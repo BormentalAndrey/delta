@@ -14,7 +14,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Важно: указываем Gradle, какую версию DeltaChat собирать
         missingDimensionStrategy("none", "foss")
         
         ndk {
@@ -61,7 +60,6 @@ android {
 }
 
 dependencies {
-    // Подключаем модуль DeltaChat
     implementation(project(":deltachat"))
     
     implementation("androidx.core:core-ktx:1.12.0")
