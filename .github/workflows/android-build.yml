@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -22,69 +24,72 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: delta/jni/deltachat-core-rust
+
+      - name: Get deltachat-core-rust submodule hash
+        id: core-hash
+        run: echo "hash=$(git rev-parse HEAD:delta/jni/deltachat-core-rust)" >> $GITHUB_OUTPUT
+
+      - name: Cache compiled core
+        id: cache-core
+        uses: actions/cache@v4
+        with:
+          path: |
+            delta/jni/arm64-v8a
+            delta/jni/x86_64
+            delta/libs/arm64-v8a
+            delta/libs/x86_64
+          key: core-${{ steps.core-hash.outputs.hash }}-ndk-r27
+
+      - name: Compile DeltaChat native libraries
+        if: steps.cache-core.outputs.cache-hit != 'true'
+        working-directory: delta
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          chmod +x scripts/ndk-make.sh scripts/install-toolchains.sh
+          export PATH="${PATH}:${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin/"
+          scripts/install-toolchains.sh
+          scripts/ndk-make.sh
+
+      - name: Copy .so files to libs
+        working-directory: delta
+        run: |
+          mkdir -p libs
+          for ABI in arm64-v8a x86_64; do
+            if [ -d "jni/$ABI" ]; then
+              mkdir -p "libs/$ABI"
+              cp -v "jni/$ABI"/*.so "libs/$ABI/" 2>/dev/null || true
+            fi
+          done
+          echo "=== Compiled .so files ==="
+          find libs jni -name "*.so" -type f | sort
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Download DeltaChat APK and extract native libraries
-        run: |
-          echo "Downloading DeltaChat APK for native libraries..."
-          mkdir -p delta/libs
-          
-          wget -q -O deltachat.apk \
-            "https://github.com/deltachat/deltachat-android/releases/latest/download/deltachat-gplay-release.apk" \
-            || wget -q -O deltachat.apk \
-            "https://github.com/deltachat/deltachat-android/releases/download/v2.49.0/deltachat-gplay-release.apk" \
-            || echo "WARNING: Failed to download DeltaChat APK"
-          
-          if [ -f deltachat.apk ] && [ -s deltachat.apk ]; then
-            echo "Extracting .so libraries from APK..."
-            unzip -q -o deltachat.apk -d deltachat_apk
-            
-            if [ -d deltachat_apk/lib ]; then
-              for ABI in arm64-v8a armeabi-v7a x86 x86_64; do
-                if [ -d "deltachat_apk/lib/$ABI" ]; then
-                  mkdir -p "delta/libs/$ABI"
-                  cp -v "deltachat_apk/lib/$ABI"/*.so "delta/libs/$ABI/" 2>/dev/null || true
-                fi
-              done
-              echo "Native libraries extracted:"
-              find delta/libs -name "*.so" -type f 2>/dev/null | sort
-            else
-              echo "ERROR: No lib directory in APK"
-              ls -la deltachat_apk/ || true
-            fi
-            
-            rm -rf deltachat_apk deltachat.apk
-          else
-            echo "WARNING: No APK downloaded, build may fail on native libraries"
-          fi
-
-      - name: Decode Keystore (Optional)
-        run: |
-          if [ ! -z "${{ secrets.ANDROID_KEYSTORE }}" ]; then
-            echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > app/release.keystore
-          fi
-
       - name: Build Debug APK
         run: gradle :app:assembleDebug --stacktrace
+
+      - name: Check APK contents
+        run: |
+          echo "=== .so files in APK ==="
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep "\.so$" || echo "NO .so FILES FOUND!"
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: app/build/outputs/apk/debug/*.apk
-
-      - name: Build Release APK
-        if: github.event_name == 'push' && contains(github.ref, 'main')
-        run: gradle :app:assembleRelease
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Upload Release APK
-        if: github.event_name == 'push' && contains(github.ref, 'main')
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: app/build/outputs/apk/release/*.apk
