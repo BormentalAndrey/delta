@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Разрешения для Tyr -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -15,16 +14,17 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- Переопределяем minSdk для Tyr -->
+    <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr" />
+
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
         android:theme="@style/Theme.Material3.Light"
-        android:extractNativeLibs="true"
         tools:replace="android:name,android:label,android:theme,android:allowBackup">
 
-        <!-- Главный экран лаунчера -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true">
@@ -38,7 +38,8 @@
         <activity
             android:name="com.jbselfcompany.tyr.ui.MainActivity"
             android:exported="false"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTask"
+            tools:replace="android:exported" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity"
@@ -68,9 +69,9 @@
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="portrait"
+            android:exported="false"
             tools:replace="screenOrientation" />
 
-        <!-- Сервисы Tyr -->
         <service
             android:name="com.jbselfcompany.tyr.service.YggmailService"
             android:enabled="true"
@@ -78,7 +79,6 @@
             android:stopWithTask="false"
             android:foregroundServiceType="dataSync" />
 
-        <!-- Ресиверы Tyr -->
         <receiver
             android:name="com.jbselfcompany.tyr.receiver.BootReceiver"
             android:exported="true"
@@ -93,12 +93,12 @@
             android:exported="false"
             android:enabled="true" />
 
-        <!-- FileProvider Tyr -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.jbselfcompany.tyr.fileprovider"
+            android:authorities="com.launcher.multiapp.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true"
+            tools:replace="android:authorities">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
