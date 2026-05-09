@@ -45,21 +45,13 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
-
-    sourceSets {
-        getByName("main") {
-            jniLibs.srcDirs("delta/libs")
-        }
-    }
-
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
+    
+    // Блоки sourceSets и packaging удалены, они здесь не нужны и ломали сборку.
+    // Модуль delta сам передаст свои библиотеки.
 }
 
 dependencies {
+    // Подтягиваем модуль дельта чата
     implementation(project(":deltachat"))
     
     implementation("androidx.core:core-ktx:1.12.0")
