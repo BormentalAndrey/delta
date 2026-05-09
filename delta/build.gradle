@@ -1,16 +1,9 @@
 plugins {
-    id 'com.android.library' // ИЗМЕНЕНО: теперь библиотека
+    id 'com.android.library'
     id 'com.diffplug.spotless' version '8.3.0'
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven {
-        url "https://www.jitpack.io"
-        name 'JitPack Github wrapper'
-    }
-}
+// БЛОК REPOSITORIES УДАЛЁН — используется из settings.gradle.kts
 
 android {
     namespace "org.thoughtcrime.securesms"
@@ -21,7 +14,6 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        // УДАЛЕН applicationId
         minSdkVersion 21
         vectorDrawables.useSupportLibrary = true
         
@@ -52,8 +44,6 @@ android {
         }
     }
 
-    // УДАЛЕНЫ signingConfigs, так как подпись делает app модуль
-
     buildTypes {
         debug {
             minifyEnabled false
@@ -74,12 +64,9 @@ android {
         }
         gplay {
             dimension "none"
-            // УДАЛЕН applicationId и плагин google-services
             buildConfigField "boolean", "USE_PLAY_SERVICES", "true"
         }
     }
-
-    // УДАЛЕН блок android.applicationVariants.all
 
     sourceSets {
         main {
@@ -94,10 +81,11 @@ android {
     lint {
         abortOnError false
     }
+    
     buildFeatures {
         renderScript true
         aidl true
-        buildConfig true // Включено для генерации BuildConfig полей
+        buildConfig true
     }
 }
 
@@ -184,6 +172,7 @@ dependencies {
     gplayImplementation 'com.google.android.gms:play-services-location:21.3.0'
 }
 
+// Вспомогательные функции остаются
 String buildConfigProperty(String name) {
     return "\"${propertyOrEmpty(name)}\""
 }
