@@ -26,13 +26,11 @@ jobs:
           echo "=== Checking delta/jni/deltachat-core-rust ==="
           if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
             echo "Submodule OK"
-            ls -la delta/jni/deltachat-core-rust/
           else
             echo "SUBMODULE MISSING - adding manually..."
             cd delta
             git submodule add https://github.com/deltachat/deltachat-core-rust.git jni/deltachat-core-rust 2>/dev/null || true
             git submodule update --init --recursive
-            ls -la jni/deltachat-core-rust/
             cd ..
           fi
 
@@ -51,7 +49,14 @@ jobs:
         with:
           ndk-version: r27
 
-      - name: Setup Rust cache
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: |
+            aarch64-linux-android
+            x86_64-linux-android
+
+      - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: delta/jni/deltachat-core-rust
@@ -59,9 +64,13 @@ jobs:
       - name: Get deltachat-core-rust submodule hash
         id: core-hash
         run: |
-          HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null || echo "unknown")
-          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
+            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust)
+          else
+            HASH="no-submodule"
+          fi
           echo "Core hash: $HASH"
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
 
       - name: Cache compiled core
         id: cache-core
@@ -78,6 +87,7 @@ jobs:
         if: steps.cache-core.outputs.cache-hit != 'true'
         working-directory: delta
         env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           echo "=== Verifying submodule ==="
@@ -85,15 +95,11 @@ jobs:
             echo "ERROR: Submodule not found!"
             exit 1
           fi
-          ls -la jni/deltachat-core-rust/
-          
-          echo "=== Installing Rust toolchains ==="
-          chmod +x scripts/install-toolchains.sh scripts/ndk-make.sh
-          export PATH="${PATH}:${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin/"
-          scripts/install-toolchains.sh
           
           echo "=== Building native libraries ==="
-          scripts/ndk-make.sh
+          chmod +x scripts/ndk-make.sh
+          echo "stable" > scripts/rust-toolchain
+          ./scripts/ndk-make.sh
           
           echo "=== Build output ==="
           find jni -name "*.so" -type f | sort
