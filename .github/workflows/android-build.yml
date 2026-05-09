@@ -77,9 +77,12 @@ jobs:
         id: core-hash
         run: |
           if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
-            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null || echo "unknown")
+            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null)
+            if [ -z "$HASH" ]; then
+              HASH="nosubmodule"
+            fi
           else
-            HASH="no-submodule"
+            HASH="nosubmodule"
           fi
           echo "Core hash: $HASH"
           echo "hash=$HASH" >> $GITHUB_OUTPUT
