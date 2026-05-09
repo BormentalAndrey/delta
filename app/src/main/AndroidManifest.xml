@@ -2,39 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Квоты для запуска внешних приложений -->
-    <queries>
-        <!-- Пакеты для проверки установленных приложений -->
-        <package android:name="com.b44t.messenger" />
-        <package android:name="com.bormental.tyr" />
-        <package android:name="chat.delta" />
-        
-        <!-- Для открытия intent -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="*" />
-        </intent>
-    </queries>
-
+    <!-- Используем ApplicationContext из DeltaChat, чтобы не сломать их инициализацию -->
     <application
-        android:allowBackup="true"
+        android:name="org.thoughtcrime.securesms.ApplicationContext"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.AppLauncher"
-        tools:targetApi="31">
-        
+        android:label="Universal Launcher"
+        android:theme="@style/Theme.Material3.Light"
+        tools:replace="android:name,android:label,android:theme,android:allowBackup">
+
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.AppLauncher">
+            android:name="com.launcher.multiapp.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+    </application>
 </manifest>
