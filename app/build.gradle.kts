@@ -16,6 +16,10 @@ android {
 
         // Важно: указываем Gradle, какую версию DeltaChat собирать
         missingDimensionStrategy("none", "foss")
+        
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86", "x86_64"
+        }
     }
 
     compileOptions {
@@ -27,6 +31,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
