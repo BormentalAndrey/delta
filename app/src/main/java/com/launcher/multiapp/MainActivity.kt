@@ -2,45 +2,135 @@ package com.launcher.multiapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = lightColorScheme()) {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Button(
-                            onClick = { startDeltaChat() },
-                            modifier = Modifier.width(200.dp)
-                        ) {
-                            Text("Запустить DeltaChat")
-                        }
-                    }
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen(
+                        onLaunchDeltaChat = { launchDeltaChat() },
+                        onLaunchTyr = { launchTyr() }
+                    )
                 }
             }
         }
     }
 
-    private fun startDeltaChat() {
+    private fun launchDeltaChat() {
         try {
-            // RoutingActivity — это главная точка входа в DeltaChat
-            val intent = Intent().setClassName(
-                this, 
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.setClassName(
+                "com.b44t.messenger",
                 "org.thoughtcrime.securesms.RoutingActivity"
             )
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Ошибка запуска: ${e.message}", Toast.LENGTH_LONG).show()
+            // Fallback
+            try {
+                val intent = Intent(Intent.ACTION_MAIN)
+                intent.setClassName(
+                    "chat.delta",
+                    "org.thoughtcrime.securesms.RoutingActivity"
+                )
+                startActivity(intent)
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+            }
+        }
+    }
+
+    private fun launchTyr() {
+        try {
+            val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+}
+
+@Composable
+fun MainScreen(
+    onLaunchDeltaChat: () -> Unit,
+    onLaunchTyr: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "🚀 Universal Launcher",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "Выберите приложение для запуска",
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        // Кнопка DeltaChat
+        Button(
+            onClick = onLaunchDeltaChat,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF4CAF50)
+            ),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("💬", fontSize = 28.sp)
+                Text("DeltaChat", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("Защищённый мессенджер", fontSize = 13.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Кнопка Tyr
+        Button(
+            onClick = onLaunchTyr,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFF5722)
+            ),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("📧", fontSize = 28.sp)
+                Text("Tyr", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("Почтовый клиент", fontSize = 13.sp)
+            }
         }
     }
 }
