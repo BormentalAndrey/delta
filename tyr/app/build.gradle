@@ -13,13 +13,17 @@ android {
     compileSdk 36
 
     defaultConfig {
-        // applicationId удалён
         minSdk 23
         targetSdk 33
         resourceConfigurations += ['en', 'ru']
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
+        
+        // BuildConfig поля для library модуля
+        buildConfigField "String", "VERSION_NAME", "\"${RELEASE_VERSION_NAME}\""
+        buildConfigField "int", "VERSION_CODE", "${RELEASE_VERSION_CODE}"
+        buildConfigField "String", "APPLICATION_ID", "\"com.jbselfcompany.tyr\""
     }
 
     buildTypes {
