@@ -5,6 +5,7 @@ on:
     branches: [ "main", "master", "develop" ]
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,29 +15,47 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive # Важно, если DeltaChat подключен как субмодуль
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Download DeltaChat APK and extract native libraries
+        run: |
+          echo "Downloading DeltaChat APK for native libraries..."
+          
+          # Пробуем скачать последний APK, если не получится - fallback на конкретную версию
+          wget -q -O deltachat.apk \
+            "https://github.com/deltachat/deltachat-android/releases/latest/download/deltachat-gplay-release.apk" \
+            || wget -q -O deltachat.apk \
+            "https://github.com/deltachat/deltachat-android/releases/download/v2.49.0/deltachat-gplay-release.apk" \
+            || echo "WARNING: Failed to download DeltaChat APK"
+          
+          if [ -f deltachat.apk ] && [ -s deltachat.apk ]; then
+            echo "Extracting .so libraries from APK..."
+            unzip -q deltachat.apk -d deltachat_apk
+            mkdir -p delta/libs
+            cp -r deltachat_apk/lib/* delta/libs/ 2>/dev/null || echo "No lib directory in APK"
+            echo "Native libraries extracted:"
+            find delta/libs -name "*.so" -type f 2>/dev/null || echo "No .so files found"
+            rm -rf deltachat_apk deltachat.apk
+          else
+            echo "WARNING: No APK downloaded, build may fail on native libraries"
+          fi
 
       - name: Decode Keystore (Optional)
-        # Если у вас есть файл подписи, его нужно зашифровать в Base64 
-        # и добавить в Secrets репозитория как ANDROID_KEYSTORE
         run: |
           if [ ! -z "${{ secrets.ANDROID_KEYSTORE }}" ]; then
             echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > app/release.keystore
           fi
 
       - name: Build Debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -44,10 +63,9 @@ jobs:
           name: debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
-      # Сборка Release версии (только если настроены секреты для подписи)
       - name: Build Release APK
         if: github.event_name == 'push' && contains(github.ref, 'main')
-        run: ./gradlew :app:assembleRelease
+        run: gradle :app:assembleRelease
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
