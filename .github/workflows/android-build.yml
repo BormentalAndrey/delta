@@ -18,6 +18,24 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Initialize and verify submodules
+        run: |
+          git submodule update --init --recursive
+          echo "=== Git submodules status ==="
+          git submodule status
+          echo "=== Checking delta/jni/deltachat-core-rust ==="
+          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Submodule OK"
+            ls -la delta/jni/deltachat-core-rust/
+          else
+            echo "SUBMODULE MISSING - adding manually..."
+            cd delta
+            git submodule add https://github.com/deltachat/deltachat-core-rust.git jni/deltachat-core-rust 2>/dev/null || true
+            git submodule update --init --recursive
+            ls -la jni/deltachat-core-rust/
+            cd ..
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -40,7 +58,10 @@ jobs:
 
       - name: Get deltachat-core-rust submodule hash
         id: core-hash
-        run: echo "hash=$(git rev-parse HEAD:delta/jni/deltachat-core-rust)" >> $GITHUB_OUTPUT
+        run: |
+          HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null || echo "unknown")
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "Core hash: $HASH"
 
       - name: Cache compiled core
         id: cache-core
@@ -59,23 +80,39 @@ jobs:
         env:
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          chmod +x scripts/ndk-make.sh scripts/install-toolchains.sh
+          echo "=== Verifying submodule ==="
+          if [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "ERROR: Submodule not found!"
+            exit 1
+          fi
+          ls -la jni/deltachat-core-rust/
+          
+          echo "=== Installing Rust toolchains ==="
+          chmod +x scripts/install-toolchains.sh scripts/ndk-make.sh
           export PATH="${PATH}:${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin/"
           scripts/install-toolchains.sh
+          
+          echo "=== Building native libraries ==="
           scripts/ndk-make.sh
+          
+          echo "=== Build output ==="
+          find jni -name "*.so" -type f | sort
 
       - name: Copy .so files to libs
         working-directory: delta
         run: |
           mkdir -p libs
           for ABI in arm64-v8a x86_64; do
-            if [ -d "jni/$ABI" ]; then
+            if [ -d "jni/$ABI" ] && [ "$(ls -A jni/$ABI/*.so 2>/dev/null)" ]; then
               mkdir -p "libs/$ABI"
-              cp -v "jni/$ABI"/*.so "libs/$ABI/" 2>/dev/null || true
+              cp -v "jni/$ABI"/*.so "libs/$ABI/"
+              echo "Copied $ABI: $(ls jni/$ABI/*.so | wc -l) files"
+            else
+              echo "WARNING: No .so files found for $ABI"
             fi
           done
-          echo "=== Compiled .so files ==="
-          find libs jni -name "*.so" -type f | sort
+          echo "=== Final libs structure ==="
+          find libs -type f | sort
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -86,7 +123,14 @@ jobs:
       - name: Check APK contents
         run: |
           echo "=== .so files in APK ==="
-          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep "\.so$" || echo "NO .so FILES FOUND!"
+          APK=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -1)
+          if [ -f "$APK" ]; then
+            unzip -l "$APK" | grep "\.so$" || echo "NO .so FILES FOUND!"
+            echo "=== APK size ==="
+            ls -lh "$APK"
+          else
+            echo "APK not found!"
+          fi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
