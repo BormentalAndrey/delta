@@ -1,6 +1,5 @@
 plugins {
-    id 'com.android.library' // 1. ИЗМЕНЕНО: теперь это библиотека, а не application
-    id 'com.google.gms.google-services' version '4.4.1' apply false // Отключаем для библиотеки
+    id 'com.android.library' // ИЗМЕНЕНО: теперь библиотека
     id 'com.diffplug.spotless' version '8.3.0'
 }
 
@@ -22,14 +21,8 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        // 2. УДАЛЕНО: applicationId "com.b44t.messenger" (библиотеке он не нужен)
-        // versionCode и versionName можно оставить для совместимости внутреннего кода
-        versionCode 747
-        versionName "2.49.0"
-        
-        multiDexEnabled true
+        // УДАЛЕН applicationId
         minSdkVersion 21
-        targetSdkVersion 36
         vectorDrawables.useSupportLibrary = true
         
         buildConfigField "boolean", "DEV_BUILD", "false"
@@ -59,14 +52,18 @@ android {
         }
     }
 
+    // УДАЛЕНЫ signingConfigs, так как подпись делает app модуль
+
     buildTypes {
         debug {
-            minifyEnabled false // Лучше выключить для отладки библиотеки
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            testProguardFiles 'test-proguard-rules.pro'
         }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            testProguardFiles 'test-proguard-rules.pro'
         }
     }
 
@@ -77,12 +74,12 @@ android {
         }
         gplay {
             dimension "none"
-            // 3. УДАЛЕНО: applicationId "chat.delta" и apply plugin google-services
+            // УДАЛЕН applicationId и плагин google-services
             buildConfigField "boolean", "USE_PLAY_SERVICES", "true"
         }
     }
 
-    // 4. УДАЛЕН БЛОК android.applicationVariants.all (он вызывает краш при сборке библиотеки)
+    // УДАЛЕН блок android.applicationVariants.all
 
     sourceSets {
         main {
@@ -100,8 +97,115 @@ android {
     buildFeatures {
         renderScript true
         aidl true
-        buildConfig true // Обязательно добавляем для генерации BuildConfig
+        buildConfig true // Включено для генерации BuildConfig полей
     }
 }
 
-// ... Spotless, dependencies и методы (buildConfigProperty и т.д.) оставляем без изменений ...
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        targetExclude 'src/main/java/chat/delta/**'
+        googleJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'xml', {
+        target 'src/*/res/**/*.xml', 'src/*/AndroidManifest.xml'
+        targetExclude 'src/*/res/values*/strings.xml'
+        eclipseWtp('xml').configFile('spotless/eclipse-wtp-xml.prefs')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    groovyGradle {
+        target '*.gradle'
+        greclipse()
+        leadingTabsToSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+dependencies {
+    def media3_version = "1.8.0"
+
+    implementation 'androidx.concurrent:concurrent-futures:1.3.0'
+    implementation 'androidx.core:core:1.17.0'
+    implementation 'androidx.core:core-telecom:1.0.1'
+    implementation 'im.conversations.webrtc:webrtc-android:129.0.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.4'
+    implementation 'androidx.sharetarget:sharetarget:1.2.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.legacy:legacy-support-v13:1.0.0'
+    implementation ('androidx.preference:preference:1.2.1') {
+        exclude group: 'androidx.lifecycle', module:'lifecycle-viewmodel'
+        exclude group: 'androidx.lifecycle', module:'lifecycle-viewmodel-ktx'
+    }
+    implementation 'androidx.legacy:legacy-preference-v14:1.0.0'
+    implementation 'androidx.exifinterface:exifinterface:1.4.1'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
+    implementation 'androidx.work:work-runtime:2.9.1'
+    implementation 'androidx.emoji2:emoji2-emojipicker:1.5.0'
+    implementation 'com.google.guava:guava:31.1-android'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
+    implementation "androidx.media3:media3-exoplayer:$media3_version"
+    implementation "androidx.media3:media3-session:$media3_version"
+    implementation "androidx.media3:media3-ui:$media3_version"
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'com.google.zxing:core:3.3.0'
+    implementation ('com.journeyapps:zxing-android-embedded:4.3.0') { transitive = false }
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.1'
+    implementation 'com.github.Baseflow:PhotoView:2.3.0'
+    implementation 'com.caverock:androidsvg-aar:1.4'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+    annotationProcessor 'androidx.annotation:annotation:1.9.1'
+    implementation 'com.makeramen:roundedimageview:2.3.0'
+    implementation 'com.github.amulyakhare:TextDrawable:558677ea31'
+    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+    implementation ('com.davemorrissey.labs:subsampling-scale-image-view:3.10.0') {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    }
+
+    implementation 'de.cketti.safecontentresolver:safe-content-resolver-v21:1.0.0'
+
+    gplayImplementation('com.google.firebase:firebase-messaging:24.1.2') {
+        exclude group: 'com.google.firebase', module: 'firebase-core'
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+    }
+    gplayImplementation 'com.google.android.gms:play-services-location:21.3.0'
+}
+
+String buildConfigProperty(String name) {
+    return "\"${propertyOrEmpty(name)}\""
+}
+
+String propertyOrEmpty(String name) {
+    Object p = findProperty(name)
+    if (p == null) return environmentVariable(name)
+    return (String) p
+}
+
+static String environmentVariable(String name) {
+    String env = System.getenv(name)
+    if (env == null) return ""
+    return env
+}
+
+String getNdkArch() {
+    Properties properties = new Properties()
+    def file = project.rootProject.file('ndkArch')
+    if (!file.exists()) return "\"\""
+    properties.load(file.newDataInputStream())
+    def arch = properties.getProperty('NDK_ARCH')
+    if (arch == null) return "\"\""
+    return "\"$arch\""
+}
