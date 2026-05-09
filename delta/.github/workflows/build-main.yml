@@ -1,0 +1,123 @@
+name: Build and Release APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: |
+            aarch64-linux-android
+            armv7-linux-androideabi
+            x86_64-linux-android
+            i686-linux-android
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            jni/deltachat-core-rust
+
+      - name: Make scripts executable
+        run: |
+          chmod +x gradlew
+          chmod +x scripts/ndk-make.sh
+
+      - name: Build Rust core
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          # Фикс: принудительно используем установленный stable toolchain
+          echo "stable" > scripts/rust-toolchain
+          ./scripts/ndk-make.sh
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
+          cat local.properties
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+
+      - name: Build APKs
+        run: |
+          ./gradlew clean
+          ./gradlew assembleFossDebug assembleGplayDebug --stacktrace
+
+      - name: Show generated APK files
+        run: |
+          echo "=== Поиск всех сгенерированных APK файлов ==="
+          # Ищем от корня проекта (исключая кэш gradle)
+          find . -name "*.apk" -not -path "*/.gradle/*" -exec ls -lh {} \;
+          
+          echo ""
+          echo "=== Директория FOSS APK ==="
+          ls -la build/outputs/apk/foss/debug/ || echo "Нет директории FOSS APK"
+          
+          echo ""
+          echo "=== Директория GPlay APK ==="
+          ls -la build/outputs/apk/gplay/debug/ || echo "Нет директории GPlay APK"
+
+      - name: Upload FOSS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltachat-foss-debug
+          # Путь изменен: убрано app/
+          path: build/outputs/apk/foss/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload GPlay APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltachat-gplay-debug
+          # Путь изменен: убрано app/
+          path: build/outputs/apk/gplay/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload fallback debug APK (if flavors failed but default succeeded)
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltachat-debug-fallback
+          # Универсальный путь: заберет любые APK в папке build, если они сгенерировались по другому пути
+          path: "**/build/outputs/apk/**/*.apk"
+          if-no-files-found: warn
+          retention-days: 7
