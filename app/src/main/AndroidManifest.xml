@@ -2,15 +2,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Используем ApplicationContext из DeltaChat, чтобы не сломать их инициализацию -->
+    <!-- Разрешения для Tyr -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
         android:theme="@style/Theme.Material3.Light"
+        android:extractNativeLibs="true"
         tools:replace="android:name,android:label,android:theme,android:allowBackup">
 
+        <!-- Главный экран лаунчера -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true">
@@ -19,6 +33,76 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Активности Tyr -->
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.MainActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.AboutActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.settings.SettingsActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.logs.LogsActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.ui.PeersActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation" />
+
+        <!-- Сервисы Tyr -->
+        <service
+            android:name="com.jbselfcompany.tyr.service.YggmailService"
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Ресиверы Tyr -->
+        <receiver
+            android:name="com.jbselfcompany.tyr.receiver.BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.jbselfcompany.tyr.receiver.MaintenanceReceiver"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- FileProvider Tyr -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.jbselfcompany.tyr.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 </manifest>
