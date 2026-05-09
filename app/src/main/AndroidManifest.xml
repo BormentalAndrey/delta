@@ -14,8 +14,8 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
-    <!-- Переопределяем minSdk для Tyr -->
-    <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr" />
+    <!-- Переопределяем minSdk для библиотек Tyr и yggmail -->
+    <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni" />
 
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
@@ -34,7 +34,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Активности Tyr -->
         <activity
             android:name="com.jbselfcompany.tyr.ui.MainActivity"
             android:exported="false"
