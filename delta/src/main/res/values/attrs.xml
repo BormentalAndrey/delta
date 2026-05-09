@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <attr name="toolbarStyle" format="reference" />
     <attr
         name="theme_type"
         format="string" />
