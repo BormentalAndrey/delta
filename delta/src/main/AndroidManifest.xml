@@ -156,35 +156,22 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true" />
 
-        <activity-alias
+       <activity-alias
             android:name=".RoutingActivity"
             android:targetActivity=".ConversationListActivity"
             android:exported="true">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-            </intent-filter>
-
+            <!-- ИЗМЕНЕНО: Оставлен только VIEW, категории LAUNCHER удалены,
+                 чтобы приложение не появлялось в списке всех программ как отдельная иконка -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Android's scheme matcher is case-sensitive, so include most likely variations -->
                 <data android:scheme="openpgp4fpr" />
-                <data
-                    android:scheme="OPENPGP4FPR"
-                    tools:ignore="AppLinkUrlError" />
-                <data
-                    android:scheme="OpenPGP4FPR"
-                    tools:ignore="AppLinkUrlError" />
-                <data
-                    android:scheme="OpenPGP4Fpr"
-                    tools:ignore="AppLinkUrlError" />
-                <data
-                    android:scheme="OpenPGP4fpr"
-                    tools:ignore="AppLinkUrlError" />
+                <data android:scheme="OPENPGP4FPR" tools:ignore="AppLinkUrlError" />
+                <data android:scheme="OpenPGP4FPR" tools:ignore="AppLinkUrlError" />
+                <data android:scheme="OpenPGP4Fpr" tools:ignore="AppLinkUrlError" />
+                <data android:scheme="OpenPGP4fpr" tools:ignore="AppLinkUrlError" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
