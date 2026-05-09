@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tyr</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="skip">Skip</string>
+    <string name="finish">Finish</string>
+    <string name="change">Change</string>
+    <string name="reset">Reset</string>
+    <string name="settings">Settings</string>
+    <string name="restart">Restart</string>
+    <string name="restart_now">Restart Now</string>
+    <string name="restart_later">Later</string>
+    <string name="or">OR</string>
+    <string name="loading">Loading…</string>
+
+    <!-- Notification Channels -->
+    <string name="notification_channel_service">Yggmail Service</string>
+    <string name="notification_channel_service_desc">Ongoing notification for Yggmail service</string>
+    <string name="notification_channel_mail">Mail Notifications</string>
+    <string name="notification_channel_mail_desc">Notifications for new emails</string>
+
+    <!-- Service Status -->
+    <string name="service_status">Service Status</string>
+    <string name="service_starting">Starting…</string>
+    <string name="service_starting_desc">Initializing Yggmail service</string>
+    <string name="service_running">Running</string>
+    <string name="service_running_desc">Mail address: %s</string>
+    <string name="service_stopping">Stopping…</string>
+    <string name="service_stopping_desc">Shutting down Yggmail service</string>
+    <string name="service_stopped">Not Running</string>
+    <string name="service_stopped_desc">Service is not running</string>
+    <string name="service_error">Error</string>
+    <string name="service_error_desc">Failed to start service</string>
+
+    <!-- Connection Status (for notification) -->
+    <string name="connection_online">Online</string>
+    <string name="connection_offline">Offline</string>
+    <string name="connection_connecting">Connecting…</string>
+    <string name="notification_peers_connected">%d peers connected</string>
+    <string name="notification_peers_connected_ping">%1$d peers • %2$d ms</string>
+    <string name="notification_no_connection">No connection</string>
+
+    <!-- Status Display -->
+    <string name="status_starting">Starting…</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopping">Stopping…</string>
+    <string name="status_stopped">Not Running</string>
+    <string name="status_error">Error: %s</string>
+
+    <!-- Main Activity -->
+    <string name="start_service">Start Service</string>
+    <string name="stop_service">Stop Service</string>
+    <string name="mail_configuration">Mail Configuration</string>
+
+    <!-- Network Statistics -->
+    <string name="network_statistics">Connection status</string>
+    <string name="connection_type">Connection Type</string>
+    <string name="connection_type_mobile_data">Mobile Data</string>
+    <string name="configured_peers">Configured Peers</string>
+    <string name="active_peer">Active Peer</string>
+    <string name="peer_status">Status</string>
+    <string name="no_active_peer">No peers configured</string>
+    <string name="peer_connected">Connected</string>
+    <string name="peer_disconnected">Disconnected</string>
+    <string name="peer_latency_format">Latency: %d ms</string>
+    <string name="peer_latency_unknown">Latency: measuring…</string>
+    <string name="yggdrasil_peers">Yggdrasil Peers</string>
+    <string name="copy_address">Copy</string>
+    <string name="show_qr_code">QR Code</string>
+    <string name="address_copied">Address copied to clipboard</string>
+    <string name="share_mailto">Share Address (mailto:)</string>
+    <string name="qr_code_title">Mail Address QR Code</string>
+    <string name="qr_code_error">Failed to generate QR code</string>
+    <string name="setup_deltachat">Setup DeltaChat/ArcaneChat</string>
+    <string name="dcaccount_opened">Opening app with autoconfig…</string>
+    <string name="dcaccount_copied">DCACCOUNT link copied! Open DeltaChat/ArcaneChat and paste it in the setup screen</string>
+    <string name="dcaccount_error">Failed to generate autoconfig link. Make sure the service is running.</string>
+    <string name="deltachat_not_installed_title">DeltaChat/ArcaneChat Not Installed</string>
+    <string name="deltachat_not_installed_message">DeltaChat/ArcaneChat is not installed on this device.\n\nIf you have DeltaChat/ArcaneChat installed, please use the manual setup instructions shown below to configure it.</string>
+    <string name="select_email_client_title">Select Email Client</string>
+    <string name="smtp_server">SMTP: %1$s:%2$s</string>
+    <string name="imap_server">IMAP: %1$s:%2$s</string>
+    <string name="deltachat_setup">DeltaChat/ArcaneChat Setup</string>
+    <string name="deltachat_setup_hint">Tap to view setup instructions</string>
+    <string name="deltachat_instructions">DeltaChat/ArcaneChat setup:\n\n1. Install and open the DeltaChat/ArcaneChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address: %1$s\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting\n\nMake sure the Tyr service is running before using DeltaChat/ArcaneChat.</string>
+    <string name="email_client_setup_title">Email Client Setup</string>
+    <string name="email_client_setup_hint">Tap to view setup instructions for K-9 Mail, Thunderbird, FairEmail</string>
+    <string name="your_email_address">your-email@yggmail</string>
+    <string name="your_password">your-password</string>
+    <string name="email_client_instructions">Email Client Setup:\n\nEmail: %1$s\nPassword: %2$s\n\nIMAP (Incoming):\n  Server: 127.0.0.1\n  Port: 1143\n  Security: None\n\nSMTP (Outgoing):\n  Server: 127.0.0.1\n  Port: 1025\n  Security: None\n\n\nK-9 Mail / Thunderbird Mobile:\n\n1. Open app, tap Add Account, then Manual Setup\n2. Enter your email and password\n3. For IMAP: 127.0.0.1:1143 (no encryption)\n4. For SMTP: 127.0.0.1:1025 (no encryption)\n5. Complete setup\n\n\nFairEmail:\n\n1. Open app, tap Manual Setup, then Custom\n2. Enter your email and password\n3. IMAP: 127.0.0.1:1143 (no encryption)\n4. SMTP: 127.0.0.1:1025 (no encryption)\n5. Save configuration\n\n\nImportant:\n\n- Tyr service must be running\n- Use "None" for encryption (local connection)\n- Username is your full email address</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_to_tyr">Welcome to Tyr</string>
+    <string name="welcome_description">Tyr creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat/ArcaneChat for secure, decentralized messaging.</string>
+    <string name="feature_decentralized">Decentralized</string>
+    <string name="feature_encrypted">End-to-End Encrypted</string>
+    <string name="feature_p2p">Peer-to-Peer</string>
+    <string name="setup_password">Setup Password</string>
+    <string name="password_description">This password will be used by DeltaChat/ArcaneChat to authenticate with the local mail server.</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="new_password">New Password</string>
+    <string name="password_security_info">Your password secures the connection between DeltaChat/ArcaneChat and the local mail server</string>
+    <string name="configure_peers">Configure Peers</string>
+    <string name="peers_description">Enter Yggdrasil network peers (one per line). Default peers are pre-filled.</string>
+    <string name="peers_list">Peers List</string>
+    <string name="peers_info">Default peers are pre-filled. You can add more peers or keep the defaults to get started</string>
+
+    <!-- Settings -->
+    <string name="service_settings">Service Settings</string>
+    <string name="network_settings">Network</string>
+    <string name="security_settings">Security</string>
+    <string name="appearance_settings">Appearance</string>
+    <string name="debug_settings">Debug</string>
+    <string name="about_settings">About</string>
+
+    <!-- Service Settings Items -->
+    <string name="auto_start_on_boot">Start on Boot</string>
+    <string name="auto_start_description">Automatically start service when device boots</string>
+
+    <!-- Network Settings Items -->
+    <string name="configure_peers_title">Configure Peers</string>
+    <string name="configure_peers_description">Manage Yggdrasil network peer connections</string>
+    <string name="use_default_peers">Use default peers</string>
+    <string name="use_default_peers_description">Connect using built-in peer list</string>
+    <string name="peer_onboarding_instructions">Choose how to connect to the Yggdrasil network:\n\n• Enable the switch to use default peers\n• Or tap \"Find Peers\" to discover available peers</string>
+    <string name="custom_peers">Custom Peers</string>
+    <string name="add_peer">Add Peer</string>
+    <string name="edit_peer">Edit Peer</string>
+    <string name="remove_peer">Remove peer</string>
+    <string name="delete_peer">Delete Peer</string>
+    <string name="delete_peer_confirmation">Delete this peer?\n\n%s</string>
+    <string name="peer_url">Peer URL</string>
+    <string name="peer_url_hint">tcp://example.peer.network:7743</string>
+    <string name="add">Add</string>
+
+    <!-- Peer Tags -->
+    <string name="peer_tag_default">Default</string>
+    <string name="peer_tag_custom">Custom</string>
+
+    <!-- Security Settings Items -->
+    <string name="change_password">Change Password</string>
+    <string name="change_password_description">Update DeltaChat/ArcaneChat authentication password</string>
+    <string name="regenerate_keys">Regenerate Keys</string>
+    <string name="regenerate_keys_description">Generate new mail address and encryption keys</string>
+    <string name="backup_restore">Backup &amp; Restore</string>
+    <string name="backup_restore_description">Export or import configuration</string>
+    <string name="create_backup">Create Backup</string>
+    <string name="restore_backup">Restore Backup</string>
+
+    <!-- Appearance Settings Items -->
+    <string name="language">Language</string>
+    <string name="language_description">Change application language</string>
+    <string name="theme">Theme</string>
+    <string name="theme_description">Change application theme</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="select_language">Select Language</string>
+    <string name="select_theme">Select Theme</string>
+    <string name="restart_app_required">Restart app to apply changes</string>
+
+    <!-- Debug Settings Items -->
+    <string name="enable_log_collection">Enable Log Collection</string>
+    <string name="enable_log_collection_description">Collect logs from Yggmail service for debugging</string>
+    <string name="collect_logs">Collect Logs</string>
+    <string name="collect_logs_description">View and share application logs for debugging</string>
+
+    <!-- About Settings Items -->
+    <string name="about_app">About Tyr</string>
+    <string name="about_app_description">Version information and credits</string>
+
+    <!-- Settings Actions -->
+    <string name="password_changed">Password changed successfully</string>
+    <string name="peers_saved">Peers saved successfully</string>
+    <string name="peers_reset">Peers reset to defaults</string>
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="reset_defaults">Reset Defaults</string>
+    <string name="reset_to_defaults_message">This will restore the default Yggdrasil peer list. Continue?</string>
+    <string name="restart_required">Restart Required</string>
+    <string name="restart_required_message">Changes will take effect after restarting the service.</string>
+    <string name="apply_changes">Apply Changes</string>
+    <string name="applying_changes">Applying changes…</string>
+    <string name="peers_applied">Peer changes applied successfully</string>
+    <string name="peers_applied_description">New peer configuration is active</string>
+    <string name="error_applying_peers">Failed to apply peer changes</string>
+    <string name="restarting_service">Restarting service to apply changes…</string>
+    <string name="restarting_service_logs">Restarting service…</string>
+    <string name="regenerate">Regenerate</string>
+    <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat/ArcaneChat with the new address. Continue?</string>
+    <string name="keys_regenerated">Keys regenerated successfully. Check your new mail address in the main screen.</string>
+    <string name="error_regenerate_keys">Failed to regenerate keys</string>
+    <string name="regenerating_keys">Regenerating keys…</string>
+
+    <!-- Logs -->
+    <string name="logs">Logs</string>
+    <string name="view_logs">View Logs</string>
+    <string name="share_logs">Share</string>
+    <string name="export_logs">Export Logs</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="clear_logs_description">Clear accumulated logs and start fresh</string>
+    <string name="tyr_logs">Tyr Logs</string>
+    <string name="loading_logs">Loading logs…</string>
+    <string name="no_logs_available">No logs available</string>
+    <string name="no_logs_to_share">No logs to share</string>
+    <string name="no_logs_to_copy">No logs to copy</string>
+    <string name="logs_copied">Logs copied to clipboard</string>
+    <string name="logs_refreshed">Logs refreshed</string>
+    <string name="service_restarted">Service restarted successfully</string>
+    <string name="logs_cleared">Logs cleared successfully</string>
+    <string name="clear_logs_confirmation">Clear all accumulated logs?</string>
+    <string name="error_loading_logs">Error loading logs: %s</string>
+    <string name="error_clearing_logs">Failed to clear logs</string>
+    <string name="log_collection_disabled">Log collection is disabled.\n\nTo view logs, enable log collection in:\nSettings → Debug Settings → Enable Log Collection</string>
+    <string name="log_collection_enabled">Log collection enabled</string>
+    <string name="log_collection_disabled_snackbar">Log collection disabled</string>
+    <string name="select_log_interval">Select log interval</string>
+    <string name="interval_10_minutes">10 minutes</string>
+    <string name="interval_30_minutes">30 minutes</string>
+    <string name="interval_60_minutes">60 minutes</string>
+    <string name="interval_24_hours">24 hours</string>
+    <string name="exporting_logs">Exporting logs…</string>
+    <string name="logs_exported">Logs exported successfully</string>
+    <string name="error_exporting_logs">Error exporting logs: %s</string>
+
+    <!-- Backup & Restore -->
+    <string name="backup_password">Backup Password</string>
+    <string name="backup_password_hint">Password to encrypt backup (min 8 chars)</string>
+    <string name="confirm_backup_password">Confirm Password</string>
+    <string name="include_keys_database">Include Yggdrasil keys</string>
+    <string name="include_keys_description">Include yggmail.db to preserve your email address</string>
+    <string name="backup_created">Backup created successfully</string>
+    <string name="backup_restored">Backup restored successfully</string>
+    <string name="backup_failed">Failed to create backup</string>
+    <string name="restore_failed">Failed to restore backup</string>
+    <string name="restore_warning">Restore will overwrite current configuration. Continue?</string>
+    <string name="restore_warning_title">Restore Backup</string>
+    <string name="restore_service_warning">Service will be restarted after restore</string>
+    <string name="error_backup_password_short">Backup password must be at least 8 characters</string>
+    <string name="error_backup_password_empty">Backup password cannot be empty</string>
+    <string name="error_backup_password_mismatch">Backup passwords do not match</string>
+    <string name="error_invalid_backup_password">Invalid backup password or corrupted file</string>
+    <string name="select_backup_file">Select Backup File</string>
+    <string name="restore_from_backup">Restore from Backup</string>
+    <string name="restore_from_backup_description">Import existing configuration instead of creating new</string>
+    <string name="restoring_backup">Restoring backup…</string>
+
+    <!-- Errors -->
+    <string name="error_password_empty">Password cannot be empty</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_save_password">Failed to save password. Please try again or contact support if the issue persists.</string>
+    <string name="error_peers_empty">Please enter at least one peer</string>
+
+    <!-- Permissions -->
+    <string name="permission_notification_title">Enable Notifications</string>
+    <string name="permission_notification_message">Tyr needs notification permission to show service status in the notification bar.</string>
+    <string name="permission_battery_title">Disable Battery Optimization</string>
+    <string name="permission_battery_message">To maintain stable connection in background, please disable battery optimization for Tyr.</string>
+    <string name="permission_allow">Allow</string>
+    <string name="permission_deny">Deny</string>
+    <string name="permission_settings">Open Settings</string>
+
+    <!-- Permission Warnings (Snackbar) -->
+    <string name="allow_notifications_snack">Notifications are disabled. Please allow them to receive service status updates.</string>
+    <string name="add_to_power_exceptions">Battery optimization is on. Add the app to power exceptions to allow background work.</string>
+    <string name="allow">Allow</string>
+
+    <!-- About -->
+    <string name="about_title">About Tyr</string>
+    <string name="version_and_build_title">Version: %1$s (Build %2$d)</string>
+    <string name="links_label">Links</string>
+    <string name="github">Tyr on GitHub</string>
+    <string name="website">Website</string>
+    <string name="libs_label">Used libraries</string>
+    <string name="libs_used">\n
+• Yggmail (Go)\n
+• Yggdrasil Network (LGPLv3)\n
+• AndroidX (Apache 2.0)\n
+• Material Components (Apache 2.0)\n
+• And others…
+</string>
+
+    <!-- Peer Discovery -->
+    <string name="peer_add_manually">Add Manually</string>
+    <string name="peer_find_peers">Find Peers</string>
+    <string name="peer_discovery_searching">Searching for peers…</string>
+    <string name="peer_discovery_progress_percent">Searching: %d%%</string>
+    <string name="peer_discovery_discovered_peers">Discovered Peers</string>
+    <string name="peer_discovery_no_peers_found">No peers found</string>
+    <string name="peer_filter_all">All</string>
+    <string name="peer_select_all">Select All</string>
+    <string name="peer_deselect_all">Clear Selection</string>
+    <string name="peer_add_selected">Add Selected</string>
+    <string name="peer_discovery_progress">Checking %1$d / %2$d peers…</string>
+    <string name="peer_discovery_progress_detailed">Found %1$d of %2$d peers (total %3$d)</string>
+    <string name="peer_discovery_found">Found: %d peers</string>
+    <string name="peer_discovery_total_available">%d peers available</string>
+    <string name="peer_discovery_selected">%d selected</string>
+    <string name="peer_added">%d peer(s) added successfully</string>
+    <string name="peers_added">%d peer(s) added</string>
+    <string name="peer_discovery_error">Failed to discover peers: %s</string>
+    <string name="peer_discovery_no_network">No network connection</string>
+    <string name="peer_discovery_no_network_message">Cannot search for peers without an internet connection. Use default peers or add manually.</string>
+    <string name="peer_discovery_in_progress">Peer discovery already in progress</string>
+    <string name="peer_from_cache">From cache (24h)</string>
+    <string name="using_default_peers">Using default peers</string>
+    <string name="all_peers_already_exist">All selected peers already exist</string>
+    <string name="error_no_peers_selected">Please select at least one peer or use default peers</string>
+
+    <!-- Storage Settings -->
+    <string name="storage_settings">Storage</string>
+    <string name="storage_and_quota">Storage &amp; Quota</string>
+    <string name="unread_quota">Message Size Limit</string>
+    <string name="unread_quota_description">Maximum file size for incoming messages</string>
+    <string name="quota_usage_label">Limitations</string>
+    <string name="storage_statistics">Storage Statistics</string>
+
+    <!-- Quota Dialog -->
+    <string name="loading_quota_info">Loading size limit information…</string>
+    <string name="error_loading_quota">Failed to load size limit information</string>
+    <string name="saving_quota">Saving size limit…</string>
+    <string name="error_saving_quota">Failed to save size limit</string>
+    <string name="quota_saved">Size limit set to %d MB</string>
+    <string name="quota_current_value">Size limit: %d MB</string>
+    <string name="quota_usage_format">Used: %s MB / %d MB (%d%%)</string>
+    <string name="quota_unread_count">Unread messages: %d</string>
+    <string name="quota_exceeded_warning">Messages exceeding size limit will be rejected.</string>
+    <string name="max_file_size">Maximum file size for incoming messages: %d MB</string>
+
+    <!-- Storage Stats Dialog -->
+    <string name="loading_storage_stats">Loading storage statistics…</string>
+    <string name="error_loading_storage_stats">Failed to load storage statistics</string>
+    <string name="storage_db_size">Database (small messages): %.2f MB</string>
+    <string name="storage_file_size">Files (large messages): %.2f MB</string>
+    <string name="storage_total_size">Total: %.2f MB</string>
+    <string name="media_cache_label">Media Cache</string>
+    <string name="storage_media_cache_size">Chat attachments: %.2f MB</string>
+
+    <!-- Media Cache -->
+    <string name="clear_media_cache">Clear Media Cache</string>
+    <string name="clear_media_cache_description">Free up space by deleting cached chat attachments</string>
+    <string name="media_cache_stats_title">Storage Usage</string>
+    <string name="media_cache_attachments_size">Chat attachments: %.2f MB</string>
+    <string name="media_cache_mail_size">Mail data (yggmail.db): %.2f MB</string>
+    <string name="media_cache_total_size">Total: %.2f MB</string>
+    <string name="media_cache_clear_confirmation">Delete all cached chat attachments (%.2f MB)?\n\nThis removes downloaded images and files from chats. Original messages are kept.</string>
+    <string name="media_cache_cleared">Cache cleared (%.2f MB freed)</string>
+    <string name="media_cache_nothing_to_clear">No cached attachments to clear</string>
+    <string name="media_cache_error">Failed to clear cache</string>
+
+    <!-- Outbound Queue -->
+    <string name="clear_outbound_queue">Clear Outbound Queue</string>
+    <string name="clear_outbound_queue_description">Remove stuck messages from the outbound send queue</string>
+    <string name="loading_queue_info">Loading queue info…</string>
+    <string name="error_loading_queue_info">Failed to load queue info</string>
+    <string name="outbound_queue_empty">Outbound queue is empty — no stuck messages.</string>
+    <string name="outbound_queue_clear_confirmation">There are %d message(s) stuck in the outbound queue. Clear them now?</string>
+    <string name="clearing_queue">Clearing outbound queue…</string>
+    <string name="error_clearing_queue">Failed to clear outbound queue</string>
+    <string name="queue_cleared">Cleared %d message(s) from the outbound queue</string>
+
+    <!-- Service Errors -->
+    <string name="error_service_not_running">Service is not running</string>
+    <string name="error_service_not_available">Service is not available</string>
+
+    <!-- Deeplink handling (tyr://open?peer=...&pubkey=...&name=...) -->
+    <string name="deeplink_add_peer_title">Add Peer</string>
+    <string name="deeplink_add_peer_message">Add this peer to Tyr?\n\n%s</string>
+    <string name="deeplink_peer_added">Peer added</string>
+    <string name="deeplink_peer_already_exists">This peer is already configured</string>
+    <string name="deeplink_invalid_peer">Invalid peer address</string>
+    <string name="deeplink_add_peer_and_contact_title">Add Peer &amp; Contact</string>
+    <string name="deeplink_peer_label">Peer:</string>
+    <string name="deeplink_contact_label">Contact:</string>
+    <string name="deeplink_added_success">Added successfully</string>
+    <string name="deeplink_already_configured">Already configured</string>
+    <string name="share_tyr_link">Share Tyr Link</string>
+    <string name="share_qr_image">Share QR Image</string>
+
+    <!-- Manual peer entry in onboarding -->
+    <string name="manual_peer_title">Or enter peer manually</string>
+    <string name="manual_peer_description">For local or private peers (e.g. local hotspot node)</string>
+    <string name="manual_peer_hint">quic://192.168.x.x:port</string>
+    <string name="error_invalid_peer_url">Invalid peer URL. Use tcp://, tls://, or quic:// format</string>
+    <string name="error_peer_url_newlines">Peer URL cannot contain newlines</string>
+    <string name="peer_prefix_added">Added tcp:// prefix automatically</string>
+    <string name="peer_already_exists">Peer already exists</string>
+    <string name="peer_enabled">Peer enabled</string>
+    <string name="peer_disabled">Peer disabled</string>
+
+    <!-- Update Check Settings -->
+    <string name="updates_settings">Updates</string>
+    <string name="update_check_enabled">Check for Updates</string>
+    <string name="update_check_enabled_description">Automatically check for new versions on GitHub</string>
+    <string name="update_check_interval">Check Frequency</string>
+    <string name="update_check_interval_description">How often to check for new versions</string>
+    <string name="update_check_now">Check Now</string>
+    <string name="update_check_now_description">Manually check for a new version</string>
+    <string name="update_interval_on_start">Every app start</string>
+    <string name="update_interval_daily">Daily</string>
+    <string name="update_interval_weekly">Weekly</string>
+    <string name="select_update_interval">Check Frequency</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_no_updates">You have the latest version (%s)</string>
+    <string name="update_check_failed">Could not check for updates. Check your internet connection.</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_available_github">Version %1$s is available on GitHub.\n\nYou have %2$s.</string>
+    <string name="update_available_fdroid">Version %1$s is available on GitHub.\n\nYou have %2$s.\n\nSince you installed via F-Droid, the update will appear there in a few days. You can also download it from GitHub now.</string>
+    <string name="update_download">Download</string>
+    <string name="update_skip_version">Skip This Version</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_settings">Settings</string>
+    <string name="chat_coming_soon">Chat — coming soon</string>
+
+    <!-- Built-in Chat -->
+    <string name="chat_empty_contacts">No contacts yet.\nTap + to add a contact.</string>
+    <string name="chat_add_contact">Add Contact</string>
+    <string name="chat_add_manually">Manual</string>
+    <string name="chat_scan_qr">Scan QR</string>
+    <string name="chat_address_hint">yggmail address (64hex@yggmail)</string>
+    <string name="chat_contact_name_hint">Name (optional)</string>
+    <string name="chat_add_contact_button">Add Contact</string>
+    <string name="chat_scan_qr_description">Scan the QR code from another user\'s Mail Configuration screen</string>
+    <string name="chat_scan_qr_button">Open Scanner</string>
+    <string name="chat_scan_qr_hint">Scan mailto: QR code</string>
+    <string name="chat_invalid_address">Invalid address. Must be 64 hex chars followed by @yggmail</string>
+    <string name="chat_invalid_address_qr">QR code does not contain a valid yggmail address</string>
+    <string name="chat_cannot_add_self">You cannot add your own address</string>
+    <string name="chat_contact_already_exists">This contact is already added</string>
+    <string name="chat_contact_added">Contact added</string>
+    <string name="chat_rename_contact">Rename</string>
+    <string name="chat_delete_contact">Delete contact</string>
+    <string name="chat_delete_contact_confirmation">Delete contact %s?</string>
+    <string name="chat_delete">Delete</string>
+    <string name="chat_message_hint">Message…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_send_error">Failed to send: %s</string>
+    <string name="chat_last_message_you">You: %s</string>
+    <string name="chat_message_status_desc">Message status</string>
+    <string name="chat_message_copied">Copied</string>
+    <string name="chat_message_menu_copy">Copy</string>
+
+    <!-- Chat Settings -->
+    <string name="chat_settings">Chat</string>
+    <string name="chat_accept_non_contacts">Accept messages from strangers</string>
+    <string name="chat_accept_non_contacts_description">Show preview of messages from users not in your contacts</string>
+    <!-- Stranger message prompt -->
+    <string name="chat_stranger_message_title">Message from unknown contact</string>
+    <string name="chat_stranger_message_body">%1$s sent you a message:\n\n%2$s</string>
+    <string name="chat_stranger_accept">Accept</string>
+    <string name="chat_stranger_decline">Decline</string>
+    <string name="chat_pending_banner">New message from unknown sender</string>
+    <string name="chat_pending_accept">Accept</string>
+    <string name="chat_pending_decline">Decline</string>
+    <string name="chat_pending_label">New contact</string>
+
+    <!-- Keystore recovery warning -->
+    <string name="keystore_recovery_title">Security storage reset</string>
+    <string name="keystore_recovery_message">The Android Keystore on this device had an issue and your encrypted settings were reset. Please re-enter your password in the app settings to restore service.</string>
+
+    <!-- Chat notifications -->
+    <string name="notification_channel_chat">Chat</string>
+    <string name="notification_channel_chat_desc">Notifications for new chat messages</string>
+    <string name="notification_new_message_from">New message from %s</string>
+    <string name="notification_new_messages_from">%1$d new messages from %2$s</string>
+
+    <!-- File attachments -->
+    <string name="attach_file">File</string>
+    <string name="attach_photo">Photo</string>
+    <string name="attach_image_preview">Image attachment</string>
+    <string name="chat_attachment_button">Attach photo</string>
+    <string name="chat_file_too_large">Photo too large. Maximum size: %d MB</string>
+    <string name="chat_attachment_error">Failed to attach photo</string>
+    <string name="chat_photo_invalid">Only image files are supported</string>
+    <string name="chat_send_with_attachment">Sending with attachment…</string>
+    <string name="chat_attachment_size_mb">%.1f MB</string>
+    <string name="chat_attachment_size_kb">%d KB</string>
+    <string name="chat_message_error_desc">Failed to send</string>
+
+    <!-- Chat list preview labels for attachments -->
+    <string name="chat_preview_photo">🖼️ Photo</string>
+    <string name="chat_preview_file">📎 File</string>
+
+    <!-- Reply to message -->
+    <string name="chat_reply_to">Reply to</string>
+    <string name="chat_reply_cancel">Cancel reply</string>
+    <string name="chat_date_today">Today</string>
+    <string name="chat_date_yesterday">Yesterday</string>
+    <string name="chat_contact_profile">Contact Profile</string>
+    <string name="chat_contact_email_label">Email address</string>
+    <string name="chat_contact_display_name_label">Display name</string>
+    <string name="chat_my_nickname_label">My display name</string>
+    <string name="chat_my_nickname_hint">Your name (sent to contacts)</string>
+    <string name="chat_my_nickname_info">This name will be sent to your contacts with your messages.</string>
+    <string name="chat_my_profile">My Profile</string>
+</resources>
