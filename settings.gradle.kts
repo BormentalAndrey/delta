@@ -17,6 +17,8 @@ dependencyResolutionManagement {
 rootProject.name = "MultiAppLauncher"
 include(":app")
 include(":deltachat")
+include(":tyr")
 
-// Указываем, что модуль deltachat находится в папке delta
+// Указываем пути к модулям в подпапках
 project(":deltachat").projectDir = file("delta")
+project(":tyr").projectDir = file("tyr/app")
