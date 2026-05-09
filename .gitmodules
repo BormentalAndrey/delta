@@ -1,0 +1,3 @@
+[submodule "delta/jni/deltachat-core-rust"]
+	path = delta/jni/deltachat-core-rust
+	url = https://github.com/deltachat/deltachat-core-rust.git
