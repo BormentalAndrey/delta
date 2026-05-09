@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <item name="search_close_btn" type="id" />
     <!-- Tag IDs for storing original padding values when applying window insets -->
     <item
         name="tag_window_insets_padding_left"
