@@ -20,18 +20,30 @@ jobs:
 
       - name: Initialize and verify submodules
         run: |
-          git submodule update --init --recursive
-          echo "=== Git submodules status ==="
-          git submodule status
-          echo "=== Checking delta/jni/deltachat-core-rust ==="
-          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
-            echo "Submodule OK"
-          else
-            echo "SUBMODULE MISSING - adding manually..."
-            cd delta
+          echo "=== Setting up submodules ==="
+          cd delta
+          if [ -d "jni/deltachat-core-rust" ] && [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Removing empty submodule directory..."
+            rm -rf jni/deltachat-core-rust
+          fi
+          if [ -f ".gitmodules" ]; then
+            git submodule update --init --recursive
+          fi
+          if [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Adding submodule..."
             git submodule add https://github.com/deltachat/deltachat-core-rust.git jni/deltachat-core-rust 2>/dev/null || true
             git submodule update --init --recursive
-            cd ..
+          fi
+          cd ..
+          echo "=== Git submodules status ==="
+          git submodule status
+          echo "=== Verifying submodule ==="
+          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Submodule OK"
+            ls -la delta/jni/deltachat-core-rust/
+          else
+            echo "ERROR: Failed to initialize submodule"
+            exit 1
           fi
 
       - name: Set up JDK 17
@@ -65,7 +77,7 @@ jobs:
         id: core-hash
         run: |
           if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
-            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust)
+            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null || echo "unknown")
           else
             HASH="no-submodule"
           fi
