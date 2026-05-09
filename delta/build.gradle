@@ -3,8 +3,6 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
 }
 
-// БЛОК REPOSITORIES УДАЛЁН — используется из settings.gradle.kts
-
 android {
     namespace "org.thoughtcrime.securesms"
     flavorDimensions "none"
@@ -17,6 +15,8 @@ android {
         minSdkVersion 21
         vectorDrawables.useSupportLibrary = true
         
+        // APPLICATION_ID для библиотечного модуля
+        buildConfigField "String", "APPLICATION_ID", "\"com.b44t.messenger\""
         buildConfigField "boolean", "DEV_BUILD", "false"
 
         ndk {
@@ -72,10 +72,6 @@ android {
         main {
             jniLibs.srcDirs = ['libs']
         }
-    }
-
-    androidResources {
-        // generateLocaleConfig удалён — не поддерживается в library модуле
     }
 
     lint {
@@ -172,7 +168,6 @@ dependencies {
     gplayImplementation 'com.google.android.gms:play-services-location:21.3.0'
 }
 
-// Вспомогательные функции остаются
 String buildConfigProperty(String name) {
     return "\"${propertyOrEmpty(name)}\""
 }
