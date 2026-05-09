@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -35,24 +35,11 @@ class MainActivity : ComponentActivity() {
 
     private fun launchDeltaChat() {
         try {
-            val intent = Intent(Intent.ACTION_MAIN)
-            intent.setClassName(
-                "com.b44t.messenger",
-                "org.thoughtcrime.securesms.RoutingActivity"
-            )
+            // Теперь DeltaChat встроен — запускаем его основную Activity напрямую
+            val intent = Intent(this, org.thoughtcrime.securesms.RoutingActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
-            // Fallback
-            try {
-                val intent = Intent(Intent.ACTION_MAIN)
-                intent.setClassName(
-                    "chat.delta",
-                    "org.thoughtcrime.securesms.RoutingActivity"
-                )
-                startActivity(intent)
-            } catch (e2: Exception) {
-                e2.printStackTrace()
-            }
+            e.printStackTrace()
         }
     }
 
@@ -84,26 +71,23 @@ fun MainScreen(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Text(
             text = "Выберите приложение для запуска",
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         Spacer(modifier = Modifier.height(48.dp))
-        
-        // Кнопка DeltaChat
+
         Button(
             onClick = onLaunchDeltaChat,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
             shape = MaterialTheme.shapes.large
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -112,18 +96,15 @@ fun MainScreen(
                 Text("Защищённый мессенджер", fontSize = 13.sp)
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
-        // Кнопка Tyr
+
         Button(
             onClick = onLaunchTyr,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF5722)
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722)),
             shape = MaterialTheme.shapes.large
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
