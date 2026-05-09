@@ -14,7 +14,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
-    <!-- Переопределяем minSdk для библиотек Tyr и yggmail -->
     <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni" />
 
     <application
@@ -100,7 +99,8 @@
             tools:replace="android:authorities">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+                android:resource="@xml/file_paths"
+                tools:replace="android:resource" />
         </provider>
 
     </application>
