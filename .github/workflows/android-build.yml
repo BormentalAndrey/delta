@@ -28,8 +28,8 @@ jobs:
       - name: Download DeltaChat APK and extract native libraries
         run: |
           echo "Downloading DeltaChat APK for native libraries..."
+          mkdir -p delta/libs
           
-          # Пробуем скачать последний APK, если не получится - fallback на конкретную версию
           wget -q -O deltachat.apk \
             "https://github.com/deltachat/deltachat-android/releases/latest/download/deltachat-gplay-release.apk" \
             || wget -q -O deltachat.apk \
@@ -38,11 +38,22 @@ jobs:
           
           if [ -f deltachat.apk ] && [ -s deltachat.apk ]; then
             echo "Extracting .so libraries from APK..."
-            unzip -q deltachat.apk -d deltachat_apk
-            mkdir -p delta/libs
-            cp -r deltachat_apk/lib/* delta/libs/ 2>/dev/null || echo "No lib directory in APK"
-            echo "Native libraries extracted:"
-            find delta/libs -name "*.so" -type f 2>/dev/null || echo "No .so files found"
+            unzip -q -o deltachat.apk -d deltachat_apk
+            
+            if [ -d deltachat_apk/lib ]; then
+              for ABI in arm64-v8a armeabi-v7a x86 x86_64; do
+                if [ -d "deltachat_apk/lib/$ABI" ]; then
+                  mkdir -p "delta/libs/$ABI"
+                  cp -v "deltachat_apk/lib/$ABI"/*.so "delta/libs/$ABI/" 2>/dev/null || true
+                fi
+              done
+              echo "Native libraries extracted:"
+              find delta/libs -name "*.so" -type f 2>/dev/null | sort
+            else
+              echo "ERROR: No lib directory in APK"
+              ls -la deltachat_apk/ || true
+            fi
+            
             rm -rf deltachat_apk deltachat.apk
           else
             echo "WARNING: No APK downloaded, build may fail on native libraries"
