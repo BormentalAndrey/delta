@@ -75,7 +75,7 @@ android {
     }
 
     androidResources {
-        generateLocaleConfig true
+        // generateLocaleConfig удалён — не поддерживается в library модуле
     }
 
     lint {
