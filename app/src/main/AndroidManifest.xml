@@ -148,7 +148,9 @@
         <activity android:name="com.jbselfcompany.tyr.ui.logs.LogsActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.ui.PeersActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:windowSoftInputMode" />
-        <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" android:screenOrientation="portrait" tools:replace="android:exported,android:screenOrientation" />
+        
+        <!-- CaptureActivity: убран tools:replace="android:screenOrientation" чтобы избежать конфликта с манифестом Tyr -->
+        <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported" />
 
         <!-- Tyr Services -->
         <service android:name="com.jbselfcompany.tyr.service.YggmailService" android:enabled="true" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="dataSync" tools:replace="android:exported,android:foregroundServiceType" />
