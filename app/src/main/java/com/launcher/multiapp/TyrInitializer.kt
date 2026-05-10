@@ -4,36 +4,13 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
-import com.jbselfcompany.tyr.TyrApplication
-import java.lang.reflect.Field
 
 class TyrInitializer : ContentProvider() {
 
     override fun onCreate(): Boolean {
         try {
-            val app = context?.applicationContext ?: return true
-            
-            // Проверяем, не инициализирован ли уже
-            var alreadyInitialized = false
-            try {
-                alreadyInitialized = TyrApplication.Companion::instance.isInitialized
-            } catch (_: Exception) {}
-            if (alreadyInitialized) return true
-
-            val tyrApp = TyrApplication()
-            
-            // Рефлексия для обхода private set в companion object
-            val companionClass = Class.forName("com.jbselfcompany.tyr.TyrApplication\$Companion")
-            val instanceField: Field = companionClass.getDeclaredField("instance")
-            instanceField.isAccessible = true
-            instanceField.set(TyrApplication.Companion, tyrApp)
-            
-            // Рефлексия для configRepository
-            val configField: Field = TyrApplication::class.java.getDeclaredField("configRepository")
-            configField.isAccessible = true
-            configField.set(tyrApp, null) // будет установлен в onCreate
-            
-            tyrApp.onCreate()
+            val app = context?.applicationContext as? android.app.Application ?: return true
+            TyrInitHelper.init(app)
         } catch (e: Exception) {
             e.printStackTrace()
         }
