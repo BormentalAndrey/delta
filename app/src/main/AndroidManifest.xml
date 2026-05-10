@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- PERMISSIONS -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -33,13 +32,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
-    <!-- FEATURES -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.location" android:required="false" />
 
-    <!-- QUERIES (from Tyr) -->
     <queries>
         <package android:name="com.b44t.messenger" />
         <package android:name="com.github.arcanechat" />
@@ -58,24 +55,22 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
-        android:theme="@style/Theme.Material3.Light"
+        android:theme="@style/Theme.AppLauncher"
         android:supportsRtl="true"
         android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         tools:replace="android:name,android:label,android:theme,android:allowBackup,android:icon">
 
-        <!-- Launcher -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Material3.Light">
+            android:theme="@style/Theme.AppLauncher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- ===== DELTACHAT ACTIVITIES ===== -->
         <activity
             android:name="org.thoughtcrime.securesms.ShareActivity"
             android:exported="true"
@@ -127,20 +122,17 @@
         <activity android:name="org.thoughtcrime.securesms.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
 
-        <!-- DeltaChat Services -->
         <service android:name="org.thoughtcrime.securesms.service.ImapService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.SmtpService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
 
-        <!-- DeltaChat Receivers -->
         <receiver android:name="org.thoughtcrime.securesms.receiver.BootReceiver" android:exported="true" android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <!-- ===== TYR ACTIVITIES ===== -->
         <activity android:name="com.jbselfcompany.tyr.ui.MainActivity" android:exported="false" android:launchMode="singleTask" android:theme="@style/Theme.Tyr" tools:replace="android:exported,android:theme,android:launchMode" />
         <activity android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity" android:exported="false" android:theme="@style/Theme.Tyr.Onboarding" tools:replace="android:exported,android:theme" />
         <activity android:name="com.jbselfcompany.tyr.ui.AboutActivity" android:exported="false" tools:replace="android:exported" />
@@ -150,10 +142,8 @@
         <activity android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:windowSoftInputMode" />
         <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported" />
 
-        <!-- Tyr Services -->
         <service android:name="com.jbselfcompany.tyr.service.YggmailService" android:enabled="true" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="dataSync" tools:replace="android:exported,android:foregroundServiceType" />
 
-        <!-- Tyr Receivers -->
         <receiver android:name="com.jbselfcompany.tyr.receiver.BootReceiver" android:exported="true" android:enabled="true" tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -161,7 +151,6 @@
         </receiver>
         <receiver android:name="com.jbselfcompany.tyr.receiver.MaintenanceReceiver" android:exported="false" android:enabled="true" tools:replace="android:exported" />
 
-        <!-- File Providers -->
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true" tools:replace="android:authorities">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" tools:replace="android:resource" />
         </provider>
