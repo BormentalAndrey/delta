@@ -26,12 +26,14 @@ class TyrApplication : Application() {
         const val CHANNEL_ID_MAIL = "mail_notifications"
         const val CHANNEL_ID_CHAT = "chat_notifications"
 
+        @JvmStatic
         lateinit var instance: TyrApplication
-            private set
+            internal set
     }
 
+    @JvmField
     lateinit var configRepository: ConfigRepository
-        private set
+        internal set
 
     var yggmailServiceBinder: com.jbselfcompany.tyr.service.YggmailService.LocalBinder? = null
 
