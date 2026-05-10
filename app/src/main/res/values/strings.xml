@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Universal Launcher</string>
+    <string name="launch_deltachat">DeltaChat</string>
+    <string name="launch_tyr">Tyr</string>
+    <string name="choose_app">Выберите приложение</string>
     
-    <!-- Исправление форматирования строки из Tyr -->
-    <string name="quota_usage_format" formatted="false">%1$s / %2$s</string>
+    <!-- Уведомления -->
+    <string name="notification_channel_service">Service Notifications</string>
+    <string name="notification_channel_service_desc">Background service status</string>
+    <string name="notification_channel_mail">Mail Notifications</string>
+    <string name="notification_channel_mail_desc">New mail notifications</string>
+    <string name="notification_channel_chat">Chat Notifications</string>
+    <string name="notification_channel_chat_desc">Chat message notifications</string>
+    
+    <!-- Локация -->
+    <string name="location_streaming_channel_desc">Location streaming service</string>
+    <string name="location_streaming_notification_title">Location streaming</string>
 </resources>
