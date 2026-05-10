@@ -17,29 +17,26 @@ class TyrApplicationWrapper : org.thoughtcrime.securesms.ApplicationContext() {
 
     var yggmailServiceBinder: com.jbselfcompany.tyr.service.YggmailService.LocalBinder? = null
 
-    private lateinit var tyrApp: TyrApplication
+    override fun attachBaseContext(base: Context) {
+        // Локаль применяется глобально для всего объединенного приложения
+        super.attachBaseContext(LocaleHelper.applyLanguage(base))
+    }
 
     override fun onCreate() {
         instance = this
         
-        // Сначала инициализируем DeltaChat
+        // 1. Инициализируем DeltaChat
         super.onCreate()
         
-        // Создаём и инициализируем Tyr
-        tyrApp = TyrApplication()
-        tyrApp.attachBaseContext(this)
-        tyrApp.onCreate()
+        // 2. Безопасно инициализируем Tyr, передавая легальный Application Context
+        TyrApplication.init(this)
         
-        // Копируем свойства из TyrApplication
-        configRepository = tyrApp.configRepository
-    }
-
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(LocaleHelper.applyLanguage(base))
+        // 3. Копируем нужные ссылки для внешнего доступа
+        configRepository = TyrApplication.instance.configRepository
     }
 
     override fun onTerminate() {
-        tyrApp.onTerminate()
+        TyrApplication.instance.onTerminate()
         super.onTerminate()
     }
 }
