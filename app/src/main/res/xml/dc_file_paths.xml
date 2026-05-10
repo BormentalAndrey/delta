@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="dc_files" path="." />
+    <external-cache-path name="external_dc_files" path="." />
+    <files-path name="dc_internal_files" path="." />
+    <root-path name="dc_root" path="." />
+</paths>
