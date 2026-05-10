@@ -3,7 +3,7 @@ package com.jbselfcompany.tyr
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -12,7 +12,8 @@ import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
 import com.jbselfcompany.tyr.utils.LocaleHelper
 import com.jbselfcompany.tyr.utils.TyrLogger
 
-class TyrApplication : Application() {
+// 1. Наследуемся от ContextWrapper. Теперь класс работает как полноценный Context
+class TyrApplication private constructor(private val app: Application) : ContextWrapper(app) {
 
     companion object {
         const val CHANNEL_ID_SERVICE = "yggmail_service"
@@ -21,6 +22,12 @@ class TyrApplication : Application() {
 
         lateinit var instance: TyrApplication
             private set
+
+        // 2. Специальный метод, который вызовет лаунчер
+        fun init(application: Application) {
+            instance = TyrApplication(application)
+            instance.initialize()
+        }
     }
 
     lateinit var configRepository: ConfigRepository
@@ -32,10 +39,8 @@ class TyrApplication : Application() {
     private val networkCallbackHandler = Handler(Looper.getMainLooper())
     private var networkCallbackRunnable: Runnable? = null
 
-    override fun onCreate() {
-        super.onCreate()
-        instance = this
-
+    // 3. Бывший onCreate() стал обычной функцией
+    private fun initialize() {
         configRepository = ConfigRepository(this)
         TyrLogger.setEnabled(configRepository.isLogCollectionEnabled())
         LocaleHelper.applyTheme(this)
@@ -60,14 +65,9 @@ class TyrApplication : Application() {
         }
     }
 
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(LocaleHelper.applyLanguage(base))
-    }
-
-    override fun onTerminate() {
+    fun onTerminate() {
         cancelNetworkCallbackRegistration()
         networkCallback?.unregister()
-        super.onTerminate()
     }
 
     private fun createNotificationChannels() {
