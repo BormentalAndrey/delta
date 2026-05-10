@@ -2,8 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ========== PERMISSIONS ========== -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -12,36 +15,132 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    
+    <!-- ========== FEATURES ========== -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- Override minSdk for libraries that require higher API -->
     <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni" />
 
+    <!-- ========== APPLICATION ========== -->
     <application
-        android:name="com.jbselfcompany.tyr.TyrApplication"
+        android:name="com.launcher.multiapp.TyrApplicationWrapper"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
         android:theme="@style/Theme.Material3.Light"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:name,android:label,android:theme,android:allowBackup">
       
+        <!-- ===== LAUNCHER ACTIVITY ===== -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Material3.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- ===== DELTACHAT ACTIVITIES ===== -->
+        <activity
+            android:name="com.b44t.messenger.ConversationListActivity"
+            android:exported="false"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <activity
+            android:name="com.b44t.messenger.ConversationActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <activity
+            android:name="com.b44t.messenger.ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <activity
+            android:name="com.b44t.messenger.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <activity
+            android:name="com.b44t.messenger.AccountActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <activity
+            android:name="com.b44t.messenger.RegistrationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DeltaChat" />
+
+        <!-- ===== DELTACHAT SERVICES ===== -->
+        <service
+            android:name="com.b44t.messenger.service.ImapService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name="com.b44t.messenger.service.SmtpService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name="com.b44t.messenger.service.MvboxService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name="com.b44t.messenger.service.FetchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- ===== DELTACHAT RECEIVERS ===== -->
+        <receiver
+            android:name="com.b44t.messenger.receiver.BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.b44t.messenger.receiver.ConnectivityReceiver"
+            android:exported="false"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.b44t.messenger.receiver.AlarmReceiver"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- ===== TYR ACTIVITIES ===== -->
         <activity
             android:name="com.jbselfcompany.tyr.ui.MainActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            tools:replace="android:exported" />
+            android:theme="@style/Theme.Tyr" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Tyr" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.AboutActivity"
@@ -67,9 +166,9 @@
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="portrait"
-            android:exported="false"
-            tools:replace="screenOrientation" />
+            android:exported="false" />
 
+        <!-- ===== TYR SERVICES ===== -->
         <service
             android:name="com.jbselfcompany.tyr.service.YggmailService"
             android:enabled="true"
@@ -77,6 +176,7 @@
             android:stopWithTask="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- ===== TYR RECEIVERS ===== -->
         <receiver
             android:name="com.jbselfcompany.tyr.receiver.BootReceiver"
             android:exported="true"
@@ -91,16 +191,26 @@
             android:exported="false"
             android:enabled="true" />
 
+        <!-- ===== FILE PROVIDER (общий) ===== -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.launcher.multiapp.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true"
-            tools:replace="android:authorities">
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"
-                tools:replace="android:resource" />
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Если нужен второй FileProvider для DeltaChat -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.dcfileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/dc_file_paths" />
         </provider>
 
     </application>
