@@ -11,7 +11,9 @@
         <item name="colorOnSecondary">#FFFFFFFF</item>
         <item name="android:colorBackground">#FFF5F5F5</item>
         <item name="colorSurface">#FFFFFFFF</item>
+        <item name="colorSurfaceVariant">#FFDBE5DD</item>
         <item name="colorOnSurface">#FF000000</item>
+        <item name="colorOnSurfaceVariant">#FF404943</item>
         <item name="colorError">#FFB00020</item>
         <item name="colorOnError">#FFFFFFFF</item>
         <item name="android:statusBarColor">#FF1565C0</item>
