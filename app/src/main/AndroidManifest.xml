@@ -17,7 +17,7 @@
     <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni" />
 
     <application
-        android:name=".UniversalApplication"
+        android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
