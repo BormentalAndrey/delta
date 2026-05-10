@@ -2,6 +2,7 @@ package com.launcher.multiapp;
 
 import android.app.Application;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method; // <-- Добавлен импорт для Method
 
 import com.jbselfcompany.tyr.TyrApplication;
 
@@ -34,8 +35,12 @@ public class TyrInitHelper {
             configField.setAccessible(true);
             configField.set(tyrApp, new com.jbselfcompany.tyr.data.ConfigRepository(app));
 
-            // Вызываем onCreate с контекстом
-            tyrApp.attachBaseContext(app.getBaseContext());
+            // ИСПРАВЛЕНИЕ: Вызываем protected метод attachBaseContext через рефлексию
+            Method attachMethod = android.content.ContextWrapper.class.getDeclaredMethod("attachBaseContext", android.content.Context.class);
+            attachMethod.setAccessible(true); // Обходим ограничение protected
+            attachMethod.invoke(tyrApp, app.getBaseContext());
+
+            // Вызываем onCreate
             tyrApp.onCreate();
         } catch (Exception e) {
             e.printStackTrace();
