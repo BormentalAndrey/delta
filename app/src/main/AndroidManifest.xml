@@ -23,7 +23,12 @@
         android:label="Universal Launcher"
         android:theme="@style/Theme.Material3.Light"
         tools:replace="android:name,android:label,android:theme,android:allowBackup">
-
+       
+        <provider
+            android:name="com.launcher.multiapp.TyrInitializer"
+            android:authorities="${applicationId}.tyr-initializer"
+            android:exported="false" />
+      
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true">
