@@ -148,8 +148,6 @@
         <activity android:name="com.jbselfcompany.tyr.ui.logs.LogsActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.ui.PeersActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:windowSoftInputMode" />
-        
-        <!-- CaptureActivity: убран tools:replace="android:screenOrientation" чтобы избежать конфликта с манифестом Tyr -->
         <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported" />
 
         <!-- Tyr Services -->
@@ -165,7 +163,7 @@
 
         <!-- File Providers -->
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true" tools:replace="android:authorities">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" tools:replace="android:resource" />
         </provider>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.dcfileprovider" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/dc_file_paths" />
