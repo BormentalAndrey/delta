@@ -13,11 +13,12 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
+        android:indeterminate="false"
         app:indicatorColor="?attr/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:trackColor="?attr/colorSurfaceVariant"
+        app:trackColor="@color/md_theme_light_surfaceVariant"
         app:trackCornerRadius="2dp"
         app:trackThickness="3dp" />
 
