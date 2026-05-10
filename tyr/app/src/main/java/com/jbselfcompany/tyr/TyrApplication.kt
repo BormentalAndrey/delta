@@ -31,7 +31,6 @@ class TyrApplication : Application() {
             internal set
     }
 
-    @JvmField
     lateinit var configRepository: ConfigRepository
         internal set
 
