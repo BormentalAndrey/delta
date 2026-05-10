@@ -1,6 +1,5 @@
 package com.jbselfcompany.tyr
 
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -11,8 +10,9 @@ import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
 import com.jbselfcompany.tyr.utils.LocaleHelper
 import com.jbselfcompany.tyr.utils.TyrLogger
+import org.thoughtcrime.securesms.ApplicationContext
 
-class TyrApplication : Application() {
+class TyrApplication : ApplicationContext() {
 
     companion object {
         const val CHANNEL_ID_SERVICE = "yggmail_service"
