@@ -17,17 +17,12 @@
     <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni" />
 
     <application
-        android:name="org.thoughtcrime.securesms.ApplicationContext"
+        android:name="com.jbselfcompany.tyr.TyrApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="Universal Launcher"
         android:theme="@style/Theme.Material3.Light"
         tools:replace="android:name,android:label,android:theme,android:allowBackup">
-       
-        <provider
-            android:name="com.launcher.multiapp.TyrInitializer"
-            android:authorities="${applicationId}.tyr-initializer"
-            android:exported="false" />
       
         <activity
             android:name="com.launcher.multiapp.MainActivity"
