@@ -10,9 +10,8 @@ import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
 import com.jbselfcompany.tyr.utils.LocaleHelper
 import com.jbselfcompany.tyr.utils.TyrLogger
-import org.thoughtcrime.securesms.ApplicationContext
 
-class TyrApplicationWrapper : ApplicationContext() {
+class TyrApplicationWrapper : com.b44t.messenger.ApplicationContext() {
 
     companion object {
         const val CHANNEL_ID_SERVICE = "yggmail_service"
@@ -74,28 +73,28 @@ class TyrApplicationWrapper : ApplicationContext() {
 
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID_SERVICE,
-                getString(com.jbselfcompany.tyr.R.string.notification_channel_service),
+                "Yggmail Service",
                 NotificationManager.IMPORTANCE_MIN
             ).apply {
-                description = getString(com.jbselfcompany.tyr.R.string.notification_channel_service_desc)
+                description = "Yggmail background service"
                 setShowBadge(false)
             }
 
             val mailChannel = NotificationChannel(
                 CHANNEL_ID_MAIL,
-                getString(com.jbselfcompany.tyr.R.string.notification_channel_mail),
+                "Mail Notifications",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = getString(com.jbselfcompany.tyr.R.string.notification_channel_mail_desc)
+                description = "New mail notifications"
                 setShowBadge(true)
             }
 
             val chatChannel = NotificationChannel(
                 CHANNEL_ID_CHAT,
-                getString(com.jbselfcompany.tyr.R.string.notification_channel_chat),
+                "Chat Messages",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = getString(com.jbselfcompany.tyr.R.string.notification_channel_chat_desc)
+                description = "Chat message notifications"
                 setShowBadge(true)
             }
 
