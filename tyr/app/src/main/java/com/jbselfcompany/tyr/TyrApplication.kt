@@ -11,13 +11,7 @@ import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
 import com.jbselfcompany.tyr.utils.LocaleHelper
 import com.jbselfcompany.tyr.utils.TyrLogger
-import com.launcher.multiapp.TyrApplicationWrapper
 
-/**
- * Application class for Tyr.
- * В режиме библиотеки делегирует инициализацию в TyrApplicationWrapper.
- * В standalone-режиме (если TyrApplicationWrapper не найден) работает автономно.
- */
 class TyrApplication : Application() {
 
     companion object {
@@ -25,27 +19,8 @@ class TyrApplication : Application() {
         const val CHANNEL_ID_MAIL = "mail_notifications"
         const val CHANNEL_ID_CHAT = "chat_notifications"
 
-        val instance: Application
-            get() {
-                return try {
-                    TyrApplicationWrapper.instance
-                } catch (e: Exception) {
-                    _standaloneInstance ?: throw IllegalStateException("TyrApplication not initialized")
-                }
-            }
-
-        private var _standaloneInstance: TyrApplication? = null
-        
-        /**
-         * Проверяет, запущено ли приложение в режиме лаунчера (интеграция с DeltaChat)
-         * или в standalone-режиме.
-         */
-        val isLauncherMode: Boolean
-            get() = try {
-                TyrApplicationWrapper.instance != null
-            } catch (e: Exception) {
-                false
-            }
+        lateinit var instance: TyrApplication
+            private set
     }
 
     lateinit var configRepository: ConfigRepository
@@ -56,45 +31,16 @@ class TyrApplication : Application() {
     private var networkCallback: NetworkChangeReceiver? = null
     private val networkCallbackHandler = Handler(Looper.getMainLooper())
     private var networkCallbackRunnable: Runnable? = null
-    
-    // Флаг для предотвращения двойной инициализации
-    private var isInitialized = false
 
     override fun onCreate() {
         super.onCreate()
-        
-        // Если мы в режиме лаунчера, инициализация уже выполнена в TyrApplicationWrapper
-        if (isLauncherMode) {
-            return
-        }
-        
-        // Standalone-режим: полная инициализация
-        initializeApplication()
-    }
+        instance = this
 
-    /**
-     * Полная инициализация приложения (используется в standalone-режиме
-     * или вызывается из TyrApplicationWrapper в режиме лаунчера).
-     */
-    internal fun initializeApplication() {
-        if (isInitialized) return
-        isInitialized = true
-        
-        _standaloneInstance = this
-
-        // Initialize configuration repository
         configRepository = ConfigRepository(this)
-
-        // Initialize logger state from persisted preference
         TyrLogger.setEnabled(configRepository.isLogCollectionEnabled())
-
-        // Apply theme preference
         LocaleHelper.applyTheme(this)
-
-        // Create notification channels
         createNotificationChannels()
 
-        // Register network callback if service is enabled
         if (configRepository.isServiceEnabled() && configRepository.isAutoStartEnabled()) {
             scheduleNetworkCallbackRegistration()
         }
@@ -124,14 +70,10 @@ class TyrApplication : Application() {
         super.onTerminate()
     }
 
-    /**
-     * Create notification channels for Android O and above
-     */
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NotificationManager::class.java)
 
-            // Service notification channel (battery optimized with IMPORTANCE_MIN)
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID_SERVICE,
                 getString(R.string.notification_channel_service),
@@ -141,7 +83,6 @@ class TyrApplication : Application() {
                 setShowBadge(false)
             }
 
-            // Mail notification channel
             val mailChannel = NotificationChannel(
                 CHANNEL_ID_MAIL,
                 getString(R.string.notification_channel_mail),
@@ -151,7 +92,6 @@ class TyrApplication : Application() {
                 setShowBadge(true)
             }
 
-            // Chat notification channel (high priority for heads-up notifications)
             val chatChannel = NotificationChannel(
                 CHANNEL_ID_CHAT,
                 getString(R.string.notification_channel_chat),
