@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Базовая тема Material Components с необходимыми атрибутами -->
+    <!-- Базовая тема Material Components со ВСЕМИ обязательными атрибутами -->
     <style name="BaseAppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">#FF1976D2</item>
-        <item name="colorPrimaryVariant">#FF1565C0</item>
-        <item name="colorOnPrimary">#FFFFFFFF</item>
-        <item name="colorSecondary">#FF388E3C</item>
-        <item name="colorSecondaryVariant">#FF2E7D32</item>
-        <item name="colorOnSecondary">#FFFFFFFF</item>
-        <item name="android:colorBackground">#FFF5F5F5</item>
-        <item name="colorSurface">#FFFFFFFF</item>
-        <item name="colorOnSurface">#FF000000</item>
-        <item name="colorError">#FFB00020</item>
-        <item name="colorOnError">#FFFFFFFF</item>
+        <!-- Основные Material-атрибуты (обязательны для компонентов) -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/secondary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/black</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/primary</item>
     </style>
 
     <!-- Основная тема лаунчера -->
@@ -31,7 +36,7 @@
 
     <!-- Splash-тема DeltaChat -->
     <style name="TextSecure.Splash" parent="BaseAppTheme">
-        <item name="android:windowBackground">#FF1976D2</item>
+        <item name="android:windowBackground">@color/primary</item>
     </style>
 
     <!-- Светлая тема DeltaChat -->
