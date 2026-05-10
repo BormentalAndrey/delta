@@ -5,28 +5,46 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import com.jbselfcompany.tyr.TyrApplication
+import java.lang.reflect.Field
 
 /**
  * ContentProvider that initializes TyrApplication before any Activity starts.
- * This is needed because the app uses DeltaChat's ApplicationContext,
- * so TyrApplication.onCreate() is never called automatically.
+ * Uses reflection to bypass private setters on instance and configRepository.
  */
 class TyrInitializer : ContentProvider() {
 
     override fun onCreate(): Boolean {
-        val app = context?.applicationContext as? android.app.Application
-        if (app != null && !TyrApplication.Companion::instance.isInitialized) {
-            try {
-                // Initialize TyrApplication manually
-                TyrApplication.instance = TyrApplication()
-                TyrApplication.instance.configRepository = 
-                    com.jbselfcompany.tyr.data.ConfigRepository(app)
-                TyrApplication.instance.onCreate()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        try {
+            val app = context?.applicationContext as? android.app.Application ?: return true
+
+            if (isTyrInitialized()) return true
+
+            val tyrApp = TyrApplication()
+            val configRepo = com.jbselfcompany.tyr.data.ConfigRepository(app)
+
+            val companionClass = TyrApplication.Companion::class.java
+            val instanceField: Field = companionClass.getDeclaredField("instance")
+            instanceField.isAccessible = true
+            instanceField.set(TyrApplication.Companion, tyrApp)
+
+            val configField: Field = TyrApplication::class.java.getDeclaredField("configRepository")
+            configField.isAccessible = true
+            configField.set(tyrApp, configRepo)
+
+            tyrApp.onCreate()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         return true
+    }
+
+    private fun isTyrInitialized(): Boolean {
+        return try {
+            TyrApplication.Companion::instance.isInitialized
+        } catch (e: Exception) {
+            false
+        }
     }
 
     override fun query(
