@@ -127,12 +127,6 @@
         <service android:name="org.thoughtcrime.securesms.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
 
-        <receiver android:name="org.thoughtcrime.securesms.receiver.BootReceiver" android:exported="true" android:enabled="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
         <activity android:name="com.jbselfcompany.tyr.ui.MainActivity" android:exported="false" android:launchMode="singleTask" android:theme="@style/Theme.Tyr" tools:replace="android:exported,android:theme,android:launchMode" />
         <activity android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity" android:exported="false" android:theme="@style/Theme.Tyr.Onboarding" tools:replace="android:exported,android:theme" />
         <activity android:name="com.jbselfcompany.tyr.ui.AboutActivity" android:exported="false" tools:replace="android:exported" />
