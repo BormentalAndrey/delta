@@ -26,6 +26,10 @@
         <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
         <item name="colorOutline">@color/md_theme_light_outline</item>
         <item name="android:textColorSecondary">@color/text_color_secondary</item>
+        
+        <!-- Стили Material 3 для кнопок -->
+        <item name="materialButtonStyle">@style/Widget.Material3.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.Material3.Button.Outlined</item>
     </style>
 
     <!-- Основная тема лаунчера -->
