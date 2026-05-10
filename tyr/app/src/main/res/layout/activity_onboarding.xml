@@ -55,7 +55,7 @@
             android:text="@string/back"
             android:textSize="16sp"
             app:cornerRadius="16dp"
-            style="@style/Widget.MaterialComponents.Button" />
+            style="@style/Widget.Material3.Button.Outlined" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_next"
@@ -65,7 +65,7 @@
             android:text="@string/next"
             android:textSize="16sp"
             app:cornerRadius="16dp"
-            style="@style/Widget.MaterialComponents.Button" />
+            style="?attr/materialButtonStyle" />
 
     </LinearLayout>
 
