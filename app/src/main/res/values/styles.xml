@@ -1,52 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Основная тема лаунчера -->
-    <style name="Theme.Material3.Light" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/secondary</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:navigationBarColor">@color/primary</item>
-    </style>
+    <style name="Theme.Material3.Light" parent="android:Theme.Material.Light.NoActionBar" />
 
-    <!-- Тема для DeltaChat (используется в ConversationListActivity и др.) -->
-    <style name="Theme.DeltaChat" parent="Theme.Material3.Light">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorSecondaryVariant">@color/secondary_dark</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:windowBackground">@color/background</item>
-    </style>
+    <!-- Тема для DeltaChat -->
+    <style name="Theme.DeltaChat" parent="android:Theme.Material.Light.NoActionBar" />
     
-    <!-- Тема для Tyr (основная) -->
-    <style name="Theme.Tyr" parent="Theme.Material3.Light">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorSecondaryVariant">@color/secondary_dark</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <item name="android:windowBackground">@color/background</item>
-    </style>
+    <!-- Тема для Tyr -->
+    <style name="Theme.Tyr" parent="android:Theme.Material.Light.NoActionBar" />
     
-    <!-- Тема для Tyr Onboarding (полноэкранный режим) -->
-    <style name="Theme.Tyr.Onboarding" parent="Theme.Tyr">
+    <!-- Тема для Tyr Onboarding -->
+    <style name="Theme.Tyr.Onboarding" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
     </style>
 
-    <!-- Splash-тема DeltaChat (используется при запуске) -->
-    <style name="TextSecure.Splash" parent="Theme.DeltaChat">
-        <item name="android:windowBackground">@color/primary</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-    </style>
+    <!-- Splash-тема DeltaChat -->
+    <style name="TextSecure.Splash" parent="android:Theme.Material.Light.NoActionBar" />
 
     <!-- Светлая тема DeltaChat -->
-    <style name="TextSecure.LightTheme" parent="Theme.DeltaChat">
-        <item name="android:windowBackground">@color/background</item>
-    </style>
+    <style name="TextSecure.LightTheme" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
