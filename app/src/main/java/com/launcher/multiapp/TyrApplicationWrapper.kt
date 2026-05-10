@@ -5,7 +5,7 @@ import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.utils.LocaleHelper
 
-class TyrApplicationWrapper : com.b44t.messenger.ApplicationContext() {
+class TyrApplicationWrapper : org.thoughtcrime.securesms.ApplicationContext() {
 
     companion object {
         lateinit var instance: TyrApplicationWrapper
@@ -17,7 +17,6 @@ class TyrApplicationWrapper : com.b44t.messenger.ApplicationContext() {
 
     var yggmailServiceBinder: com.jbselfcompany.tyr.service.YggmailService.LocalBinder? = null
 
-    // Экземпляр TyrApplication для вызова его методов
     private lateinit var tyrApp: TyrApplication
 
     override fun onCreate() {
@@ -26,12 +25,12 @@ class TyrApplicationWrapper : com.b44t.messenger.ApplicationContext() {
         // Сначала инициализируем DeltaChat
         super.onCreate()
         
-        // Создаём и инициализируем Tyr (он сам создаст каналы, зарегистрирует колбэки и т.д.)
+        // Создаём и инициализируем Tyr
         tyrApp = TyrApplication()
         tyrApp.attachBaseContext(this)
         tyrApp.onCreate()
         
-        // Копируем свойства
+        // Копируем свойства из TyrApplication
         configRepository = tyrApp.configRepository
     }
 
