@@ -1,54 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Основные цвета приложения -->
-    <color name="primary">#FF1976D2</color>
-    <color name="primary_dark">#FF1565C0</color>
-    <color name="primary_light">#FF42A5F5</color>
-    
-    <!-- Вторичные цвета -->
-    <color name="secondary">#FF388E3C</color>
-    <color name="secondary_dark">#FF2E7D32</color>
-    <color name="secondary_light">#FF66BB6A</color>
-    
-    <!-- Базовые цвета -->
-    <color name="white">#FFFFFFFF</color>
-    <color name="black">#FF000000</color>
-    <color name="background">#FFF5F5F5</color>
-    <color name="surface">#FFFFFFFF</color>
-    <color name="error">#FFB00020</color>
-    
-    <!-- Цвета уведомлений -->
-    <color name="notification">#FFFF5722</color>
-    <color name="notification_pressed">#FFE64A19</color>
-    
-    <!-- Материал дизайн (для совместимости) -->
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    
-    <!-- Фирменные цвета приложений -->
-    <color name="deltachat_green">#FF43E97B</color>
-    <color name="tyr_red">#FFFF6B6B</color>
-    
-    <!-- Дополнительные цвета для DeltaChat -->
-    <color name="deltachat_dark">#FF1B5E20</color>
-    <color name="deltachat_light">#FFC8E6C9</color>
-    <color name="deltachat_accent">#FF00C853</color>
-    
-    <!-- Дополнительные цвета для Tyr -->
-    <color name="tyr_dark">#FFC62828</color>
-    <color name="tyr_light">#FFFFCDD2</color>
-    <color name="tyr_accent">#FFFF8A80</color>
-    
-    <!-- Системные цвета -->
-    <color name="status_bar">#FF0D47A1</color>
-    <color name="navigation_bar">#FF1565C0</color>
-    
-    <!-- Цвета для тёмной темы -->
-    <color name="dark_background">#FF121212</color>
-    <color name="dark_surface">#FF1E1E1E</color>
-    <color name="dark_text">#FFFFFFFF</color>
-    <color name="dark_text_secondary">#B3FFFFFF</color>
+    <!-- Material Design 3 Colors (из оригинального Tyr) -->
+    <color name="md_theme_light_primary">#006C4C</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#89F8C7</color>
+    <color name="md_theme_light_onPrimaryContainer">#002114</color>
+    <color name="md_theme_light_secondary">#4D6357</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#CFE9D9</color>
+    <color name="md_theme_light_onSecondaryContainer">#0A1F16</color>
+    <color name="md_theme_light_tertiary">#3D6373</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#C1E8FB</color>
+    <color name="md_theme_light_onTertiaryContainer">#001F29</color>
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    <color name="md_theme_light_background">#FBFDF8</color>
+    <color name="md_theme_light_onBackground">#191C1A</color>
+    <color name="md_theme_light_surface">#FBFDF8</color>
+    <color name="md_theme_light_onSurface">#191C1A</color>
+    <color name="md_theme_light_surfaceVariant">#DBE5DD</color>
+    <color name="md_theme_light_onSurfaceVariant">#404943</color>
+    <color name="md_theme_light_outline">#707973</color>
+
+    <color name="md_theme_dark_primary">#6CDB9C</color>
+    <color name="md_theme_dark_onPrimary">#003826</color>
+    <color name="md_theme_dark_primaryContainer">#005138</color>
+    <color name="md_theme_dark_onPrimaryContainer">#89F8C7</color>
+    <color name="md_theme_dark_secondary">#B3CCBE</color>
+    <color name="md_theme_dark_onSecondary">#1F352A</color>
+    <color name="md_theme_dark_secondaryContainer">#354B40</color>
+    <color name="md_theme_dark_onSecondaryContainer">#CFE9D9</color>
+    <color name="md_theme_dark_tertiary">#A5CCDE</color>
+    <color name="md_theme_dark_onTertiary">#073543</color>
+    <color name="md_theme_dark_tertiaryContainer">#244C5B</color>
+    <color name="md_theme_dark_onTertiaryContainer">#C1E8FB</color>
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_errorContainer">#93000A</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+    <color name="md_theme_dark_background">#191C1A</color>
+    <color name="md_theme_dark_onBackground">#FFFFFF</color>
+    <color name="md_theme_dark_surface">#191C1A</color>
+    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+    <color name="md_theme_dark_surfaceVariant">#404943</color>
+    <color name="md_theme_dark_onSurfaceVariant">#FFFFFF</color>
+    <color name="md_theme_dark_outline">#899389</color>
+
+    <!-- Status Colors -->
+    <color name="status_starting">#FF9800</color>
+    <color name="status_running">#4CAF50</color>
+    <color name="status_stopping">#FF9800</color>
+    <color name="status_stopped">#9E9E9E</color>
+    <color name="status_error">#F44336</color>
 </resources>
