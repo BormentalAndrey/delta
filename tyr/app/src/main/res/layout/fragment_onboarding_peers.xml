@@ -157,7 +157,6 @@
             android:layout_marginTop="16dp"
             android:text="@string/peer_from_cache"
             android:visibility="gone"
-            style="@style/Widget.MaterialComponents.Chip.Assist"
             app:chipIcon="@drawable/ic_cached"
             tools:visibility="visible" />
 
