@@ -108,26 +108,22 @@
         <service
             android:name="com.b44t.messenger.service.ImapService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:foregroundServiceType" />
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name="com.b44t.messenger.service.SmtpService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:foregroundServiceType" />
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name="com.b44t.messenger.service.MvboxService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:foregroundServiceType" />
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name="com.b44t.messenger.service.FetchService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:foregroundServiceType" />
+            android:foregroundServiceType="dataSync" />
 
         <!-- ===== DELTACHAT RECEIVERS ===== -->
         <receiver
@@ -153,66 +149,54 @@
             android:exported="false"
             android:enabled="true" />
 
-        <!-- ===== TYR ACTIVITIES (с tools:replace для конфликтующих атрибутов) ===== -->
+        <!-- ===== TYR ACTIVITIES ===== -->
         <activity
             android:name="com.jbselfcompany.tyr.ui.MainActivity"
-            android:exported="false"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Tyr"
-            tools:replace="android:exported,android:theme" />
+            tools:replace="android:exported,android:theme,android:launchMode" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Tyr.Onboarding"
-            tools:replace="android:theme" />
+            tools:replace="android:exported,android:theme" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.AboutActivity"
-            android:exported="false"
             tools:replace="android:exported" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.settings.SettingsActivity"
-            android:exported="false"
             tools:replace="android:exported" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.logs.LogsActivity"
-            android:exported="false"
             tools:replace="android:exported" />
             
         <activity
             android:name="com.jbselfcompany.tyr.ui.PeersActivity"
-            android:exported="false"
             tools:replace="android:exported" />
             
         <activity
             android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity"
-            android:exported="false"
             android:windowSoftInputMode="adjustResize"
-            tools:replace="android:exported" />
+            tools:replace="android:exported,android:windowSoftInputMode" />
             
+        <!-- ВАЖНО: Убираем android:screenOrientation, оставляем только tools:replace -->
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="portrait"
-            android:exported="false"
             tools:replace="android:screenOrientation,android:exported" />
 
         <!-- ===== TYR SERVICES ===== -->
         <service
             android:name="com.jbselfcompany.tyr.service.YggmailService"
             android:enabled="true"
-            android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:foregroundServiceType" />
+            tools:replace="android:exported,android:foregroundServiceType" />
 
         <!-- ===== TYR RECEIVERS ===== -->
         <receiver
             android:name="com.jbselfcompany.tyr.receiver.BootReceiver"
-            android:exported="true"
-            android:enabled="true">
+            android:enabled="true"
+            tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -220,8 +204,8 @@
 
         <receiver
             android:name="com.jbselfcompany.tyr.receiver.MaintenanceReceiver"
-            android:exported="false"
-            android:enabled="true" />
+            android:enabled="true"
+            tools:replace="android:exported" />
 
         <!-- ===== FILE PROVIDERS ===== -->
         <provider
