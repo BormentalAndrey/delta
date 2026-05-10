@@ -33,6 +33,7 @@
         
         <!-- Outline -->
         <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_surfaceVariant</item>
         
         <!-- Error -->
         <item name="colorError">@color/md_theme_light_error</item>
