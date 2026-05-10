@@ -15,6 +15,7 @@ android {
         versionName = "1.0"
 
         missingDimensionStrategy("none", "foss")
+        multiDexEnabled = true
         
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
@@ -45,27 +46,16 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
-    
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-        resources {
-            excludes += listOf(
-                "META-INF/*.version",
-                "META-INF/*.SF",
-                "META-INF/*.RSA",
-                "META-INF/*.DSA",
-                "META-INF/LICENSE*",
-                "META-INF/NOTICE*",
-                "META-INF/DEPENDENCIES"
-            )
-        }
-    }
 
     sourceSets {
         getByName("main") {
             jniLibs.srcDirs("delta/libs")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }
@@ -74,6 +64,7 @@ dependencies {
     implementation(project(":deltachat"))
     implementation(project(":tyr"))
     
+    implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
