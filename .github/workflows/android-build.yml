@@ -153,6 +153,9 @@ jobs:
           echo "=== Final libs structure ==="
           find libs -type f | sort
 
+      - name: Make Gradlew executable
+        run: chmod +x gradlew
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -177,8 +180,8 @@ jobs:
             ls -lh "$APK"
           else
             echo "APK not found!"
-            echo "Listing build outputs:"
-            find app/build -type f -name "*.apk" 2>/dev/null
+            echo "Listing all files in build outputs:"
+            find app/build -type f -name "*.apk" 2>/dev/null || echo "No APK files anywhere"
           fi
 
       - name: Upload Debug APK
