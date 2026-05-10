@@ -49,17 +49,14 @@ class MainActivity : ComponentActivity() {
 
     private fun launchDeltaChat() {
         try {
-            // Основной Activity DeltaChat - список чатов
             val intent = Intent(Intent.ACTION_MAIN).apply {
-                setClassName(packageName, "com.b44t.messenger.ConversationListActivity")
+                setClassName(packageName, "org.thoughtcrime.securesms.ConversationListActivity")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             
-            // Проверяем, существует ли Activity
             if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
                 startActivity(intent)
             } else {
-                // Fallback: пробуем открыть профиль
                 tryProfileActivity()
             }
         } catch (e: Exception) {
@@ -72,7 +69,7 @@ class MainActivity : ComponentActivity() {
     private fun tryProfileActivity() {
         try {
             val intent = Intent(Intent.ACTION_MAIN).apply {
-                setClassName(packageName, "com.b44t.messenger.ProfileActivity")
+                setClassName(packageName, "org.thoughtcrime.securesms.ProfileActivity")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             startActivity(intent)
@@ -84,7 +81,6 @@ class MainActivity : ComponentActivity() {
 
     private fun launchTyr() {
         try {
-            // Запускаем Tyr MainActivity
             val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
@@ -92,7 +88,6 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             
-            // Fallback: пробуем onboarding если основной Activity недоступен
             try {
                 val intent = Intent(this, com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -131,7 +126,6 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Заголовок
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,7 +161,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Кнопка DeltaChat
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -191,7 +184,6 @@ fun MainScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
-                        // Иконка
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
@@ -203,7 +195,6 @@ fun MainScreen(
                         
                         Spacer(modifier = Modifier.width(16.dp))
                         
-                        // Текст
                         Column {
                             Text(
                                 text = "DeltaChat",
@@ -222,7 +213,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Кнопка Tyr
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -246,7 +236,6 @@ fun MainScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
-                        // Иконка
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
@@ -258,7 +247,6 @@ fun MainScreen(
                         
                         Spacer(modifier = Modifier.width(16.dp))
                         
-                        // Текст
                         Column {
                             Text(
                                 text = "Tyr",
@@ -277,7 +265,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Информация о приложении
             Text(
                 text = "Два приложения в одном",
                 fontSize = 14.sp,
