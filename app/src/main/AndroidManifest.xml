@@ -107,7 +107,7 @@
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:theme="@style/Theme.DeltaChat"
-            tools:replace="android:theme" />
+            tools:replace="android:theme,android:exported" />
 
         <activity-alias
             android:name="org.thoughtcrime.securesms.RoutingActivity"
@@ -121,11 +121,11 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name="org.thoughtcrime.securesms.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="org.thoughtcrime.securesms.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="org.thoughtcrime.securesms.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported,android:windowSoftInputMode" />
+        <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
+        <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
+        <activity android:name="org.thoughtcrime.securesms.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
+        <activity android:name="org.thoughtcrime.securesms.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
 
         <!-- DeltaChat Services -->
         <service android:name="org.thoughtcrime.securesms.service.ImapService" android:exported="false" android:foregroundServiceType="dataSync" />
