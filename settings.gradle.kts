@@ -11,11 +11,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }  // Исправлено: убран www
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
 rootProject.name = "MultiAppLauncher"
+
+// Основные модули
 include(":app")
 include(":deltachat")
 include(":tyr")
