@@ -77,7 +77,7 @@
 
         <!-- ===== DELTACHAT ACTIVITIES ===== -->
         <activity
-            android:name="com.b44t.messenger.ShareActivity"
+            android:name="org.thoughtcrime.securesms.ShareActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:excludeFromRecents="true"
@@ -101,7 +101,7 @@
         </activity>
 
         <activity
-            android:name="com.b44t.messenger.ConversationListActivity"
+            android:name="org.thoughtcrime.securesms.ConversationListActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:launchMode="singleTask"
@@ -110,8 +110,8 @@
             tools:replace="android:theme" />
 
         <activity-alias
-            android:name="com.b44t.messenger.RoutingActivity"
-            android:targetActivity="com.b44t.messenger.ConversationListActivity"
+            android:name="org.thoughtcrime.securesms.RoutingActivity"
+            android:targetActivity="org.thoughtcrime.securesms.ConversationListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -121,20 +121,20 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name="com.b44t.messenger.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="com.b44t.messenger.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="com.b44t.messenger.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="com.b44t.messenger.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
-        <activity android:name="com.b44t.messenger.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
+        <activity android:name="org.thoughtcrime.securesms.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme" />
 
         <!-- DeltaChat Services -->
-        <service android:name="com.b44t.messenger.service.ImapService" android:exported="false" android:foregroundServiceType="dataSync" />
-        <service android:name="com.b44t.messenger.service.SmtpService" android:exported="false" android:foregroundServiceType="dataSync" />
-        <service android:name="com.b44t.messenger.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
-        <service android:name="com.b44t.messenger.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
+        <service android:name="org.thoughtcrime.securesms.service.ImapService" android:exported="false" android:foregroundServiceType="dataSync" />
+        <service android:name="org.thoughtcrime.securesms.service.SmtpService" android:exported="false" android:foregroundServiceType="dataSync" />
+        <service android:name="org.thoughtcrime.securesms.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
+        <service android:name="org.thoughtcrime.securesms.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
 
         <!-- DeltaChat Receivers -->
-        <receiver android:name="com.b44t.messenger.receiver.BootReceiver" android:exported="true" android:enabled="true">
+        <receiver android:name="org.thoughtcrime.securesms.receiver.BootReceiver" android:exported="true" android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
