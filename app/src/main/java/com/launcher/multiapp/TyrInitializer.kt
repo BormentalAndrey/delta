@@ -11,30 +11,28 @@ class TyrInitializer : ContentProvider() {
 
     override fun onCreate(): Boolean {
         try {
-            val app = context?.applicationContext as? android.app.Application ?: return true
+            val app = context?.applicationContext ?: return true
             
             // Проверяем, не инициализирован ли уже
+            var alreadyInitialized = false
             try {
-                if (TyrApplication.Companion::instance.isInitialized) return true
-            } catch (e: Exception) {
-                // Не инициализирован — продолжаем
-            }
+                alreadyInitialized = TyrApplication.Companion::instance.isInitialized
+            } catch (_: Exception) {}
+            if (alreadyInitialized) return true
 
             val tyrApp = TyrApplication()
             
-            // Взламываем private set для instance
-            val companionClass = TyrApplication.Companion::class.java
+            // Рефлексия для обхода private set в companion object
+            val companionClass = Class.forName("com.jbselfcompany.tyr.TyrApplication\$Companion")
             val instanceField: Field = companionClass.getDeclaredField("instance")
             instanceField.isAccessible = true
             instanceField.set(TyrApplication.Companion, tyrApp)
             
-            // Взламываем private set для configRepository
-            val configRepo = com.jbselfcompany.tyr.data.ConfigRepository(app)
+            // Рефлексия для configRepository
             val configField: Field = TyrApplication::class.java.getDeclaredField("configRepository")
             configField.isAccessible = true
-            configField.set(tyrApp, configRepo)
+            configField.set(tyrApp, null) // будет установлен в onCreate
             
-            // Вызываем onCreate
             tyrApp.onCreate()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -42,9 +40,9 @@ class TyrInitializer : ContentProvider() {
         return true
     }
 
-    override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null
+    override fun query(uri: Uri, p: Array<out String>?, sel: String?, sa: Array<out String>?, sort: String?): Cursor? = null
     override fun getType(uri: Uri): String? = null
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = 0
-    override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int = 0
+    override fun delete(uri: Uri, sel: String?, sa: Array<out String>?): Int = 0
+    override fun update(uri: Uri, values: ContentValues?, sel: String?, sa: Array<out String>?): Int = 0
 }
