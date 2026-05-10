@@ -35,11 +35,17 @@ class MainActivity : ComponentActivity() {
 
     private fun launchDeltaChat() {
         try {
-            // Теперь DeltaChat встроен — запускаем его основную Activity напрямую
-            val intent = Intent(this, org.thoughtcrime.securesms.RoutingActivity::class.java)
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.setClassName(packageName, "org.thoughtcrime.securesms.ConversationListActivity")
             startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            try {
+                val intent = Intent(Intent.ACTION_MAIN)
+                intent.setClassName(packageName, "org.thoughtcrime.securesms.WebViewActivity")
+                startActivity(intent)
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+            }
         }
     }
 
@@ -59,34 +65,18 @@ fun MainScreen(
     onLaunchTyr: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🚀 Universal Launcher",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
+        Text("🚀 Universal Launcher", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Выберите приложение для запуска",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
+        Text("Выберите приложение для запуска", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
             onClick = onLaunchDeltaChat,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp),
+            modifier = Modifier.fillMaxWidth().height(80.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
             shape = MaterialTheme.shapes.large
         ) {
@@ -101,9 +91,7 @@ fun MainScreen(
 
         Button(
             onClick = onLaunchTyr,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp),
+            modifier = Modifier.fillMaxWidth().height(80.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722)),
             shape = MaterialTheme.shapes.large
         ) {
