@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Базовая тема Material Components со ВСЕМИ обязательными атрибутами -->
-    <style name="BaseAppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- Основные Material-атрибуты (обязательны для компонентов) -->
-        <item name="colorPrimary">#FF1976D2</item>
-        <item name="colorPrimaryDark">#FF1565C0</item>
-        <item name="colorAccent">#FF388E3C</item>
-        <item name="colorOnPrimary">#FFFFFFFF</item>
-        <item name="colorSecondary">#FF388E3C</item>
-        <item name="colorOnSecondary">#FFFFFFFF</item>
-        <item name="android:colorBackground">#FFF5F5F5</item>
-        <item name="colorSurface">#FFFFFFFF</item>
-        <item name="colorSurfaceVariant">#FFDBE5DD</item>
-        <item name="colorOnSurface">#FF000000</item>
-        <item name="colorOnSurfaceVariant">#FF404943</item>
-        <item name="colorError">#FFB00020</item>
-        <item name="colorOnError">#FFFFFFFF</item>
-        <item name="android:statusBarColor">#FF1565C0</item>
-        <item name="android:navigationBarColor">#FF1976D2</item>
+    <!-- Базовая тема из оригинального Tyr (Material 3 Light) -->
+    <style name="BaseAppTheme" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
+        <item name="colorOnError">@color/md_theme_light_onError</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="android:textColorSecondary">@color/text_color_secondary</item>
     </style>
 
     <!-- Основная тема лаунчера -->
@@ -31,12 +39,13 @@
     
     <!-- Тема для Tyr Onboarding -->
     <style name="Theme.Tyr.Onboarding" parent="BaseAppTheme">
-        <item name="android:windowFullscreen">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <!-- Splash-тема DeltaChat -->
     <style name="TextSecure.Splash" parent="BaseAppTheme">
-        <item name="android:windowBackground">#FF1976D2</item>
+        <item name="android:windowBackground">@color/md_theme_light_primary</item>
     </style>
 
     <!-- Светлая тема DeltaChat -->
