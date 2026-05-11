@@ -491,5 +491,19 @@
     <string name="chat_attachment_size_kb">%d KB</string>
     <string name="chat_message_error_desc">Failed to send</string>
 
-    <!-- Chat list preview labels for attachments -->
-    <string name="chat_preview_photo">
+        <string name="chat_preview_photo">🖼️ Photo</string>
+    <string name="chat_preview_file">📎 File</string>
+
+    <!-- Reply to message -->
+    <string name="chat_reply_to">Reply to</string>
+    <string name="chat_reply_cancel">Cancel reply</string>
+    <string name="chat_date_today">Today</string>
+    <string name="chat_date_yesterday">Yesterday</string>
+    <string name="chat_contact_profile">Contact Profile</string>
+    <string name="chat_contact_email_label">Email address</string>
+    <string name="chat_contact_display_name_label">Display name</string>
+    <string name="chat_my_nickname_label">My display name</string>
+    <string name="chat_my_nickname_hint">Your name (sent to contacts)</string>
+    <string name="chat_my_nickname_info">This name will be sent to your contacts with your messages.</string>
+    <string name="chat_my_profile">My Profile</string>
+</resources>
