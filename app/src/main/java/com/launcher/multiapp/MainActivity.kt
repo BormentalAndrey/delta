@@ -10,17 +10,21 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.AutoconfigServer
@@ -33,15 +37,16 @@ class MainActivity : ComponentActivity() {
 
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
+    private var showAnonymousDialog = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(
                 colorScheme = lightColorScheme(
-                    primary = Color(0xFF1976D2),
-                    secondary = Color(0xFF388E3C),
-                    background = Color(0xFFF5F5F5),
+                    primary = Color(0xFF7C3AED),
+                    secondary = Color(0xFF06B6D4),
+                    background = Color(0xFFF8F7FF),
                     surface = Color.White,
                 )
             ) {
@@ -52,11 +57,28 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         isLoading = isLoading.value,
                         loadingMessage = loadingMessage.value,
-                        onLaunchDeltaChat = { launchDeltaChat() },
-                        onSetupAnonymous = { setupAnonymousAccount() },
+                        showDialog = showAnonymousDialog.value,
+                        onDismissDialog = { showAnonymousDialog.value = false },
+                        onLaunchEmail = { launchDeltaChat() },
+                        onSetupAnonymous = { name, password ->
+                            showAnonymousDialog.value = false
+                            setupAnonymousAccount(name, password)
+                        },
+                        onOpenDialog = { showAnonymousDialog.value = true },
                         onLaunchTyr = { launchTyr() }
                     )
                 }
+            }
+
+            // Диалог анонимной регистрации
+            if (showAnonymousDialog.value) {
+                AnonymousRegistrationDialog(
+                    onDismiss = { showAnonymousDialog.value = false },
+                    onConfirm = { name, password ->
+                        showAnonymousDialog.value = false
+                        setupAnonymousAccount(name, password)
+                    }
+                )
             }
         }
     }
@@ -93,7 +115,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Запуск Tyr ==========
+    // ========== Запуск Tyr (скрытая кнопка в настройках) ==========
     private fun launchTyr() {
         try {
             val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java).apply {
@@ -114,16 +136,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Анонимный аккаунт: Запуск Yggmail + Автонастройка DeltaChat ==========
-    private fun setupAnonymousAccount() {
-        if (!configRepository.isOnboardingCompleted()) {
-            Toast.makeText(this, "Сначала завершите настройку в Tyr", Toast.LENGTH_LONG).show()
-            launchTyr()
-            return
-        }
+    // ========== Анонимный аккаунт ==========
+    private fun setupAnonymousAccount(name: String, password: String) {
+        // Сохраняем пароль
+        configRepository.savePassword(password)
+        configRepository.setOnboardingCompleted(true)
 
         isLoading.value = true
-        loadingMessage.value = "Запуск Yggmail сервера..."
+        loadingMessage.value = "Создание защищённого аккаунта..."
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -136,13 +156,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val email = configRepository.getMailAddress()
-                val password = configRepository.getPassword()
 
-                if (email.isNullOrEmpty() || password.isNullOrEmpty()) {
+                if (email.isNullOrEmpty()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Учётные данные не найдены.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Не удалось создать аккаунт.", Toast.LENGTH_LONG).show()
                         isLoading.value = false
-                        launchTyr()
                     }
                     return@launch
                 }
@@ -155,7 +173,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     openDeltaChatWithDclogin(dcloginUrl)
                     isLoading.value = false
-                    Toast.makeText(this@MainActivity, "Анонимный аккаунт готов!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Аккаунт создан! Добро пожаловать в Как дела?", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -167,9 +185,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Ожидание готовности Yggmail IMAP сервера (без прямого доступа к mobile.* классам)
-     */
     private suspend fun waitForServiceReady(timeoutMs: Long = 120000L) {
         val startTime = System.currentTimeMillis()
         var imapWasReady = false
@@ -183,27 +198,27 @@ class MainActivity : ComponentActivity() {
                     if (!imapWasReady) {
                         imapWasReady = true
                         withContext(Dispatchers.Main) {
-                            loadingMessage.value = "IMAP готов. Ожидание подключения пиров..."
+                            loadingMessage.value = "Подключение к сети..."
                         }
                         delay(5000)
                     }
 
                     if (imapWasReady) {
                         withContext(Dispatchers.Main) {
-                            loadingMessage.value = "Сервер готов. Настройка DeltaChat..."
+                            loadingMessage.value = "Всё готово!"
                         }
-                        delay(2000)
+                        delay(1500)
                         return
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        loadingMessage.value = "Ожидание запуска сервера..."
+                        loadingMessage.value = "Запуск сервера..."
                     }
                 }
             }
             delay(2000)
         }
-        throw IllegalStateException("Таймаут ожидания Yggmail (${timeoutMs / 1000}с)")
+        throw IllegalStateException("Таймаут ожидания")
     }
 
     private suspend fun isImapReady(): Boolean {
@@ -225,27 +240,122 @@ class MainActivity : ComponentActivity() {
                 data = Uri.parse(dcloginUrl)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-
             if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
                 startActivity(intent)
             } else {
-                Toast.makeText(this, "DeltaChat не может обработать DCLOGIN", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "DeltaChat не найден", Toast.LENGTH_LONG).show()
                 launchDeltaChat()
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "Ошибка открытия DCLOGIN: ${e.message}", Toast.LENGTH_LONG).show()
             launchDeltaChat()
         }
     }
 }
 
+// ========== Диалог анонимной регистрации ==========
+@Composable
+fun AnonymousRegistrationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, password: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("🛡️", fontSize = 48.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Анонимный аккаунт",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF7C3AED)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Придумайте имя и пароль.\nВсё остальное настроится автоматически.",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Ваше имя") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
+                    label = { Text("Пароль") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = passwordError != null,
+                    supportingText = passwordError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        when {
+                            name.isBlank() -> passwordError = "Введите имя"
+                            password.length < 6 -> passwordError = "Минимум 6 символов"
+                            else -> onConfirm(name.trim(), password)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Создать аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(onClick = onDismiss) {
+                    Text("Отмена", color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+// ========== Главный экран ==========
 @Composable
 fun MainScreen(
     isLoading: Boolean,
     loadingMessage: String,
-    onLaunchDeltaChat: () -> Unit,
-    onSetupAnonymous: () -> Unit,
+    showDialog: Boolean,
+    onDismissDialog: () -> Unit,
+    onLaunchEmail: () -> Unit,
+    onSetupAnonymous: (String, String) -> Unit,
+    onOpenDialog: () -> Unit,
     onLaunchTyr: () -> Unit
 ) {
     Box(
@@ -254,9 +364,9 @@ fun MainScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF1565C0),
-                        Color(0xFF42A5F5),
-                        Color(0xFF90CAF9)
+                        Color(0xFF7C3AED),
+                        Color(0xFF8B5CF6),
+                        Color(0xFF06B6D4)
                     )
                 )
             )
@@ -288,134 +398,75 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Card(
+            // Заголовок
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("💬", fontSize = 56.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Как дела?",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Защищённое общение без границ",
+                    fontSize = 15.sp,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(56.dp))
+
+            // Кнопка 1: Обычная регистрация
+            Button(
+                onClick = onLaunchEmail,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                    .height(64.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = "🚀", fontSize = 48.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Universal Launcher",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1565C0),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Выберите режим запуска",
-                        fontSize = 16.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                Text(
+                    "📧  Войти по email",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF7C3AED)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Кнопка 2: Анонимная регистрация
+            Button(
+                onClick = onOpenDialog,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.2f)
+                ),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    "🛡️  Анонимный аккаунт",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            ActionButton(
-                text = "Анонимный аккаунт",
-                subtitle = "Запустить Yggmail и настроить DeltaChat автоматически",
-                icon = "🛡️",
-                color = Color(0xFF6C3483),
-                enabled = !isLoading,
-                onClick = onSetupAnonymous
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ActionButton(
-                text = "DeltaChat",
-                subtitle = "Открыть защищённый мессенджер",
-                icon = "💬",
-                color = Color(0xFF4CAF50),
-                enabled = !isLoading,
-                onClick = onLaunchDeltaChat
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ActionButton(
-                text = "Tyr",
-                subtitle = "Управление Yggmail сервером и настройками",
-                icon = "⚙️",
-                color = Color(0xFFFF5722),
-                enabled = !isLoading,
-                onClick = onLaunchTyr
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "Выберите способ подключения",
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-fun ActionButton(
-    text: String,
-    subtitle: String,
-    icon: String,
-    color: Color,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Button(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = color,
-                contentColor = Color.White,
-                disabledContainerColor = color.copy(alpha = 0.5f),
-                disabledContentColor = Color.White.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(icon, fontSize = 28.sp)
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        subtitle,
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.8f),
-                        maxLines = 2
-                    )
-                }
+            // Скрытая кнопка Tyr (маленькая, внизу)
+            TextButton(onClick = onLaunchTyr) {
+                Text(
+                    "⚙️",
+                    fontSize = 20.sp,
+                    color = Color.White.copy(alpha = 0.4f)
+                )
             }
         }
     }
