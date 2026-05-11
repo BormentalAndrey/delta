@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                     YggmailService.start(this@MainActivity)
                 }
 
-                // Шаг 2: Подождать готовности сервиса
+                // Шаг 2: Подождать готовности IMAP порта
                 withContext(Dispatchers.IO) {
                     waitForServiceReady()
                 }
@@ -153,7 +153,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Шаг 4: Сгенерировать DCLOGIN и открыть DeltaChat
-                loadingMessage.value = "Настройка DeltaChat..."
+                withContext(Dispatchers.Main) {
+                    loadingMessage.value = "Настройка DeltaChat..."
+                }
                 val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
 
                 withContext(Dispatchers.Main) {
@@ -172,26 +174,40 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Ожидание готовности Yggmail сервиса (блокирующий вызов в IO-потоке)
+     * Ожидание готовности Yggmail IMAP сервера (блокирующий вызов в IO-потоке)
      */
-    private suspend fun waitForServiceReady(timeoutMs: Long = 30000L) {
+    private suspend fun waitForServiceReady(timeoutMs: Long = 60000L) {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < timeoutMs) {
-            // Проверяем статус
             if (YggmailService.isRunning) {
-                // Дополнительно ждём появления email-адреса
                 val email = configRepository.getMailAddress()
-                if (!email.isNullOrEmpty()) {
+                if (!email.isNullOrEmpty() && isImapReady()) {
                     withContext(Dispatchers.Main) {
-                        loadingMessage.value = "Сервер готов. Получение учётных данных..."
+                        loadingMessage.value = "Сервер готов. Настройка DeltaChat..."
                     }
-                    delay(1000) // Дополнительная пауза для стабилизации
+                    delay(2000) // Дополнительная пауза для стабилизации SMTP
                     return
                 }
             }
-            delay(500)
+            delay(1000)
         }
-        throw IllegalStateException("Таймаут ожидания Yggmail сервера")
+        throw IllegalStateException("Таймаут ожидания Yggmail сервера (${timeoutMs / 1000}с)")
+    }
+
+    /**
+     * Проверка доступности IMAP порта
+     */
+    private suspend fun isImapReady(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                java.net.Socket().use { socket ->
+                    socket.connect(java.net.InetSocketAddress("127.0.0.1", 1143), 2000)
+                    true
+                }
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 
     /**
