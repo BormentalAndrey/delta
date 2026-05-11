@@ -3,11 +3,14 @@ package com.jbselfcompany.tyr.utils
 import kotlinx.coroutines.*
 import java.net.InetSocketAddress
 import java.net.Socket
-import javax.net.ssl.SSLSocketFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import java.security.cert.X509Certificate
 
 /**
  * Автоматический менеджер Yggdrasil-пиров с проверкой доступности,
@@ -40,6 +43,18 @@ object PeerManager {
         "https://raw.githubusercontent.com/yggdrasil-network/public-peers/master/other/europe.md",
         "https://raw.githubusercontent.com/yggdrasil-network/public-peers/master/global.md"
     )
+
+    // Trust-all SSL context для проверки пиров
+    private val trustAllSslContext: SSLContext by lazy {
+        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        })
+        SSLContext.getInstance("TLS").apply {
+            init(null, trustAllCerts, java.security.SecureRandom())
+        }
+    }
 
     // Кэш рабочих пиров
     @Volatile
@@ -200,7 +215,7 @@ object PeerManager {
     }
 
     /**
-     * Проверить доступность пира (TCP/TLS connect)
+     * Проверить доступность пира (TCP connect)
      * @return latency in ms, or -1 if unavailable
      */
     private fun checkPeer(peerUri: String): Long {
@@ -213,22 +228,24 @@ object PeerManager {
 
             val latency = System.currentTimeMillis() - startTime
 
-            // Для TLS проверяем рукопожатие
-            if (uri.scheme == "tls" || uri.scheme == "quic") {
+            // Для TLS проверяем рукопожатие с trust-all контекстом
+            if (uri.scheme == "tls") {
                 try {
-                    val sslSocket = SSLSocketFactory.getDefault()
-                        .createSocket(socket, uri.host, uri.port, true) as javax.net.ssl.SSLSocket
+                    val sslSocket = trustAllSslContext.socketFactory.createSocket(
+                        socket, uri.host, uri.port, true
+                    ) as javax.net.ssl.SSLSocket
                     sslSocket.startHandshake()
                     sslSocket.close()
                 } catch (e: Exception) {
-                    // TLS handshake failed, but TCP connected — может быть QUIC
-                    TyrLogger.d(TAG, "TLS handshake failed for $peerUri, but TCP OK")
+                    // TLS handshake failed, but TCP connected — peer may use QUIC or plain TCP
+                    TyrLogger.d(TAG, "TLS handshake failed for $peerUri, but TCP OK: ${e.message}")
                 }
             }
 
-            socket.close()
+            try { socket.close() } catch (_: Exception) {}
             latency
         } catch (e: Exception) {
+            TyrLogger.d(TAG, "Peer check failed for $peerUri: ${e.message}")
             -1
         }
     }
@@ -281,7 +298,6 @@ object PeerManager {
      */
     private fun parsePeersFromMarkdown(markdown: String): List<String> {
         val peers = mutableListOf<String>()
-        // Ищем строки вида: `tls://host:port` или `tcp://host:port`
         val regex = Regex("`(tls|tcp|quic)://[^`]+`")
         val matches = regex.findAll(markdown)
         for (match in matches) {
