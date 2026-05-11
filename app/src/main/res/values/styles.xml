@@ -54,7 +54,7 @@
         <item name="textAppearanceOverline">@style/TextAppearance.MaterialComponents.Overline</item>
         
         <!-- CardView -->
-        <item name="cardViewStyle">@style/Widget.MaterialComponents.CardView</item>
+        <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
     </style>
 
     <!-- Основная тема лаунчера -->
