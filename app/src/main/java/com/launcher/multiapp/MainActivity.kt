@@ -30,8 +30,7 @@ class MainActivity : ComponentActivity() {
 
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
-    
-    // Состояния для UI
+
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
 
@@ -128,17 +127,14 @@ class MainActivity : ComponentActivity() {
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                // Шаг 1: Запустить Yggmail сервис
                 if (!YggmailService.isRunning) {
                     YggmailService.start(this@MainActivity)
                 }
 
-                // Шаг 2: Подождать готовности IMAP порта
                 withContext(Dispatchers.IO) {
                     waitForServiceReady()
                 }
 
-                // Шаг 3: Получить учётные данные
                 val email = configRepository.getMailAddress()
                 val password = configRepository.getPassword()
 
@@ -151,7 +147,6 @@ class MainActivity : ComponentActivity() {
                     return@launch
                 }
 
-                // Шаг 4: Сгенерировать DCLOGIN и открыть DeltaChat
                 withContext(Dispatchers.Main) {
                     loadingMessage.value = "Настройка DeltaChat..."
                 }
@@ -173,24 +168,32 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Ожидание готовности Yggmail IMAP сервера
+     * Ожидание готовности Yggmail IMAP сервера (без прямого доступа к mobile.* классам)
      */
     private suspend fun waitForServiceReady(timeoutMs: Long = 120000L) {
         val startTime = System.currentTimeMillis()
+        var imapWasReady = false
+
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             if (YggmailService.isRunning) {
                 val email = configRepository.getMailAddress()
-                if (!email.isNullOrEmpty() && isImapReady()) {
-                    if (hasConnectedPeers()) {
+                val imapReady = isImapReady()
+
+                if (!email.isNullOrEmpty() && imapReady) {
+                    if (!imapWasReady) {
+                        imapWasReady = true
                         withContext(Dispatchers.Main) {
-                            loadingMessage.value = "Пиры подключены. Настройка DeltaChat..."
+                            loadingMessage.value = "IMAP готов. Ожидание подключения пиров..."
                         }
-                        delay(3000)
+                        delay(5000)
+                    }
+
+                    if (imapWasReady) {
+                        withContext(Dispatchers.Main) {
+                            loadingMessage.value = "Сервер готов. Настройка DeltaChat..."
+                        }
+                        delay(2000)
                         return
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            loadingMessage.value = "Ожидание подключения к Yggdrasil сети..."
-                        }
                     }
                 } else {
                     withContext(Dispatchers.Main) {
@@ -216,25 +219,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private suspend fun hasConnectedPeers(): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                val instance = YggmailService.instance ?: return@withContext false
-                val connections = instance.getPeerConnections()
-                connections?.any { it.up } == true
-            } catch (e: Exception) {
-                false
-            }
-        }
-    }
-
     private fun openDeltaChatWithDclogin(dcloginUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 data = Uri.parse(dcloginUrl)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            
+
             if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
                 startActivity(intent)
             } else {
