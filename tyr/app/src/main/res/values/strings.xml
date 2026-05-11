@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Tyr</string>
+    <string name="app_name">Как дела?</string>
 
     <!-- Common -->
     <string name="ok">OK</string>
@@ -21,19 +21,19 @@
     <string name="loading">Loading…</string>
 
     <!-- Notification Channels -->
-    <string name="notification_channel_service">Yggmail Service</string>
-    <string name="notification_channel_service_desc">Ongoing notification for Yggmail service</string>
+    <string name="notification_channel_service">Как дела? Service</string>
+    <string name="notification_channel_service_desc">Ongoing notification for Как дела? service</string>
     <string name="notification_channel_mail">Mail Notifications</string>
     <string name="notification_channel_mail_desc">Notifications for new emails</string>
 
     <!-- Service Status -->
     <string name="service_status">Service Status</string>
     <string name="service_starting">Starting…</string>
-    <string name="service_starting_desc">Initializing Yggmail service</string>
+    <string name="service_starting_desc">Initializing service</string>
     <string name="service_running">Running</string>
     <string name="service_running_desc">Mail address: %s</string>
     <string name="service_stopping">Stopping…</string>
-    <string name="service_stopping_desc">Shutting down Yggmail service</string>
+    <string name="service_stopping_desc">Shutting down service</string>
     <string name="service_stopped">Not Running</string>
     <string name="service_stopped_desc">Service is not running</string>
     <string name="service_error">Error</string>
@@ -88,17 +88,17 @@
     <string name="smtp_server">SMTP: %1$s:%2$s</string>
     <string name="imap_server">IMAP: %1$s:%2$s</string>
     <string name="deltachat_setup">DeltaChat/ArcaneChat Setup</string>
-    <string name="deltachat_setup_hint">Tap to view setup instructions</string>
-    <string name="deltachat_instructions">DeltaChat/ArcaneChat setup:\n\n1. Install and open the DeltaChat/ArcaneChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address: %1$s\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting\n\nMake sure the Tyr service is running before using DeltaChat/ArcaneChat.</string>
+    <string name="deltachat_setup_hint">Как дела?</string>
+    <string name="deltachat_instructions">DeltaChat/ArcaneChat setup:\n\n1. Install and open the DeltaChat/ArcaneChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address: %1$s\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting\n\nMake sure the Как дела? service is running before using DeltaChat/ArcaneChat.</string>
     <string name="email_client_setup_title">Email Client Setup</string>
     <string name="email_client_setup_hint">Tap to view setup instructions for K-9 Mail, Thunderbird, FairEmail</string>
     <string name="your_email_address">your-email@yggmail</string>
     <string name="your_password">your-password</string>
-    <string name="email_client_instructions">Email Client Setup:\n\nEmail: %1$s\nPassword: %2$s\n\nIMAP (Incoming):\n  Server: 127.0.0.1\n  Port: 1143\n  Security: None\n\nSMTP (Outgoing):\n  Server: 127.0.0.1\n  Port: 1025\n  Security: None\n\n\nK-9 Mail / Thunderbird Mobile:\n\n1. Open app, tap Add Account, then Manual Setup\n2. Enter your email and password\n3. For IMAP: 127.0.0.1:1143 (no encryption)\n4. For SMTP: 127.0.0.1:1025 (no encryption)\n5. Complete setup\n\n\nFairEmail:\n\n1. Open app, tap Manual Setup, then Custom\n2. Enter your email and password\n3. IMAP: 127.0.0.1:1143 (no encryption)\n4. SMTP: 127.0.0.1:1025 (no encryption)\n5. Save configuration\n\n\nImportant:\n\n- Tyr service must be running\n- Use "None" for encryption (local connection)\n- Username is your full email address</string>
+    <string name="email_client_instructions">Email Client Setup:\n\nEmail: %1$s\nPassword: %2$s\n\nIMAP (Incoming):\n  Server: 127.0.0.1\n  Port: 1143\n  Security: None\n\nSMTP (Outgoing):\n  Server: 127.0.0.1\n  Port: 1025\n  Security: None\n\n\nK-9 Mail / Thunderbird Mobile:\n\n1. Open app, tap Add Account, then Manual Setup\n2. Enter your email and password\n3. For IMAP: 127.0.0.1:1143 (no encryption)\n4. For SMTP: 127.0.0.1:1025 (no encryption)\n5. Complete setup\n\n\nFairEmail:\n\n1. Open app, tap Manual Setup, then Custom\n2. Enter your email and password\n3. IMAP: 127.0.0.1:1143 (no encryption)\n4. SMTP: 127.0.0.1:1025 (no encryption)\n5. Save configuration\n\n\nImportant:\n\n- Как дела? service must be running\n- Use "None" for encryption (local connection)\n- Username is your full email address</string>
 
     <!-- Onboarding -->
-    <string name="welcome_to_tyr">Welcome to Tyr</string>
-    <string name="welcome_description">Tyr creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat/ArcaneChat for secure, decentralized messaging.</string>
+    <string name="welcome_to_tyr">Welcome to Как дела?</string>
+    <string name="welcome_description">Как дела? creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat/ArcaneChat for secure, decentralized messaging.</string>
     <string name="feature_decentralized">Decentralized</string>
     <string name="feature_encrypted">End-to-End Encrypted</string>
     <string name="feature_p2p">Peer-to-Peer</string>
@@ -172,12 +172,12 @@
 
     <!-- Debug Settings Items -->
     <string name="enable_log_collection">Enable Log Collection</string>
-    <string name="enable_log_collection_description">Collect logs from Yggmail service for debugging</string>
+    <string name="enable_log_collection_description">Collect logs from service for debugging</string>
     <string name="collect_logs">Collect Logs</string>
     <string name="collect_logs_description">View and share application logs for debugging</string>
 
     <!-- About Settings Items -->
-    <string name="about_app">About Tyr</string>
+    <string name="about_app">About Как дела?</string>
     <string name="about_app_description">Version information and credits</string>
 
     <!-- Settings Actions -->
@@ -209,7 +209,7 @@
     <string name="export_logs">Export Logs</string>
     <string name="clear_logs">Clear Logs</string>
     <string name="clear_logs_description">Clear accumulated logs and start fresh</string>
-    <string name="tyr_logs">Tyr Logs</string>
+    <string name="tyr_logs">Logs</string>
     <string name="loading_logs">Loading logs…</string>
     <string name="no_logs_available">No logs available</string>
     <string name="no_logs_to_share">No logs to share</string>
@@ -264,9 +264,9 @@
 
     <!-- Permissions -->
     <string name="permission_notification_title">Enable Notifications</string>
-    <string name="permission_notification_message">Tyr needs notification permission to show service status in the notification bar.</string>
+    <string name="permission_notification_message">Как дела? needs notification permission to show service status in the notification bar.</string>
     <string name="permission_battery_title">Disable Battery Optimization</string>
-    <string name="permission_battery_message">To maintain stable connection in background, please disable battery optimization for Tyr.</string>
+    <string name="permission_battery_message">To maintain stable connection in background, please disable battery optimization for Как дела?.</string>
     <string name="permission_allow">Allow</string>
     <string name="permission_deny">Deny</string>
     <string name="permission_settings">Open Settings</string>
@@ -277,10 +277,10 @@
     <string name="allow">Allow</string>
 
     <!-- About -->
-    <string name="about_title">About Tyr</string>
+    <string name="about_title">About Как дела?</string>
     <string name="version_and_build_title">Version: %1$s (Build %2$d)</string>
     <string name="links_label">Links</string>
-    <string name="github">Tyr on GitHub</string>
+    <string name="github">Как дела? on GitHub</string>
     <string name="website">Website</string>
     <string name="libs_label">Used libraries</string>
     <string name="libs_used">\n
@@ -376,7 +376,7 @@
 
     <!-- Deeplink handling (tyr://open?peer=...&pubkey=...&name=...) -->
     <string name="deeplink_add_peer_title">Add Peer</string>
-    <string name="deeplink_add_peer_message">Add this peer to Tyr?\n\n%s</string>
+    <string name="deeplink_add_peer_message">Add this peer to Как дела??\n\n%s</string>
     <string name="deeplink_peer_added">Peer added</string>
     <string name="deeplink_peer_already_exists">This peer is already configured</string>
     <string name="deeplink_invalid_peer">Invalid peer address</string>
@@ -385,7 +385,7 @@
     <string name="deeplink_contact_label">Contact:</string>
     <string name="deeplink_added_success">Added successfully</string>
     <string name="deeplink_already_configured">Already configured</string>
-    <string name="share_tyr_link">Share Tyr Link</string>
+    <string name="share_tyr_link">Share Link</string>
     <string name="share_qr_image">Share QR Image</string>
 
     <!-- Manual peer entry in onboarding -->
@@ -492,19 +492,4 @@
     <string name="chat_message_error_desc">Failed to send</string>
 
     <!-- Chat list preview labels for attachments -->
-    <string name="chat_preview_photo">🖼️ Photo</string>
-    <string name="chat_preview_file">📎 File</string>
-
-    <!-- Reply to message -->
-    <string name="chat_reply_to">Reply to</string>
-    <string name="chat_reply_cancel">Cancel reply</string>
-    <string name="chat_date_today">Today</string>
-    <string name="chat_date_yesterday">Yesterday</string>
-    <string name="chat_contact_profile">Contact Profile</string>
-    <string name="chat_contact_email_label">Email address</string>
-    <string name="chat_contact_display_name_label">Display name</string>
-    <string name="chat_my_nickname_label">My display name</string>
-    <string name="chat_my_nickname_hint">Your name (sent to contacts)</string>
-    <string name="chat_my_nickname_info">This name will be sent to your contacts with your messages.</string>
-    <string name="chat_my_profile">My Profile</string>
-</resources>
+    <string name="chat_preview_photo">
