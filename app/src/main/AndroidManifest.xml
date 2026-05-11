@@ -54,7 +54,7 @@
         android:name="com.launcher.multiapp.TyrApplicationWrapper"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="Universal Launcher"
+        android:label="Как дела?"
         android:theme="@style/Theme.AppLauncher"
         android:supportsRtl="true"
         android:largeHeap="true"
