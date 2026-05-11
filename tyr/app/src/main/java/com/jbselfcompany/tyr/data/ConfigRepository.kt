@@ -58,9 +58,18 @@ class ConfigRepository(private val context: Context) {
         // Cache TTL for discovered peers (24 hours)
         private const val CACHE_TTL_HOURS = 24
 
-        // Default Yggdrasil peers
+        // Default Yggdrasil peers (updated with working peers)
         val DEFAULT_PEERS = listOf(
-            "tcp://bra.zbin.eu:7743"
+            "tls://yggno.de:18227",
+            "tls://longseason.1200bps.xyz:13121",
+            "tls://188.225.9.167:18227",
+            "tls://62.113.203.46:18227",
+            "tls://45.147.200.202:6010",
+            "tls://ygg-msk-1.averyan.ru:8363",
+            "quic://ygg-msk-1.averyan.ru:8364",
+            "tls://yggdrasil.ecliptik.com:443",
+            "tls://router.dev.ygg:443",
+            "tls://ygg.peer.rocks:443"
         )
 
         // Language options
@@ -342,6 +351,13 @@ class ConfigRepository(private val context: Context) {
      */
     fun getPeersString(): String {
         return getEnabledPeers().joinToString(",")
+    }
+
+    /**
+     * Get the best working peer discovered by PeerManager
+     */
+    fun getBestPeer(): String? {
+        return com.jbselfcompany.tyr.utils.PeerManager.bestPeer
     }
 
     /**
