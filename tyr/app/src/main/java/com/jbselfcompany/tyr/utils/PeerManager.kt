@@ -161,7 +161,6 @@ object PeerManager {
             }
         }
 
-        // Сохраняем всех рабочих
         if (workingPeers.isNotEmpty()) {
             cachePeers(workingPeers)
             bestPeer = workingPeers.first()
@@ -234,10 +233,10 @@ object PeerManager {
                     val sslSocket = trustAllSslContext.socketFactory.createSocket(
                         socket, uri.host, uri.port, true
                     ) as javax.net.ssl.SSLSocket
-                    sslSocket.startHandshake()
-                    sslSocket.close()
+                    sslSocket.use {
+                        it.startHandshake()
+                    }
                 } catch (e: Exception) {
-                    // TLS handshake failed, but TCP connected — peer may use QUIC or plain TCP
                     TyrLogger.d(TAG, "TLS handshake failed for $peerUri, but TCP OK: ${e.message}")
                 }
             }
