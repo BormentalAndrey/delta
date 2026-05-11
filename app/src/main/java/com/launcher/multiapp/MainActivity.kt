@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.AutoconfigServer
-import com.jbselfcompany.tyr.utils.PeerManager
 import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
@@ -116,7 +115,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Анонимный аккаунт: Поиск пиров + Запуск Yggmail + Автонастройка DeltaChat ==========
+    // ========== Анонимный аккаунт: Запуск Yggmail + Автонастройка DeltaChat ==========
     private fun setupAnonymousAccount() {
         if (!configRepository.isOnboardingCompleted()) {
             Toast.makeText(this, "Сначала завершите настройку в Tyr", Toast.LENGTH_LONG).show()
@@ -125,60 +124,21 @@ class MainActivity : ComponentActivity() {
         }
 
         isLoading.value = true
-        loadingMessage.value = "Поиск доступных пиров..."
+        loadingMessage.value = "Запуск Yggmail сервера..."
 
-        // Шаг 1: Найти рабочий пир
-        PeerManager.findWorkingPeer(object : PeerManager.PeerCheckCallback {
-            override fun onStatusUpdate(message: String) {
-                runOnUiThread {
-                    loadingMessage.value = message
-                }
-            }
-
-            override fun onPeerFound(peer: String, latencyMs: Long) {
-                TyrLogger.d("MainActivity", "Peer found: $peer (${latencyMs}ms)")
-                runOnUiThread {
-                    loadingMessage.value = "Пир найден (${latencyMs}мс). Запуск сервера..."
-                }
-                // Сохраняем рабочий пир
-                configRepository.savePeer(
-                    com.jbselfcompany.tyr.data.PeerInfo(
-                        uri = peer,
-                        isEnabled = true,
-                        tag = com.jbselfcompany.tyr.data.PeerInfo.PeerTag.DEFAULT
-                    )
-                )
-                // Запускаем сервис
-                startYggmailAndSetupDeltaChat()
-            }
-
-            override fun onAllPeersFailed() {
-                runOnUiThread {
-                    isLoading.value = false
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Не удалось найти рабочий пир. Проверьте подключение к интернету.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        })
-    }
-
-    private fun startYggmailAndSetupDeltaChat() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                // Шаг 2: Запустить Yggmail сервис
+                // Шаг 1: Запустить Yggmail сервис
                 if (!YggmailService.isRunning) {
                     YggmailService.start(this@MainActivity)
                 }
 
-                // Шаг 3: Подождать готовности IMAP порта
+                // Шаг 2: Подождать готовности IMAP порта
                 withContext(Dispatchers.IO) {
                     waitForServiceReady()
                 }
 
-                // Шаг 4: Получить учётные данные
+                // Шаг 3: Получить учётные данные
                 val email = configRepository.getMailAddress()
                 val password = configRepository.getPassword()
 
@@ -191,7 +151,7 @@ class MainActivity : ComponentActivity() {
                     return@launch
                 }
 
-                // Шаг 5: Сгенерировать DCLOGIN и открыть DeltaChat
+                // Шаг 4: Сгенерировать DCLOGIN и открыть DeltaChat
                 withContext(Dispatchers.Main) {
                     loadingMessage.value = "Настройка DeltaChat..."
                 }
@@ -212,14 +172,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun runOnUiThread(action: () -> Unit) {
-        if (Thread.currentThread() == android.os.Looper.getMainLooper().thread) {
-            action()
-        } else {
-            android.os.Handler(android.os.Looper.getMainLooper()).post(action)
-        }
-    }
-
     /**
      * Ожидание готовности Yggmail IMAP сервера
      */
@@ -229,7 +181,6 @@ class MainActivity : ComponentActivity() {
             if (YggmailService.isRunning) {
                 val email = configRepository.getMailAddress()
                 if (!email.isNullOrEmpty() && isImapReady()) {
-                    // Проверяем, есть ли подключённые пиры
                     if (hasConnectedPeers()) {
                         withContext(Dispatchers.Main) {
                             loadingMessage.value = "Пиры подключены. Настройка DeltaChat..."
@@ -380,7 +331,7 @@ fun MainScreen(
 
             ActionButton(
                 text = "Анонимный аккаунт",
-                subtitle = "Автопоиск пиров, запуск Yggmail и настройка DeltaChat",
+                subtitle = "Запустить Yggmail и настроить DeltaChat автоматически",
                 icon = "🛡️",
                 color = Color(0xFF6C3483),
                 enabled = !isLoading,
