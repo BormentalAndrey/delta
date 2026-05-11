@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -34,6 +33,7 @@ class MainActivity : ComponentActivity() {
 
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
+    private val appPrefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
 
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
@@ -41,6 +41,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Если регистрация уже пройдена — сразу в чат
+        if (appPrefs.getBoolean("registration_completed", false)) {
+            launchDeltaChat()
+            finish()
+            return
+        }
+
         setContent {
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -59,7 +67,7 @@ class MainActivity : ComponentActivity() {
                         loadingMessage = loadingMessage.value,
                         showDialog = showAnonymousDialog.value,
                         onDismissDialog = { showAnonymousDialog.value = false },
-                        onLaunchEmail = { launchDeltaChat() },
+                        onLaunchEmail = { markCompletedAndLaunch { launchDeltaChat() } },
                         onSetupAnonymous = { name, password ->
                             showAnonymousDialog.value = false
                             setupAnonymousAccount(name, password)
@@ -70,7 +78,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Диалог анонимной регистрации
             if (showAnonymousDialog.value) {
                 AnonymousRegistrationDialog(
                     onDismiss = { showAnonymousDialog.value = false },
@@ -81,6 +88,15 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun markRegistrationCompleted() {
+        appPrefs.edit().putBoolean("registration_completed", true).apply()
+    }
+
+    private fun markCompletedAndLaunch(action: () -> Unit) {
+        markRegistrationCompleted()
+        action()
     }
 
     // ========== Обычный запуск DeltaChat ==========
@@ -115,7 +131,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Запуск Tyr (скрытая кнопка в настройках) ==========
+    // ========== Запуск Tyr (скрытая кнопка) ==========
     private fun launchTyr() {
         try {
             val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java).apply {
@@ -138,7 +154,6 @@ class MainActivity : ComponentActivity() {
 
     // ========== Анонимный аккаунт ==========
     private fun setupAnonymousAccount(name: String, password: String) {
-        // Сохраняем пароль
         configRepository.savePassword(password)
         configRepository.setOnboardingCompleted(true)
 
@@ -171,6 +186,7 @@ class MainActivity : ComponentActivity() {
                 val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
 
                 withContext(Dispatchers.Main) {
+                    markRegistrationCompleted()
                     openDeltaChatWithDclogin(dcloginUrl)
                     isLoading.value = false
                     Toast.makeText(this@MainActivity, "Аккаунт создан! Добро пожаловать в Как дела?", Toast.LENGTH_SHORT).show()
@@ -398,7 +414,6 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Заголовок
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("💬", fontSize = 56.sp)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -420,7 +435,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(56.dp))
 
-            // Кнопка 1: Обычная регистрация
             Button(
                 onClick = onLaunchEmail,
                 modifier = Modifier
@@ -439,15 +453,12 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Кнопка 2: Анонимная регистрация
             Button(
                 onClick = onOpenDialog,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.2f)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
@@ -460,7 +471,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Скрытая кнопка Tyr (маленькая, внизу)
             TextButton(onClick = onLaunchTyr) {
                 Text(
                     "⚙️",
