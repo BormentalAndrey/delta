@@ -1,8 +1,9 @@
 package com.launcher.multiapp
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowUpimport android.content.Intent
+import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
