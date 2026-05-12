@@ -46,9 +46,6 @@
                 android:singleLine="true"
                 android:textColor="?attr/conversation_list_item_contact_color"
                 tools:text="Jules Bonnot" />
-            <!-- Attention: Using android:maxLines="1", if the name is an emoji followed by a long word
-                and the chat is muted, then the long word is not shown at all (instead of using `…`). That's why we use
-                android:singleLine="true" -->
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/subject"
@@ -57,7 +54,7 @@
                 style="@style/Signal.Text.Preview"
                 android:textColor="?attr/conversation_list_item_subject_color"
                 android:maxLines="1"
-                tools:text="Wheels arrive at 3pm flat. This is a somewhat longer message."
+                tools:text="Wheels arrive at 3pm flat."
                 android:ellipsize="end" />
 
         </LinearLayout>
