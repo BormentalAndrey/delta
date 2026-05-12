@@ -52,6 +52,15 @@
         <item name="conversation_list_item_divider">@color/md_theme_light_outlineVariant</item>
         <item name="conversation_list_item_background">@color/md_theme_light_surface</item>
         <item name="contact_list_divider_color">@color/md_theme_light_outlineVariant</item>
+        <item name="icon_tint">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="icon_tint_dark">@color/md_theme_light_onSurface</item>
+        <item name="secondary_button_fg">@color/md_theme_light_primary</item>
+        <item name="pref_icon_tint">@color/md_theme_light_primary</item>
+        <item name="menu_icon_tint">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="close_icon_color">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="dialog_background_color">@color/md_theme_light_surface</item>
+        <item name="dialog_info_icon">@color/md_theme_light_primary</item>
+        <item name="dialog_alert_icon">@color/md_theme_light_error</item>
     </style>
 
     <style name="Theme.Material3.Light" parent="BaseAppTheme" />
