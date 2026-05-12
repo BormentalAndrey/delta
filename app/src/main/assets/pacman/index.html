@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pacman</title>
+  <style>
+    @font-face {
+      font-family: 'BDCartoonShoutRegular';
+      src: url('BD_Cartoon_Shout-webfont.ttf') format('truetype');
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      touch-action: manipulation;
+      font-family: Arial, sans-serif;
+    }
+
+    #pacman {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Контейнер управления — идеально ровный крест */
+    #controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: 90px 120px 90px;
+      grid-template-rows: 90px 120px 90px;
+      grid-template-areas: 
+        ".       up      ."
+        "left    start   right"
+        ".       down    .";
+      gap: 20px;
+      z-index: 10;
+    }
+
+    /* Кнопки направления — все одинаковые */
+    .direction-btn {
+      width: 90px;
+      height: 90px;
+      background: radial-gradient(circle at center, #ffff33, #ffcc00);
+      border: 5px solid #ffff66;
+      border-radius: 50%;
+      color: #000;
+      font-size: 48px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 0 25px #ffff00,
+        0 10px 20px rgba(0, 0, 0, 0.7),
+        inset 0 5px 15px rgba(255, 255, 255, 0.5);
+      user-select: none;
+      touch-action: manipulation;
+      transition: all 0.15s ease;
+    }
+
+    .direction-btn:active {
+      transform: scale(0.92);
+      box-shadow: 
+        0 0 35px #ffff66,
+        0 5px 10px rgba(0, 0, 0, 0.9);
+      background: radial-gradient(circle at center, #ffcc00, #ccaa00);
+    }
+
+    /* Центральная кнопка СТАРТ */
+    #start {
+      grid-area: start;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle at center, #ff3366, #dd1144);
+      border: 6px solid #ff6699;
+      border-radius: 50%;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.8);
+      
+      /* Идеальное центрирование текста */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      box-shadow: 
+        0 0 35px #ff3366,
+        0 12px 25px rgba(0, 0, 0, 0.8),
+        inset 0 6px 20px rgba(255, 255, 255, 0.3);
+      transition: all 0.15s ease;
+    }
+
+    #start:active {
+      transform: scale(0.93);
+      box-shadow: 
+        0 0 45px #ff6699,
+        0 6px 12px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Привязка кнопок к сетке */
+    #up { grid-area: up; }
+    #down { grid-area: down; }
+    #left { grid-area: left; }
+    #right { grid-area: right; }
+
+  </style>
+</head>
+<body>
+  <div id="pacman"></div>
+
+  <!-- Ровные кнопки управления -->
+  <div id="controls">
+    <div id="left" class="direction-btn">←</div>
+    <div id="up" class="direction-btn">↑</div>
+    <div id="down" class="direction-btn">↓</div>
+    <div id="right" class="direction-btn">→</div>
+    <div id="start">СТАРТ</div>
+  </div>
+
+  <script src="modernizr-1.5.min.js"></script>
+  <script src="pacman.js"></script>
+  <script>
+    (function () {
+      var el = document.getElementById("pacman");
+      var gameStarted = false;
+
+      function startGame() {
+        if (window.PACMAN && window.Modernizr && Modernizr.canvas) {
+          if (!gameStarted) {
+            PACMAN.init(el, "./");
+            gameStarted = true;
+          }
+        } else {
+          setTimeout(startGame, 100);
+        }
+      }
+
+      startGame();
+
+      function sendKey(keyCode) {
+        if (!gameStarted) return;
+        var event = new KeyboardEvent('keydown', {
+          keyCode: keyCode,
+          which: keyCode,
+          bubbles: true
+        });
+        document.dispatchEvent(event);
+      }
+
+      // Touch события
+      document.getElementById('up').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        sendKey(38);
+      });
+      document.getElementById('down').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        sendKey(40);
+      });
+      document.getElementById('left').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        sendKey(37);
+      });
+      document.getElementById('right').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        sendKey(39);
+      });
+      document.getElementById('start').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        sendKey(78); // N — новая игра
+      });
+
+      // Поддержка мыши для тестирования на ПК
+      document.getElementById('up').addEventListener('mousedown', () => sendKey(38));
+      document.getElementById('down').addEventListener('mousedown', () => sendKey(40));
+      document.getElementById('left').addEventListener('mousedown', () => sendKey(37));
+      document.getElementById('right').addEventListener('mousedown', () => sendKey(39));
+      document.getElementById('start').addEventListener('mousedown', () => sendKey(78));
+    })();
+  </script>
+</body>
+</html>
