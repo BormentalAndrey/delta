@@ -47,9 +47,6 @@
 
         <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
 
-        <!-- Обязательно для FloatingActionButton -->
-        <item name="fabStyle">@style/Widget.MaterialComponents.FloatingActionButton</item>
-        
         <!-- Кастомные атрибуты DeltaChat -->
         <item name="search_toolbar_background">@color/md_theme_light_surfaceVariant</item>
         <item name="search_background">@color/md_theme_light_surface</item>
