@@ -95,6 +95,18 @@
         <item name="android:contentDescription">@string/chat_input_placeholder</item>
     </style>
 
+    <style name="Signal.Text.Body" parent="TextAppearance.AppCompat.Body1">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="Signal.Text.Preview" parent="TextAppearance.AppCompat.Body2">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="Signal.Text.Caption" parent="TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">12sp</item>
+    </style>
+
     <style name="AttachmentTypeLabel">
         <item name="android:textColor">#ff999999</item>
         <item name="android:textSize">14sp</item>
