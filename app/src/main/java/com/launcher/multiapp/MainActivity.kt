@@ -7,17 +7,24 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +35,13 @@ import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.AutoconfigServer
 import kotlinx.coroutines.*
+
+private val NeonCyan = Color(0xFF00FFFF)
+private val NeonGreen = Color(0xFF00FF9D)
+private val NeonPurple = Color(0xFFB042FF)
+private val DarkBackground = Color(0xFF0A0A0A)
+private val SurfaceGray = Color(0xFF1E1E1E)
+private val DeepPurple = Color(0xFF1A0033)
 
 class MainActivity : ComponentActivity() {
 
@@ -51,22 +65,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = Color(0xFF7C3AED),
-                    secondary = Color(0xFF06B6D4),
-                    background = Color(0xFFF8F7FF),
-                    surface = Color.White,
+                colorScheme = darkColorScheme(
+                    primary = NeonCyan,
+                    secondary = NeonPurple,
+                    background = DarkBackground,
+                    surface = SurfaceGray,
                 )
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = DarkBackground
                 ) {
                     MainScreen(
                         isLoading = isLoading.value,
                         loadingMessage = loadingMessage.value,
-                        showDialog = showAnonymousDialog.value,
-                        onDismissDialog = { showAnonymousDialog.value = false },
                         onLaunchEmail = { markCompletedAndLaunch { launchDeltaChat() } },
                         onSetupAnonymous = { name, password ->
                             showAnonymousDialog.value = false
@@ -99,7 +111,6 @@ class MainActivity : ComponentActivity() {
         action()
     }
 
-    // ========== Обычный запуск DeltaChat ==========
     private fun launchDeltaChat() {
         try {
             val intent = Intent(Intent.ACTION_MAIN).apply {
@@ -131,7 +142,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Запуск Tyr (скрытая кнопка) ==========
     private fun launchTyr() {
         try {
             val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java).apply {
@@ -152,7 +162,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ========== Анонимный аккаунт ==========
     private fun setupAnonymousAccount(name: String, password: String) {
         configRepository.savePassword(password)
         configRepository.setOnboardingCompleted(true)
@@ -285,20 +294,29 @@ fun AnonymousRegistrationDialog(
                 .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceGray),
+            elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("🛡️", fontSize = 48.sp)
-                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(NeonPurple.copy(alpha = 0.2f))
+                        .border(2.dp, NeonPurple, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🛡️", fontSize = 28.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     "Анонимный аккаунт",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF7C3AED)
+                    color = NeonCyan
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -312,10 +330,17 @@ fun AnonymousRegistrationDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Ваше имя") },
+                    label = { Text("Ваше имя", color = NeonCyan) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonCyan,
+                        unfocusedBorderColor = NeonCyan.copy(alpha = 0.3f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = NeonCyan
+                    )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -325,13 +350,21 @@ fun AnonymousRegistrationDialog(
                         password = it
                         passwordError = null
                     },
-                    label = { Text("Пароль") },
+                    label = { Text("Пароль", color = NeonPurple) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonPurple,
+                        unfocusedBorderColor = NeonPurple.copy(alpha = 0.3f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = NeonPurple,
+                        errorBorderColor = Color.Red
+                    ),
                     isError = passwordError != null,
-                    supportingText = passwordError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
+                    supportingText = passwordError?.let { { Text(it, color = Color.Red) } }
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -346,10 +379,10 @@ fun AnonymousRegistrationDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Создать аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Создать аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -367,42 +400,95 @@ fun AnonymousRegistrationDialog(
 fun MainScreen(
     isLoading: Boolean,
     loadingMessage: String,
-    showDialog: Boolean,
-    onDismissDialog: () -> Unit,
     onLaunchEmail: () -> Unit,
     onSetupAnonymous: (String, String) -> Unit,
     onOpenDialog: () -> Unit,
     onLaunchTyr: () -> Unit
 ) {
+    // Анимация пульсации для логотипа
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    // Анимация градиента
+    val gradientShift by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradient"
+    )
+
+    val animatedGradient = Brush.verticalGradient(
+        colors = listOf(
+            DeepPurple,
+            Color(0xFF0D0020).copy(alpha = 0.9f),
+            DarkBackground
+        ),
+        startY = 0f + gradientShift * 200f,
+        endY = 1000f + gradientShift * 200f
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF7C3AED),
-                        Color(0xFF8B5CF6),
-                        Color(0xFF06B6D4)
-                    )
-                )
-            )
+            .background(animatedGradient)
     ) {
+        // Декоративные элементы
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .offset((-100).dp, (-50).dp)
+                .clip(CircleShape)
+                .background(NeonPurple.copy(alpha = 0.05f))
+        )
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .offset(250.dp, 600.dp)
+                .clip(CircleShape)
+                .background(NeonCyan.copy(alpha = 0.05f))
+        )
+
         if (isLoading) {
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(64.dp),
-                    color = Color.White,
-                    strokeWidth = 6.dp
-                )
+                // Анимированная иконка загрузки
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .scale(scale)
+                        .clip(CircleShape)
+                        .background(NeonPurple.copy(alpha = 0.2f))
+                        .border(3.dp, NeonPurple, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("⏳", fontSize = 32.sp)
+                }
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = loadingMessage,
-                    color = Color.White,
+                    color = NeonCyan,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.width(200.dp),
+                    color = NeonPurple,
+                    trackColor = NeonPurple.copy(alpha = 0.2f)
                 )
             }
         }
@@ -414,68 +500,134 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("💬", fontSize = 56.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Как дела?",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "Защищённое общение без границ",
-                    fontSize = 15.sp,
-                    color = Color.White.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center
-                )
-            }
+            // Логотип приложения intro1.png
+            Image(
+                painter = painterResource(id = R.drawable.intro1),
+                contentDescription = "Как дела?",
+                modifier = Modifier
+                    .size(200.dp)
+                    .scale(scale)
+            )
 
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            Text(
+                "Как дела?",
+                fontSize = 42.sp,
+                fontWeight = FontWeight.Bold,
+                color = NeonCyan,
+                textAlign = TextAlign.Center,
+                letterSpacing = 2.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Защищённое общение без границ",
+                fontSize = 15.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                letterSpacing = 1.sp
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Кнопка 1: Email
             Button(
                 onClick = onLaunchEmail,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(20.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonCyan.copy(alpha = 0.15f)
+                ),
+                shape = RoundedCornerShape(20.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, NeonCyan.copy(alpha = 0.5f))
             ) {
-                Text(
-                    "📧  Войти по email",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF7C3AED)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(NeonCyan.copy(alpha = 0.2f))
+                        .border(1.dp, NeonCyan, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("📧", fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Войти по email",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonCyan
+                    )
+                    Text(
+                        "Стандартная регистрация",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Кнопка 2: Анонимный
             Button(
                 onClick = onOpenDialog,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f)),
-                shape = RoundedCornerShape(20.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonPurple.copy(alpha = 0.15f)
+                ),
+                shape = RoundedCornerShape(20.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, NeonPurple.copy(alpha = 0.5f))
             ) {
-                Text(
-                    "🛡️  Анонимный аккаунт",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(NeonPurple.copy(alpha = 0.2f))
+                        .border(1.dp, NeonPurple, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🛡️", fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Анонимный аккаунт",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonPurple
+                    )
+                    Text(
+                        "Автоматическая настройка",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            TextButton(onClick = onLaunchTyr) {
+            // Скрытая кнопка настроек
+            Row(
+                modifier = Modifier
+                    .clickable { onLaunchTyr() }
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowUp,
+                    contentDescription = null,
+                    tint = Color.Gray.copy(alpha = 0.3f),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     "⚙️",
-                    fontSize = 20.sp,
-                    color = Color.White.copy(alpha = 0.4f)
+                    fontSize = 16.sp,
+                    color = Color.Gray.copy(alpha = 0.3f)
                 )
             }
         }
