@@ -1,0 +1,57 @@
+package com.kakdela.p2p.ui.navigation
+
+/**
+ * Объект со всеми маршрутами приложения.
+ * Использование констант исключает ошибки опечаток при навигации.
+ */
+object Routes {
+
+    // --- СЛУЖЕБНЫЕ ---
+    const val SPLASH = "splash"
+    const val ONBOARDING = "onboarding" // Добавлен маршрут для экрана обучения
+
+    // --- АВТОРИЗАЦИЯ ---
+    const val CHOICE = "choice"
+    const val AUTH_EMAIL = "auth_email"
+    const val AUTH_PHONE = "auth_phone"
+
+    // --- ГЛАВНЫЕ ЭКРАНЫ (BOTTOM BAR) ---
+    const val CHATS = "chats"
+    const val DEALS = "deals"
+    const val ENTERTAINMENT = "entertainment"
+    const val SETTINGS = "settings"
+
+    // --- КОНТАКТЫ И ПЕРЕПИСКА ---
+    const val CONTACTS = "contacts"
+
+    // Шаблон для NavHost: "chat/{chatId}"
+    const val CHAT_DIRECT = "chat/{chatId}"
+
+    // --- ИНСТРУМЕНТЫ (DEALS) ---
+    const val CALCULATOR = "calculator"
+    const val TEXT_EDITOR = "text_editor"
+    const val AI_CHAT = "ai_chat"
+    const val FILE_MANAGER = "file_manager"
+
+    // --- ДОСУГ И МЕДИА (ENTERTAINMENT) ---
+    const val MUSIC = "music"
+    const val TIC_TAC_TOE = "tic_tac_toe"
+    const val CHESS = "chess"
+    const val PACMAN = "pacman"
+    const val JEWELS = "jewels"
+    const val SUDOKU = "sudoku"
+
+    // --- SLOTS ---
+    const val SLOTS_1 = "slots_1"
+
+    // --- TERMINAL ---
+    const val TERMINAL = "terminal"
+
+    /**
+     * Вспомогательная функция для генерации пути к конкретному чату.
+     * Использовать так: navController.navigate(Routes.buildChatRoute(userHash))
+     */
+    fun buildChatRoute(chatId: String): String {
+        return "chat/$chatId"
+    }
+}
