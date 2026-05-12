@@ -73,8 +73,16 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
   protected void onCreate(Bundle icicle, boolean ready) {
     setContentView(R.layout.activity_application_preferences);
 
-    //noinspection ConstantConditions
-    this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    // Устанавливаем Toolbar из макета в качестве ActionBar для темы NoActionBar
+    androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+    if (toolbar != null) {
+      setSupportActionBar(toolbar);
+    }
+
+    // Безопасная проверка перед установкой кнопки "Назад"
+    if (getSupportActionBar() != null) {
+      getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
 
     // add padding to avoid content hidden behind system bars
     ViewUtil.applyWindowInsets(findViewById(R.id.fragment));
@@ -170,10 +178,11 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
     @Override
     public void onResume() {
       super.onResume();
-      //noinspection ConstantConditions
-      ((ApplicationPreferencesActivity) getActivity())
-          .getSupportActionBar()
-          .setTitle(R.string.menu_settings);
+      if (((ApplicationPreferencesActivity) getActivity()).getSupportActionBar() != null) {
+        ((ApplicationPreferencesActivity) getActivity())
+            .getSupportActionBar()
+            .setTitle(R.string.menu_settings);
+      }
       setCategorySummaries();
     }
 
