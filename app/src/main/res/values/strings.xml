@@ -1,19 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Как дела?</string>
+    <string name="application_name">Как дела?</string>
     <string name="launch_deltachat">DeltaChat</string>
     <string name="launch_tyr">Tyr</string>
     <string name="choose_app">Выберите приложение</string>
-    
-    <!-- Уведомления -->
+
+    <!-- ========== Уведомления ========== -->
     <string name="notification_channel_service">Service Notifications</string>
     <string name="notification_channel_service_desc">Background service status</string>
     <string name="notification_channel_mail">Mail Notifications</string>
     <string name="notification_channel_mail_desc">New mail notifications</string>
     <string name="notification_channel_chat">Chat Notifications</string>
     <string name="notification_channel_chat_desc">Chat message notifications</string>
-    
-    <!-- Локация -->
+
+    <!-- ========== Локация ========== -->
     <string name="location_streaming_channel_desc">Location streaming service</string>
     <string name="location_streaming_notification_title">Location streaming</string>
+
+    <!-- ========== Основные ========== -->
+    <string name="send">Отправить</string>
+    <string name="enter_message">Введите сообщение...</string>
+    <string name="chats">Чаты</string>
+    <string name="enter_phone">Введите номер телефона</string>
+    <string name="verify_code">Введите код из SMS</string>
+    <string name="verify">Подтвердить</string>
+    <string name="global_chat">Глобальный чат</string>
+
+    <!-- ========== Файлы ========== -->
+    <string name="title_file_received">Файл получен</string>
+    <string name="action_file_received_edit">Редактировать</string>
+    <string name="action_file_received_open_directory">Открыть папку</string>
+    <string name="error_file_received_title">Ошибка получения файла</string>
+    <string name="file_received_title">File received</string>
+
+    <!-- ========== Termux ========== -->
+    <string name="termux_preferences_title">Настройки Termux</string>
+    <string name="termux_preferences_summary">Управление терминалом</string>
+    <string name="termux_api_preferences_title">Termux:API</string>
+    <string name="termux_api_preferences_summary">Настройки API</string>
+    <string name="termux_float_preferences_title">Termux:Float</string>
+    <string name="termux_float_preferences_summary">Плавающее окно</string>
+    <string name="termux_tasker_preferences_title">Termux:Tasker</string>
+    <string name="termux_tasker_preferences_summary">Интеграция с Tasker</string>
+    <string name="termux_widget_preferences_title">Termux:Widget</string>
+    <string name="termux_widget_preferences_summary">Настройки виджетов</string>
+    <string name="about_preference_title">О программе</string>
+    <string name="donate_preference_title">Поддержать проект</string>
+
+    <string name="action_new_session">Новая сессия</string>
+    <string name="action_new_session_failsafe">Безопасный режим</string>
+    <string name="action_open_settings">Настройки</string>
+    <string name="title_rename_session">Переименовать сессию</string>
+    <string name="action_rename_session_confirm">ОК</string>
+    <string name="title_max_terminals_reached">Лимит достигнут</string>
+    <string name="msg_max_terminals_reached">Вы достигли максимального количества открытых терминалов.</string>
+    <string name="title_create_named_session">Создать именованную сессию</string>
+    <string name="action_create_named_session_confirm">Создать</string>
+
+    <string name="termux_logging_header">Логирование</string>
+    <string name="termux_log_level_title">Уровень логов</string>
+    <string name="termux_terminal_view_key_logging_enabled_title">Логирование клавиш</string>
+    <string name="termux_terminal_view_key_logging_enabled_on">Включено</string>
+    <string name="termux_terminal_view_key_logging_enabled_off">Выключено</string>
+    <string name="termux_plugin_error_notifications_enabled_title">Уведомления плагинов</string>
+    <string name="termux_plugin_error_notifications_enabled_on">Показывать</string>
+    <string name="termux_plugin_error_notifications_enabled_off">Скрывать</string>
+    <string name="termux_crash_report_notifications_enabled_title">Отчеты о сбоях</string>
+    <string name="termux_crash_report_notifications_enabled_on">Включено</string>
+    <string name="termux_crash_report_notifications_enabled_off">Выключено</string>
+
+    <string name="termux_terminal_io_preferences_title">Ввод/Вывод терминала</string>
+    <string name="termux_terminal_io_preferences_summary">Настройки клавиатуры</string>
+    <string name="termux_keyboard_header">Клавиатура</string>
+    <string name="termux_soft_keyboard_enabled_title">Экранная клавиатура</string>
+    <string name="termux_soft_keyboard_enabled_off">Скрыта</string>
+    <string name="termux_soft_keyboard_enabled_on">Активна</string>
+    <string name="termux_soft_keyboard_enabled_only_if_no_hardware_title">Клавиатура только при отсутствии Hardware</string>
+    <string name="termux_soft_keyboard_enabled_only_if_no_hardware_on">Включено</string>
+    <string name="termux_soft_keyboard_enabled_only_if_no_hardware_off">Выключено</string>
+    <string name="action_toggle_soft_keyboard">Клавиатура</string>
+    <string name="toggle_keyboard_button">Клавиатура</string>
+    <string name="terminal_toolbar_text_input">Поле ввода</string>
+
+    <string name="termux_terminal_view_preferences_title">Экран терминала</string>
+    <string name="termux_terminal_view_preferences_summary">Настройки отображения</string>
+    <string name="termux_terminal_view_view_header">Вид</string>
+    <string name="termux_terminal_view_terminal_margin_adjustment_title">Корректировка отступов</string>
+    <string name="termux_terminal_view_terminal_margin_adjustment_on">Включено</string>
+    <string name="termux_terminal_view_terminal_margin_adjustment_off">Выключено</string>
+
+    <string name="error_termux_service_start_failed_bg">Не удалось запустить сервис из фона (Background execution restriction).</string>
+    <string name="error_termux_service_start_failed_general">Ошибка запуска сервиса Termux.</string>
+    <string name="error_termux_service_not_running">Сервис Termux не запущен.</string>
+    <string name="msg_enabling_terminal_toolbar">Включение панели клавиш…</string>
+    <string name="msg_disabling_terminal_toolbar">Отключение панели клавиш…</string>
+    <string name="msg_terminal_reset">Терминал сброшен</string>
+
+    <string name="error_run_command_service_api_help">Помощь по API: %1$s</string>
+    <string name="error_run_command_service_invalid_intent_action">Неверное действие Intent: %1$s</string>
+    <string name="error_run_command_service_invalid_execution_command_runner">Неверный раннер команды: %1$s</string>
+    <string name="error_run_command_service_mandatory_extra_missing">Отсутствует обязательный параметр: %1$s</string>
+    <string name="error_termux_service_invalid_execution_command_runner">Неверный раннер команды: %1$s</string>
+    <string name="error_termux_service_unsupported_execution_command_runner">Неподдерживаемый раннер: %1$s</string>
+    <string name="error_termux_service_execution_command_shell_name_unset">Shell name unset для: %1$s</string>
+    <string name="error_termux_service_unsupported_execution_command_shell_create_mode">Неподдерживаемый shell mode: %1$s</string>
+    <string name="error_display_over_other_apps_permission_not_granted_to_start_terminal">Нет разрешения на отображение поверх других окон.</string>
+
+    <string name="bootstrap_installer_body">Установка системных компонентов…</string>
+    <string name="bootstrap_error_title">Ошибка установки системы</string>
+    <string name="bootstrap_error_body">Не удалось установить базовые компоненты окружения. Пожалуйста, убедитесь в наличии интернета и свободного места.</string>
+    <string name="bootstrap_error_try_again">Повторить</string>
+    <string name="bootstrap_error_abort">Выход</string>
+    <string name="bootstrap_error_not_primary_user_message">Установка возможна только основным пользователем устройства.</string>
+    <string name="bootstrap_error_installed_on_portable_sd">Приложение не может быть запущено с переносной SD-карты.</string>
+
+    <string name="dialog_title_styling">Стиль терминала</string>
+    <string name="dialog_title_select_url">Выберите URL</string>
+    <string name="dialog_title_reset_terminal">Сбросить терминал?</string>
+    <string name="dialog_message_reset_terminal">Это убьет текущий процесс и перезапустит сессию.</string>
+    <string name="title_confirm_kill_process">Убить процесс?</string>
+    <string name="title_select_url_none_found">URL не найдены</string>
+    <string name="title_select_url_dialog">Выберите URL</string>
+    <string name="msg_select_url_copied_to_clipboard">URL скопирован в буфер обмена</string>
+    <string name="msg_generating_report">Генерация отчета...</string>
+    <string name="msg_add_termux_debug_info">Добавить отладочную информацию?</string>
+    <string name="error_styling_not_installed">Termux:Styling не установлен.</string>
+    <string name="action_styling_install">Установить</string>
+
+    <string name="notification_action_exit">Выход</string>
+    <string name="notification_action_wake_lock">Wake Lock</string>
+    <string name="notification_action_wake_unlock">Wake Unlock</string>
+
+    <string name="action_share_transcript">Поделиться историей</string>
+    <string name="action_share_selected_text">Поделиться выделенным</string>
+    <string name="action_autofill_username">Имя пользователя</string>
+    <string name="action_autofill_password">Пароль</string>
+    <string name="action_reset_terminal">Сбросить терминал</string>
+    <string name="action_kill_process">Завершить процесс (%1$d)</string>
+    <string name="action_style_terminal">Стиль</string>
+    <string name="action_toggle_keep_screen_on">Не гасить экран</string>
+    <string name="action_open_help">Помощь</string>
+    <string name="action_report_issue">Сообщить о проблеме</string>
+
+    <string name="menu_select_url">Выбрать URL</string>
+    <string name="action_select_url">Выбрать URL</string>
+    <string name="menu_share_transcript">Поделиться текстом</string>
+    <string name="menu_reset_terminal">Сбросить терминал</string>
+    <string name="menu_kill_process">Убить процесс</string>
+    <string name="menu_styling">Стиль</string>
+    <string name="menu_toggle_keep_screen_on">Не гасить экран</string>
+    <string name="menu_help">Помощь</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_report">Сообщить о проблеме</string>
+
+    <string name="title_share_transcript">Поделиться логом</string>
+    <string name="title_share_transcript_with">Отправить лог через...</string>
+    <string name="title_share_selected_text">Поделиться выделенным</string>
+    <string name="title_share_selected_text_with">Отправить выделение через...</string>
+
+    <string name="button_yes">Да</string>
+    <string name="button_no">Нет</string>
+    <string name="button_cancel">Отмена</string>
+    <string name="button_ok">OK</string>
 </resources>
