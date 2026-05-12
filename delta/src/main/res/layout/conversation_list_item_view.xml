@@ -125,7 +125,8 @@
                 <ImageView
                     android:id="@+id/unread_indicator"
                     android:layout_width="24dp"
-                    android:layout_height="24dp" />
+                    android:layout_height="24dp"
+                    android:tint="?attr/conversation_list_item_unread_color" />
             </LinearLayout>
 
         </LinearLayout>
