@@ -41,7 +41,7 @@
         <item name="textAppearanceOverline">@style/TextAppearance.MaterialComponents.Overline</item>
         <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
 
-        <!-- DeltaChat Custom Attributes -->
+        <!-- All DeltaChat Custom Attributes -->
         <item name="search_toolbar_background">@color/md_theme_light_surfaceVariant</item>
         <item name="search_background">@color/md_theme_light_surface</item>
         <item name="fab_color">@color/md_theme_light_primary</item>
@@ -61,6 +61,26 @@
         <item name="dialog_background_color">@color/md_theme_light_surface</item>
         <item name="dialog_info_icon">@color/md_theme_light_primary</item>
         <item name="dialog_alert_icon">@color/md_theme_light_error</item>
+        <item name="conversation_transport_sms_indicator">@color/md_theme_light_primary</item>
+        <item name="conversation_transport_push_indicator">@color/md_theme_light_tertiary</item>
+        <item name="conversation_item_incoming_bubble_color">@color/md_theme_light_surfaceVariant</item>
+        <item name="conversation_item_outgoing_bubble_color">@color/md_theme_light_primaryContainer</item>
+        <item name="conversation_item_incoming_text_primary_color">@color/md_theme_light_onSurface</item>
+        <item name="conversation_item_outgoing_text_primary_color">@color/md_theme_light_onPrimaryContainer</item>
+        <item name="conversation_item_update_bg_color">@color/md_theme_light_surfaceVariant</item>
+        <item name="conversation_item_update_text_color">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="conversation_item_date_line_color">@color/md_theme_light_outlineVariant</item>
+        <item name="conversation_item_sticky_date_background">@color/md_theme_light_surface</item>
+        <item name="conversation_item_sticky_date_text_color">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="login_top_background">@color/md_theme_light_primary</item>
+        <item name="profile_toolbar_background">@color/md_theme_light_primary</item>
+        <item name="profile_toolbar_foreground">@color/md_theme_light_onPrimary</item>
+        <item name="send_button_bg">@color/md_theme_light_primary</item>
+        <item name="floating_mini_bg">@color/md_theme_light_surface</item>
+        <item name="input_panel_bg_color">@color/md_theme_light_surface</item>
+        <item name="emoji_drawer_background">@color/md_theme_light_surfaceVariant</item>
+        <item name="emoji_text_color">@color/md_theme_light_onSurface</item>
+        <item name="conversation_background">@color/md_theme_light_background</item>
     </style>
 
     <style name="Theme.Material3.Light" parent="BaseAppTheme" />
