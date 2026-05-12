@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import java.util.Arrays;
@@ -41,9 +42,10 @@ public class AppearancePreferenceFragment extends ListSummaryPreferenceFragment 
   @Override
   public void onResume() {
     super.onResume();
-    ((ApplicationPreferencesActivity) getActivity())
-        .getSupportActionBar()
-        .setTitle(R.string.pref_appearance);
+    ActionBar actionBar = ((ApplicationPreferencesActivity) getActivity()).getSupportActionBar();
+    if (actionBar != null) {
+      actionBar.setTitle(R.string.pref_appearance);
+    }
     String imagePath = Prefs.getBackgroundImagePath(getContext(), dcContext.getAccountId());
     String backgroundString;
     if (imagePath.isEmpty()) {
@@ -77,9 +79,6 @@ public class AppearancePreferenceFragment extends ListSummaryPreferenceFragment 
       backgroundString = context.getString(R.string.custom);
     }
 
-    // adding combined strings as "Read receipt: %1$s, Screen lock: %1$s, "
-    // makes things inflexible on changes and/or adds lot of additional works to programmers.
-    // however, if needed, we can refine this later.
     return themeEntries[themeIndex]
         + ", "
         + context.getString(R.string.pref_background)
