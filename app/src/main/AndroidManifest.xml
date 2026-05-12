@@ -104,18 +104,6 @@
             android:theme="@style/Theme.DeltaChat"
             tools:replace="android:theme,android:exported,android:label" />
 
-        <activity-alias
-            android:name="org.thoughtcrime.securesms.RoutingActivity"
-            android:targetActivity="org.thoughtcrime.securesms.ConversationListActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="openpgp4fpr" />
-            </intent-filter>
-        </activity-alias>
-
         <activity android:name="org.thoughtcrime.securesms.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported,android:windowSoftInputMode" />
         <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
