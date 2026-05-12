@@ -43,18 +43,13 @@
 
     <!-- Тема для DeltaChat — мост между нашими цветами и атрибутами DeltaChat -->
     <style name="Theme.DeltaChat" parent="TextSecure.LightNoActionBar">
-        <!-- Переопределяем ключевые цвета -->
         <item name="colorPrimary">@color/md_theme_light_primary</item>
         <item name="colorPrimaryDark">@color/md_theme_light_primaryContainer</item>
         <item name="colorAccent">@color/md_theme_light_secondary</item>
         <item name="colorSecondary">@color/md_theme_light_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-        
-        <!-- Статус-бар -->
-        <item name="android:statusBarColor">@color/md_theme_light_primaryDark</item>
+        <item name="android:statusBarColor">@color/md_theme_light_primaryContainer</item>
         <item name="android:windowLightStatusBar">true</item>
-        
-        <!-- TextAppearance -->
         <item name="textAppearanceBody1">@style/TextAppearance.MaterialComponents.Body1</item>
     </style>
 
