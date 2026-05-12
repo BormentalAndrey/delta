@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Базовая тема Material Components (совместима с MaterialButton, MaterialCardView и TextInputLayout) -->
+    <!-- Базовая тема Material Components -->
     <style name="BaseAppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- Primary -->
         <item name="colorPrimary">@color/md_theme_light_primary</item>
         <item name="colorPrimaryDark">@color/md_theme_light_primaryContainer</item>
         <item name="colorPrimaryVariant">@color/md_theme_light_primaryContainer</item>
@@ -10,20 +9,17 @@
         <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
         <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
         
-        <!-- Secondary (ОБЯЗАТЕЛЕН для MaterialCardView) -->
         <item name="colorSecondary">@color/md_theme_light_secondary</item>
         <item name="colorSecondaryVariant">@color/md_theme_light_secondaryContainer</item>
         <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
         <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
         <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
         
-        <!-- Tertiary -->
         <item name="colorTertiary">@color/md_theme_light_tertiary</item>
         <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
         <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
         <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
         
-        <!-- Background / Surface -->
         <item name="android:colorBackground">@color/md_theme_light_background</item>
         <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
         <item name="colorSurface">@color/md_theme_light_surface</item>
@@ -31,20 +27,16 @@
         <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
         <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
         
-        <!-- Outline -->
         <item name="colorOutline">@color/md_theme_light_outline</item>
         <item name="colorOutlineVariant">@color/md_theme_light_surfaceVariant</item>
         
-        <!-- Error -->
         <item name="colorError">@color/md_theme_light_error</item>
         <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
         <item name="colorOnError">@color/md_theme_light_onError</item>
         <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
         
-        <!-- Text -->
         <item name="android:textColorSecondary">@color/text_color_secondary</item>
         
-        <!-- TextAppearance (ОБЯЗАТЕЛЬНО для TextInputLayout) -->
         <item name="textAppearanceSubtitle1">@style/TextAppearance.MaterialComponents.Subtitle1</item>
         <item name="textAppearanceSubtitle2">@style/TextAppearance.MaterialComponents.Subtitle2</item>
         <item name="textAppearanceBody1">@style/TextAppearance.MaterialComponents.Body1</item>
@@ -53,32 +45,28 @@
         <item name="textAppearanceCaption">@style/TextAppearance.MaterialComponents.Caption</item>
         <item name="textAppearanceOverline">@style/TextAppearance.MaterialComponents.Overline</item>
         
-        <!-- CardView -->
         <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
     </style>
 
-    <!-- Основная тема лаунчера -->
     <style name="Theme.Material3.Light" parent="BaseAppTheme" />
 
-    <!-- Тема для DeltaChat -->
     <style name="Theme.DeltaChat" parent="BaseAppTheme">
         <item name="search_toolbar_background">@color/md_theme_light_surfaceVariant</item>
     </style>
     
-    <!-- Тема для Tyr -->
+    <!-- Тема для DeltaChat с ActionBar (требуется для FloatingActionButton) -->
+    <style name="TextSecure.LightNoActionBar" parent="BaseAppTheme" />
+    
     <style name="Theme.Tyr" parent="BaseAppTheme" />
     
-    <!-- Тема для Tyr Onboarding -->
     <style name="Theme.Tyr.Onboarding" parent="BaseAppTheme">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
-    <!-- Splash-тема DeltaChat -->
     <style name="TextSecure.Splash" parent="BaseAppTheme">
         <item name="android:windowBackground">@color/md_theme_light_primary</item>
     </style>
 
-    <!-- Светлая тема DeltaChat -->
     <style name="TextSecure.LightTheme" parent="BaseAppTheme" />
 </resources>
