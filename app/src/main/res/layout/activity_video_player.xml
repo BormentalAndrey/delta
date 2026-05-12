@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- Видео плеер -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:use_controller="false"
+        app:resize_mode="fit" />
+
+    <!-- Оверлей для центральных индикаторов и иконки блокировки -->
+    <FrameLayout
+        android:id="@+id/overlay_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+
+        <!-- Центральный индикатор жестов (перемотка, громкость, яркость) -->
+        <TextView
+            android:id="@+id/center_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="48sp"
+            android:textColor="#FFFFFF"
+            android:visibility="gone"
+            android:shadowColor="#FF00FF"
+            android:shadowRadius="30" />
+
+        <!-- Иконка блокировки экрана (по центру при locked) -->
+        <ImageView
+            android:id="@+id/lock_icon"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:src="@android:drawable/ic_lock_lock"
+            android:tint="#FF00FF"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
+
+    <!-- Верхняя панель (название видео, часы, батарея) -->
+    <LinearLayout
+        android:id="@+id/top_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="#80000000">
+
+        <TextView
+            android:id="@+id/video_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Загрузка..."
+            android:textColor="#FF00FF"
+            android:textSize="18sp"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:shadowColor="#FF00FF"
+            android:shadowRadius="20" />
+
+        <TextView
+            android:id="@+id/clock_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#00FFFF"
+            android:textSize="16sp"
+            android:layout_marginEnd="16dp"
+            android:shadowColor="#00FFFF"
+            android:shadowRadius="10" />
+
+        <TextView
+            android:id="@+id/battery_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="100%"
+            android:textColor="#39FF14"
+            android:textSize="16sp"
+            android:shadowColor="#39FF14"
+            android:shadowRadius="10" />
+    </LinearLayout>
+
+    <!-- Нижняя панель управления -->
+    <LinearLayout
+        android:id="@+id/controls_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#B3000000">
+
+        <!-- SeekBar -->
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="1000"
+            android:progressTint="#00FFFF"
+            android:progressBackgroundTint="#40FFFFFF"
+            android:thumbTint="#FF00FF" />
+
+        <!-- Текущее и общее время -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/current_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="#00FFFF"
+                android:shadowColor="#00FFFF"
+                android:shadowRadius="10" />
+
+            <TextView
+                android:id="@+id/total_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="00:00"
+                android:textColor="#FFFFFF"
+                android:shadowColor="#00FFFF"
+                android:shadowRadius="10" />
+        </RelativeLayout>
+
+        <!-- Кнопки управления -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp">
+
+            <ImageButton
+                android:id="@+id/btn_prev"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_previous"
+                android:tint="#00FFFF" />
+
+            <ImageButton
+                android:id="@+id/btn_play_pause"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="24dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_play"
+                android:tint="#39FF14" />
+
+            <ImageButton
+                android:id="@+id/btn_next"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_next"
+                android:tint="#00FFFF" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_speed"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:tint="#FF00FF" />
+
+            <ImageButton
+                android:id="@+id/btn_lock"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_idle_lock"
+                android:tint="#B026FF" />
+
+            <ImageButton
+                android:id="@+id/btn_playlist"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_agenda"
+                android:tint="#00FFFF" />
+
+            <ImageButton
+                android:id="@+id/btn_pip"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_pip"
+                android:tint="#00FFFF"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/btn_fullscreen"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_zoom"
+                android:tint="#B026FF" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
