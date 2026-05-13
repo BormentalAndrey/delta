@@ -1,16 +1,15 @@
 package com.kakdela.p2p.ui.navigation
 
 import android.content.Context
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Bundle
+import android.view.View
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.CloudOff
@@ -27,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.FragmentContainerView
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -37,6 +38,7 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import org.thoughtcrime.securesms.ConversationListFragment
 
 @Composable
 fun NavGraph(
@@ -59,7 +61,7 @@ fun NavGraph(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                AppBottomBar(currentRoute, navController, context)
+                AppBottomBar(currentRoute, navController)
             }
         },
         containerColor = Color.Black
@@ -73,10 +75,10 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ =================
+            // ================= MAIN: ЧАТЫ = DeltaChat Fragment =================
 
             composable(Routes.CHATS) {
-                ChatsPlaceholder(context)
+                DeltaChatFragmentView()
             }
 
             // ================= SECTIONS =================
@@ -132,58 +134,38 @@ fun NavGraph(
     }
 }
 
-// ================= CHATS PLACEHOLDER =================
+// ================= DELTACHAT FRAGMENT VIEW =================
 
 @Composable
-fun ChatsPlaceholder(context: Context) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                Icons.Outlined.ChatBubbleOutline,
-                contentDescription = null,
-                tint = Color(0xFF00FFFF),
-                modifier = Modifier.size(64.dp)
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Нажмите чтобы открыть чаты",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "DeltaChat откроется в этом окне",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Spacer(Modifier.height(24.dp))
-            Button(
-                onClick = {
-                    try {
-                        val intent = Intent(context, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        }
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Открыть чаты", color = Color.Black, fontWeight = FontWeight.Bold)
+fun DeltaChatFragmentView() {
+    val context = LocalContext.current
+    var fragmentContainerId by remember { mutableIntStateOf(View.generateViewId()) }
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx ->
+            FragmentContainerView(ctx).apply {
+                id = fragmentContainerId
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        update = { view ->
+            val fragmentManager = (view.context as androidx.fragment.app.FragmentActivity).supportFragmentManager
+            if (fragmentManager.findFragmentById(view.id) == null) {
+                val fragment = ConversationListFragment()
+                val args = Bundle()
+                args.putBoolean(ConversationListFragment.ARCHIVE, false)
+                fragment.arguments = args
+                
+                fragmentManager.beginTransaction()
+                    .replace(view.id, fragment)
+                    .commit()
             }
         }
-    }
+    )
 }
 
 // ================= UI HELPERS =================
@@ -191,8 +173,7 @@ fun ChatsPlaceholder(context: Context) {
 @Composable
 private fun AppBottomBar(
     currentRoute: String?,
-    navController: NavHostController,
-    context: Context
+    navController: NavHostController
 ) {
     NavigationBar(
         containerColor = Color(0xFF010101),
@@ -211,17 +192,7 @@ private fun AppBottomBar(
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    if (route == Routes.CHATS) {
-                        // Открываем DeltaChat в том же task'е
-                        try {
-                            val intent = Intent(context, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
-                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                            }
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    } else if (route != currentRoute) {
+                    if (!selected) {
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
