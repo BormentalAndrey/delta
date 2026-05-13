@@ -1,11 +1,9 @@
 package com.launcher.multiapp
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -34,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.rememberNavController
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
@@ -49,7 +48,7 @@ private val DarkBackground = Color(0xFF0A0A0A)
 private val SurfaceGray = Color(0xFF1E1E1E)
 private val DeepPurple = Color(0xFF1A0033)
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
@@ -62,7 +61,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Только после завершения регистрации показываем NavGraph
         if (appPrefs.getBoolean("registration_completed", false)) {
             setContent {
                 MaterialTheme(
@@ -85,7 +83,6 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        // Экран регистрации
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
