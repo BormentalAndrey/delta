@@ -69,4 +69,36 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="dark_gray">#A9A9A9</color>
+
+    <!-- ========== DeltaChat Colors ========== -->
+    <color name="delta_primary">#ff415e6b</color>
+    <color name="delta_primary_lite">#4c6e7d</color>
+    <color name="delta_accent">#42A5F5</color>
+    <color name="delta_accent_darker">#ff2090ea</color>
+    <color name="core_light_90">#FF1A1A1A</color>
+    <color name="core_light_60">#FF666666</color>
+    <color name="core_light_45">#FF8C8C8C</color>
+    <color name="core_dark_30">#FFB3B3B3</color>
+    <color name="core_dark_05">#FFF2F2F2</color>
+    <color name="core_dark_55">#FF737373</color>
+    <color name="core_black">#FF000000</color>
+    <color name="core_white">#FFFFFFFF</color>
+    <color name="gray50">#ff808080</color>
+    <color name="gray65">#ff595959</color>
+    <color name="gray70">#ff4d4d4d</color>
+    <color name="gray78">#ff383838</color>
+    <color name="gray95">#ff111111</color>
+    <color name="gray10">#ffdddddd</color>
+    <color name="gray13">#ffababab</color>
+    <color name="light_green">#ffefffde</color>
+    <color name="green">#ff70b15c</color>
+    <color name="light_pink">#ffcdb7b5</color>
+    <color name="grey_100">#FFF5F5F5</color>
+    <color name="grey_700">#FF616161</color>
+    <color name="universal_overlay">#55444444</color>
+    <color name="text_color_dark_theme">#FFFFFFFF</color>
+    <color name="text_color_secondary_dark_theme">#B3FFFFFF</color>
+    <color name="background_material_light">#FFFFFFFF</color>
+    <color name="background_material_dark">#FF303030</color>
+    <color name="text_color_secondary">#FF444444</color>
 </resources>
