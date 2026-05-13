@@ -2,12 +2,8 @@ package com.kakdela.p2p.ui.player
 
 import androidx.compose.foundation.BorderStroke
 import android.Manifest
-import android.content.ContentUris
-import android.content.Context
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -52,9 +48,7 @@ fun MusicPlayerScreen() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val fetched = fetchAudioTracks(context)
-            MusicManager.tracks.clear()
-            MusicManager.tracks.addAll(fetched)
+            MusicManager.loadTracks(context)
         }
     }
 
@@ -62,8 +56,7 @@ fun MusicPlayerScreen() {
     LaunchedEffect(Unit) {
         if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
             if (MusicManager.tracks.isEmpty()) {
-                val fetched = fetchAudioTracks(context)
-                MusicManager.tracks.addAll(fetched)
+                MusicManager.loadTracks(context)
             }
         } else {
             launcher.launch(permission)
@@ -273,90 +266,4 @@ fun PlaybackControlPanel(
             }
         }
     }
-}
-
-// MusicManager object
-object MusicManager {
-    val tracks = mutableListOf<AudioTrack>()
-    var currentIndex = 0
-    var isPlaying = false
-    var currentTrack: AudioTrack? = null
-        get() = if (tracks.isNotEmpty() && currentIndex in tracks.indices) tracks[currentIndex] else null
-
-    fun togglePlayPause() {
-        isPlaying = !isPlaying
-        // TODO: Интеграция с MediaPlayer
-    }
-
-    fun playTrack(context: Context, index: Int) {
-        currentIndex = index
-        isPlaying = true
-        // TODO: Интеграция с MediaPlayer
-    }
-
-    fun playNext(context: Context) {
-        if (tracks.isNotEmpty()) {
-            currentIndex = (currentIndex + 1) % tracks.size
-            playTrack(context, currentIndex)
-        }
-    }
-
-    fun playPrevious(context: Context) {
-        if (tracks.isNotEmpty()) {
-            currentIndex = if (currentIndex - 1 < 0) tracks.size - 1 else currentIndex - 1
-            playTrack(context, currentIndex)
-        }
-    }
-}
-
-// Вспомогательная функция получения треков
-fun fetchAudioTracks(context: Context): List<AudioTrack> {
-    val tracks = mutableListOf<AudioTrack>()
-    val projection = arrayOf(
-        MediaStore.Audio.Media._ID,
-        MediaStore.Audio.Media.TITLE,
-        MediaStore.Audio.Media.ARTIST,
-        MediaStore.Audio.Media.ALBUM,
-        MediaStore.Audio.Media.DURATION,
-        MediaStore.Audio.Media.ALBUM_ID
-    )
-
-    context.contentResolver.query(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-        projection,
-        "${MediaStore.Audio.Media.IS_MUSIC} != 0",
-        null,
-        null
-    )?.use { cursor ->
-        val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-        val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-        val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-        val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-        val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-        val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-
-        while (cursor.moveToNext()) {
-            val id = cursor.getLong(idCol)
-            val albumId = cursor.getLong(albumIdCol)
-            val albumArtUri = ContentUris.withAppendedId(
-                Uri.parse("content://media/external/audio/albumart"), 
-                albumId
-            )
-
-            tracks.add(
-                AudioTrack(
-                    id = id,
-                    title = cursor.getString(titleCol) ?: "Unknown",
-                    artist = cursor.getString(artistCol) ?: "Unknown Artist",
-                    albumTitle = cursor.getString(albumCol) ?: "Unknown Album",
-                    trackNumber = 0,
-                    duration = cursor.getLong(durationCol),
-                    uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id),
-                    albumArt = albumArtUri,
-                    albumId = albumId
-                )
-            )
-        }
-    }
-    return tracks
 }
