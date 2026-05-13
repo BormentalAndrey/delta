@@ -29,7 +29,11 @@
         <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
         <item name="colorOnError">@color/md_theme_light_onError</item>
         <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
-        
+        <item name="colorAccent">@color/delta_accent</item>
+        <item name="colorControlActivated">@color/delta_accent</item>
+        <item name="colorControlHighlight">@color/delta_accent</item>
+        <item name="fab_color">@color/delta_primary_lite</item>
+
         <item name="android:textColorSecondary">@color/text_color_secondary</item>
         <item name="textAppearanceSubtitle1">@style/TextAppearance.MaterialComponents.Subtitle1</item>
         <item name="textAppearanceSubtitle2">@style/TextAppearance.MaterialComponents.Subtitle2</item>
@@ -41,14 +45,14 @@
         <item name="materialCardViewStyle">@style/Widget.MaterialComponents.CardView</item>
     </style>
 
-    <!-- Тема для DeltaChat — мост между нашими цветами и атрибутами DeltaChat -->
+    <!-- Тема для DeltaChat -->
     <style name="Theme.DeltaChat" parent="TextSecure.LightNoActionBar">
-        <item name="colorPrimary">@color/md_theme_light_primary</item>
-        <item name="colorPrimaryDark">@color/md_theme_light_primaryContainer</item>
-        <item name="colorAccent">@color/md_theme_light_secondary</item>
-        <item name="colorSecondary">@color/md_theme_light_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-        <item name="android:statusBarColor">@color/md_theme_light_primaryContainer</item>
+        <item name="colorPrimary">@color/delta_primary</item>
+        <item name="colorPrimaryDark">@color/delta_primary</item>
+        <item name="colorAccent">@color/delta_accent</item>
+        <item name="colorSecondary">@color/delta_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor">@color/delta_primary</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="textAppearanceBody1">@style/TextAppearance.MaterialComponents.Body1</item>
     </style>
