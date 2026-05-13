@@ -18,7 +18,6 @@ class TyrApplicationWrapper : org.thoughtcrime.securesms.ApplicationContext() {
     var yggmailServiceBinder: com.jbselfcompany.tyr.service.YggmailService.LocalBinder? = null
 
     override fun attachBaseContext(base: Context) {
-        // Локаль применяется глобально для всего объединенного приложения
         super.attachBaseContext(LocaleHelper.applyLanguage(base))
     }
 
@@ -28,11 +27,23 @@ class TyrApplicationWrapper : org.thoughtcrime.securesms.ApplicationContext() {
         // 1. Инициализируем DeltaChat
         super.onCreate()
         
-        // 2. Безопасно инициализируем Tyr, передавая легальный Application Context
+        // 2. Инициализируем Kakdela P2P (PDFBox)
+        initKakdela()
+        
+        // 3. Инициализируем Tyr
         TyrApplication.init(this)
         
-        // 3. Копируем нужные ссылки для внешнего доступа
+        // 4. Копируем ссылки
         configRepository = TyrApplication.instance.configRepository
+    }
+
+    private fun initKakdela() {
+        try {
+            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(this)
+            android.util.Log.i("TyrAppWrapper", "PDFBox initialized")
+        } catch (e: Exception) {
+            android.util.Log.e("TyrAppWrapper", "Kakdela init error", e)
+        }
     }
 
     override fun onTerminate() {
