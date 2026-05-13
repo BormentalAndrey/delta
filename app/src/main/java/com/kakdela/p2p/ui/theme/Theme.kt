@@ -3,13 +3,10 @@ package com.kakdela.p2p.ui.theme
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -48,12 +45,8 @@ fun KakdelaTheme(content: @Composable () -> Unit) {
         }
     }
 
-    CompositionLocalProvider(
-        LocalIndication provides ripple()
-    ) {
-        MaterialTheme(
-            colorScheme = DarkColorScheme,
-            content = content
-        )
-    }
+    MaterialTheme(
+        colorScheme = DarkColorScheme,
+        content = content
+    )
 }
