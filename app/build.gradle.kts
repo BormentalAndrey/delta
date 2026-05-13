@@ -23,6 +23,11 @@ val tinkVersion = "1.15.0"
 val coilVersion = "2.6.0"
 val poiVersion = "5.2.5"
 val guavaVersion = "33.2.1-android"
+val composeBomVersion = "2024.12.00"
+val composeCompilerVersion = "1.5.15"
+val activityComposeVersion = "1.9.3"
+val navigationComposeVersion = "2.8.5"
+val lifecycleVersion = "2.8.7"
 
 android {
     namespace = "com.launcher.multiapp"
@@ -106,7 +111,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11"
+        kotlinCompilerExtensionVersion = composeCompilerVersion
     }
 
     sourceSets {
@@ -144,22 +149,22 @@ dependencies {
     // Android Core
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
-    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
+    implementation("androidx.activity:activity-compose:$activityComposeVersion")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    // Compose — обновлённый BOM и зависимости
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
 
     // Material
     implementation("com.google.android.material:material:1.13.0")
