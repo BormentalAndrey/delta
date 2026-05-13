@@ -11,7 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -133,32 +137,34 @@ private val entertainmentItems = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntertainmentScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Развлечения",
-                        fontWeight = FontWeight.Black,
-                        color = Color.Green
+    CompositionLocalProvider(LocalIndication provides ripple()) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Развлечения",
+                            fontWeight = FontWeight.Black,
+                            color = Color.Green
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Black
                     )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Black
                 )
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(entertainmentItems, key = { it.id }) { item ->
-                EntertainmentNeonItem(item, navController)
+            }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(entertainmentItems, key = { it.id }) { item ->
+                    EntertainmentNeonItem(item, navController)
+                }
             }
         }
     }
@@ -225,7 +231,7 @@ fun EntertainmentNeonItem(
                 AsyncImage(
                     model = MusicManager.currentTrack!!.albumArt,
                     contentDescription = null,
-                    error = painterResource(id = R.mipmap.ic_launcher),
+                    error = painterResource(id = R.drawable.ic_music_placeholder),
                     modifier = Modifier
                         .size(45.dp)
                         .clip(RoundedCornerShape(8.dp)),
