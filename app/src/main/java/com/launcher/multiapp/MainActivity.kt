@@ -58,12 +58,11 @@ class MainActivity : ComponentActivity() {
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
-    
-    private var deltaChatStarted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Только после завершения регистрации показываем NavGraph
         if (appPrefs.getBoolean("registration_completed", false)) {
             setContent {
                 MaterialTheme(
@@ -78,21 +77,15 @@ class MainActivity : ComponentActivity() {
                         val navController = rememberNavController()
                         NavGraph(
                             navController = navController,
-                            startDestination = Routes.CHATS,
-                            onChatsTabSelected = { launchDeltaChatInTask() }
+                            startDestination = Routes.CHATS
                         )
                     }
                 }
             }
-            
-            // Запускаем DeltaChat при первом открытии
-            if (!deltaChatStarted) {
-                launchDeltaChatInTask()
-                deltaChatStarted = true
-            }
             return
         }
 
+        // Экран регистрации
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
@@ -132,63 +125,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Запускает DeltaChat ConversationListActivity в том же task'е.
-     * Использует FLAG_ACTIVITY_CLEAR_TOP чтобы вернуться к существующему экземпляру.
-     */
-    private fun launchDeltaChatInTask() {
-        try {
-            val intent = Intent(this, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }
-            startActivity(intent)
-            overridePendingTransition(0, 0)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        // При возврате из DeltaChat — обновляем UI
-        if (intent.hasExtra("return_to_chats")) {
-            launchDeltaChatInTask()
-        }
-    }
-
     private fun markRegistrationCompleted() {
         appPrefs.edit().putBoolean("registration_completed", true).apply()
-    }
-
-    private fun launchDeltaChat() {
-        try {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                setClassName(packageName, "org.thoughtcrime.securesms.ConversationListActivity")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
-                startActivity(intent)
-            } else {
-                tryProfileActivity()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "DeltaChat не найден: ${e.message}", Toast.LENGTH_LONG).show()
-            tryProfileActivity()
-        }
-    }
-
-    private fun tryProfileActivity() {
-        try {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                setClassName(packageName, "org.thoughtcrime.securesms.ProfileActivity")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "DeltaChat не найден.", Toast.LENGTH_LONG).show()
-        }
     }
 
     private fun launchTyr() {
@@ -314,15 +252,10 @@ class MainActivity : ComponentActivity() {
                 data = Uri.parse(dcloginUrl)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
-                startActivity(intent)
-            } else {
-                Toast.makeText(this, "DeltaChat не найден", Toast.LENGTH_LONG).show()
-                launchDeltaChat()
-            }
+            startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
-            launchDeltaChat()
+            Toast.makeText(this, "DeltaChat не найден", Toast.LENGTH_LONG).show()
         }
     }
 }
