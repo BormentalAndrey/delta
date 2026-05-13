@@ -1,4 +1,4 @@
-package com.kakdela.p2p.ui.player
+package com.launcher.multiapp.kakdela.ui.player
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -34,7 +34,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.kakdela.p2p.R
+import com.launcher.multiapp.R
 import android.Manifest
 import android.app.PictureInPictureParams
 import android.content.ContentUris
@@ -184,7 +184,6 @@ class VideoPlayerActivity : ComponentActivity() {
     private fun setupGestures() {
         playerView.setOnTouchListener { _, event ->
             if (isLocked) {
-                // При locked тачи идут только на разблокировку (lockIcon clickable)
                 false
             } else {
                 when (event.actionMasked) {
@@ -214,10 +213,8 @@ class VideoPlayerActivity : ComponentActivity() {
                                 val seekAmount = (deltaX / playerView.width * SEEK_FULL_SWIPE_SECONDS * 1000).toLong()
                                 val newPos = (initialSeekPos + seekAmount).coerceIn(0L, player.duration)
                                 player.seekTo(newPos)
-                                // Было: showCenterIndicator("\( {if (seekAmount > 0) "+" else "-"} \){formatTime(kotlin.math.abs(seekAmount))}", neonGreen)
                                 val sign = if (seekAmount > 0) "+" else "-"
                                 showCenterIndicator("$sign${formatTime(kotlin.math.abs(seekAmount))}", neonGreen)
-
                             }
                             2 -> {
                                 val deltaY = touchStartY - event.y
@@ -248,7 +245,6 @@ class VideoPlayerActivity : ComponentActivity() {
             }
         }
 
-        // Разблокировка по тапу на lockIcon
         lockIcon.setOnClickListener { toggleLock() }
     }
 
