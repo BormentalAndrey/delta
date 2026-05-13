@@ -1,4 +1,4 @@
-package com.kakdela.p2p.ui.navigation
+package com.launcher.multiapp.kakdela.ui.navigation
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -30,10 +30,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import com.kakdela.p2p.ui.*
-import com.kakdela.p2p.ui.chat.AiChatScreen
-import com.kakdela.p2p.ui.player.MusicPlayerScreen
-import com.kakdela.p2p.ui.screens.FileManagerScreen
+import com.launcher.multiapp.kakdela.ui.*
+import com.launcher.multiapp.kakdela.ui.chat.AiChatScreen
+import com.launcher.multiapp.kakdela.ui.player.MusicPlayerScreen
+import com.launcher.multiapp.kakdela.ui.screens.FileManagerScreen
 
 @Composable
 fun NavGraph(
@@ -73,7 +73,8 @@ fun NavGraph(
             // ================= MAIN =================
 
             composable(Routes.CHATS) {
-                ChatsListScreen(navController = navController)
+                // Используем ChatListScreen из DeltaChat
+                DeltaChatScreen(navController = navController)
             }
 
             // ================= SECTIONS =================
@@ -126,6 +127,23 @@ fun NavGraph(
                 AiChatScreen()
             }
         }
+    }
+}
+
+@Composable
+fun DeltaChatScreen(navController: NavHostController) {
+    // Заглушка для чатов DeltaChat
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "Чаты DeltaChat",
+            color = Color.White,
+            fontSize = 20.sp
+        )
     }
 }
 
