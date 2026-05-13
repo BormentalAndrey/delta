@@ -28,11 +28,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.kakdela.p2p.ui.browser.BrowserActivity
 import com.kakdela.p2p.ui.navigation.Routes
-import com.kakdela.p2p.ui.terminal.TerminalActivity
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-// Типы пунктов
 enum class DealType { WEB, CALCULATOR, TOOL, ACTIVITY }
 
 data class DealItem(
@@ -52,7 +50,6 @@ data class DealItem(
             DealType.ACTIVITY -> {
                 when (id) {
                     "browser" -> Icons.Filled.Public
-                    "terminal" -> Icons.Filled.Edit
                     else -> Icons.Filled.ShoppingBag
                 }
             }
@@ -61,15 +58,12 @@ data class DealItem(
 }
 
 private val dealItems = listOf(
-    // ===== Activity =====
     DealItem(
         id = "browser",
         title = "P2P Браузер",
         description = "Анонимный сёрфинг",
         type = DealType.ACTIVITY
     ),
-    
-    // ===== Инструменты =====
     DealItem(
         id = "file_manager",
         title = "Файловый менеджер",
@@ -88,8 +82,6 @@ private val dealItems = listOf(
         description = "TXT, DOCX, PDF (чтение)",
         type = DealType.TOOL
     ),
-
-    // ===== WEB =====
     DealItem(
         id = "gosuslugi",
         title = "Госуслуги",
@@ -171,22 +163,18 @@ fun DealNeonItem(item: DealItem, navController: NavHostController) {
         onClick = {
             when (item.type) {
                 DealType.ACTIVITY -> {
-                    val intent = when (item.id) {
-                        "browser" -> Intent(context, BrowserActivity::class.java)
-                        "terminal" -> Intent(context, TerminalActivity::class.java)
-                        else -> null
+                    when (item.id) {
+                        "browser" -> context.startActivity(Intent(context, BrowserActivity::class.java))
                     }
-                    intent?.let { context.startActivity(it) }
                 }
 
                 DealType.CALCULATOR ->
                     navController.navigate(Routes.CALCULATOR)
 
                 DealType.TOOL ->
-                    if (item.id == "text_editor") {
-                        navController.navigate(Routes.TEXT_EDITOR)
-                    } else if (item.id == "file_manager") {
-                        navController.navigate(Routes.FILE_MANAGER)
+                    when (item.id) {
+                        "text_editor" -> navController.navigate(Routes.TEXT_EDITOR)
+                        "file_manager" -> navController.navigate(Routes.FILE_MANAGER)
                     }
 
                 DealType.WEB -> item.url?.let {
