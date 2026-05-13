@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.kakdela.p2p.R
+import com.launcher.multiapp.R
 import com.kakdela.p2p.ui.navigation.Routes
 import com.kakdela.p2p.ui.player.MusicManager
 import com.kakdela.p2p.ui.player.VideoPlayerActivity
