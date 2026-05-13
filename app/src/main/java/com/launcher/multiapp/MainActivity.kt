@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,30 +64,6 @@ class MainActivity : ComponentActivity() {
 
         if (appPrefs.getBoolean("registration_completed", false)) {
             setContent {
-                CompositionLocalProvider(LocalIndication provides ripple()) {
-                    MaterialTheme(
-                        colorScheme = darkColorScheme(
-                            primary = NeonCyan,
-                            secondary = NeonPurple,
-                            background = DarkBackground,
-                            surface = SurfaceGray,
-                        )
-                    ) {
-                        Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
-                            val navController = rememberNavController()
-                            NavGraph(
-                                navController = navController,
-                                startDestination = Routes.CHATS
-                            )
-                        }
-                    }
-                }
-            }
-            return
-        }
-
-        setContent {
-            CompositionLocalProvider(LocalIndication provides ripple()) {
                 MaterialTheme(
                     colorScheme = darkColorScheme(
                         primary = NeonCyan,
@@ -99,21 +73,41 @@ class MainActivity : ComponentActivity() {
                     )
                 ) {
                     Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
-                        MainScreen(
-                            isLoading = isLoading.value,
-                            loadingMessage = loadingMessage.value,
-                            onLaunchEmail = {
-                                markRegistrationCompleted()
-                                recreate()
-                            },
-                            onSetupAnonymous = { name, password ->
-                                showAnonymousDialog.value = false
-                                setupAnonymousAccount(name, password)
-                            },
-                            onOpenDialog = { showAnonymousDialog.value = true },
-                            onLaunchTyr = { launchTyr() }
+                        val navController = rememberNavController()
+                        NavGraph(
+                            navController = navController,
+                            startDestination = Routes.CHATS
                         )
                     }
+                }
+            }
+            return
+        }
+
+        setContent {
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    primary = NeonCyan,
+                    secondary = NeonPurple,
+                    background = DarkBackground,
+                    surface = SurfaceGray,
+                )
+            ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
+                    MainScreen(
+                        isLoading = isLoading.value,
+                        loadingMessage = loadingMessage.value,
+                        onLaunchEmail = {
+                            markRegistrationCompleted()
+                            recreate()
+                        },
+                        onSetupAnonymous = { name, password ->
+                            showAnonymousDialog.value = false
+                            setupAnonymousAccount(name, password)
+                        },
+                        onOpenDialog = { showAnonymousDialog.value = true },
+                        onLaunchTyr = { launchTyr() }
+                    )
                 }
             }
 
@@ -129,7 +123,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ... остальные методы без изменений ...
     private fun markRegistrationCompleted() {
         appPrefs.edit().putBoolean("registration_completed", true).apply()
     }
@@ -300,5 +293,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-// ... остальные Composable функции без изменений ...
