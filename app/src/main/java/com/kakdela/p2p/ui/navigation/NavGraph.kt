@@ -1,5 +1,6 @@
 package com.kakdela.p2p.ui.navigation
 
+import android.view.ViewGroup
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
