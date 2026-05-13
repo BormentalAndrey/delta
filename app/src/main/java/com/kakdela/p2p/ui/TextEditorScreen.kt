@@ -313,7 +313,7 @@ fun TextEditorScreen(navController: NavHostController) {
                     .background(Color.White),
                 textStyle = TextStyle(fontSize = 16.sp),
                 readOnly = isPdf,
-                colors = TextFieldDefaults.textFieldColors(
+                colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 )
