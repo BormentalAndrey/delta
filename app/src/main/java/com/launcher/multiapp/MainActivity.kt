@@ -33,9 +33,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.navigation.compose.rememberNavController
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.AutoconfigServer
+import com.kakdela.p2p.ui.navigation.NavGraph
+import com.kakdela.p2p.ui.navigation.Routes
 import kotlinx.coroutines.*
 
 private val NeonCyan = Color(0xFF00FFFF)
@@ -58,12 +61,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // После регистрации — показываем NavGraph вместо закрытия
         if (appPrefs.getBoolean("registration_completed", false)) {
-            launchDeltaChat()
-            finish()
+            setContent {
+                MaterialTheme(
+                    colorScheme = darkColorScheme(
+                        primary = NeonCyan,
+                        secondary = NeonPurple,
+                        background = DarkBackground,
+                        surface = SurfaceGray,
+                    )
+                ) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
+                        val navController = rememberNavController()
+                        NavGraph(
+                            navController = navController,
+                            startDestination = Routes.CHATS
+                        )
+                    }
+                }
+            }
             return
         }
 
+        // Экран регистрации
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
@@ -73,14 +94,14 @@ class MainActivity : ComponentActivity() {
                     surface = SurfaceGray,
                 )
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = DarkBackground
-                ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
                     MainScreen(
                         isLoading = isLoading.value,
                         loadingMessage = loadingMessage.value,
-                        onLaunchEmail = { markCompletedAndLaunch { launchDeltaChat() } },
+                        onLaunchEmail = {
+                            markRegistrationCompleted()
+                            recreate() // Пересоздаём Activity, чтобы показать NavGraph
+                        },
                         onSetupAnonymous = { name, password ->
                             showAnonymousDialog.value = false
                             setupAnonymousAccount(name, password)
@@ -105,11 +126,6 @@ class MainActivity : ComponentActivity() {
 
     private fun markRegistrationCompleted() {
         appPrefs.edit().putBoolean("registration_completed", true).apply()
-    }
-
-    private fun markCompletedAndLaunch(action: () -> Unit) {
-        markRegistrationCompleted()
-        action()
     }
 
     private fun launchDeltaChat() {
@@ -200,6 +216,7 @@ class MainActivity : ComponentActivity() {
                     openDeltaChatWithDclogin(dcloginUrl)
                     isLoading.value = false
                     Toast.makeText(this@MainActivity, "Аккаунт создан!", Toast.LENGTH_SHORT).show()
+                    recreate() // Пересоздаём Activity, чтобы показать NavGraph
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -228,7 +245,6 @@ class MainActivity : ComponentActivity() {
                         }
                         delay(5000)
                     }
-
                     if (imapWasReady) {
                         withContext(Dispatchers.Main) {
                             loadingMessage.value = "Всё готово!"
@@ -290,23 +306,15 @@ fun AnonymousRegistrationDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = SurfaceGray),
             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(NeonPurple.copy(alpha = 0.2f))
-                        .border(2.dp, NeonPurple, CircleShape),
+                    modifier = Modifier.size(64.dp).clip(CircleShape)
+                        .background(NeonPurple.copy(alpha = 0.2f)).border(2.dp, NeonPurple, CircleShape),
                     contentAlignment = Alignment.Center
                 ) { Text("🛡️", fontSize = 28.sp) }
                 Spacer(Modifier.height(16.dp))
@@ -321,8 +329,7 @@ fun AnonymousRegistrationDialog(
                     label = { Text("Ваше имя", color = NeonCyan) }, singleLine = true,
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonCyan,
-                        unfocusedBorderColor = NeonCyan.copy(alpha = 0.3f),
+                        focusedBorderColor = NeonCyan, unfocusedBorderColor = NeonCyan.copy(alpha = 0.3f),
                         focusedTextColor = Color.White, unfocusedTextColor = Color.White, cursorColor = NeonCyan
                     )
                 )
@@ -334,8 +341,7 @@ fun AnonymousRegistrationDialog(
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonPurple,
-                        unfocusedBorderColor = NeonPurple.copy(alpha = 0.3f),
+                        focusedBorderColor = NeonPurple, unfocusedBorderColor = NeonPurple.copy(alpha = 0.3f),
                         focusedTextColor = Color.White, unfocusedTextColor = Color.White,
                         cursorColor = NeonPurple, errorBorderColor = Color.Red
                     ),
@@ -352,9 +358,7 @@ fun AnonymousRegistrationDialog(
                             else -> onConfirm(name.trim(), password)
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -379,126 +383,61 @@ fun MainScreen(
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ), label = "scale"
+        animationSpec = infiniteRepeatable(animation = tween(2000, easing = EaseInOutCubic), repeatMode = RepeatMode.Reverse),
+        label = "scale"
     )
 
     val gradientShift by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "gradient"
+        animationSpec = infiniteRepeatable(animation = tween(4000, easing = LinearEasing), repeatMode = RepeatMode.Reverse),
+        label = "gradient"
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(DeepPurple, Color(0xFF0D0020).copy(alpha = 0.9f), DarkBackground),
-                    startY = 0f + gradientShift * 200f, endY = 1000f + gradientShift * 200f
-                )
-            )
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(DeepPurple, Color(0xFF0D0020).copy(alpha = 0.9f), DarkBackground),
+                startY = 0f + gradientShift * 200f, endY = 1000f + gradientShift * 200f)
+        )
     ) {
-        // Фоновые элементы декора
-        Box(modifier = Modifier
-            .size(300.dp)
-            .offset((-100).dp, (-50).dp)
-            .clip(CircleShape)
-            .background(NeonPurple.copy(alpha = 0.05f)))
-        Box(modifier = Modifier
-            .size(200.dp)
-            .offset(250.dp, 600.dp)
-            .clip(CircleShape)
-            .background(NeonCyan.copy(alpha = 0.05f)))
+        Box(modifier = Modifier.size(300.dp).offset((-100).dp, (-50).dp).clip(CircleShape).background(NeonPurple.copy(alpha = 0.05f)))
+        Box(modifier = Modifier.size(200.dp).offset(250.dp, 600.dp).clip(CircleShape).background(NeonCyan.copy(alpha = 0.05f)))
 
-        // Основной контент с адаптивным позиционированием
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding() // Отступы от системных панелей (статусбар, навигация)
-                .padding(horizontal = 32.dp, vertical = 24.dp),
+            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 32.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            
-            // Гибкий отступ сверху, чтобы картинка была чуть выше центра
             Spacer(modifier = Modifier.weight(0.3f))
 
-            // Логотип
             Image(
                 painter = painterResource(id = R.drawable.intro1),
                 contentDescription = "Логотип",
-                modifier = Modifier
-                    .size(200.dp)
-                    .scale(scale)
+                modifier = Modifier.size(200.dp).scale(scale)
             )
 
-            // Гибкий отступ между логотипом и контентом (кнопки/загрузка спускаются ниже)
             Spacer(modifier = Modifier.weight(0.5f))
 
             if (isLoading) {
-                // UI Загрузки (заменяет кнопки, предотвращая перекрытие)
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .scale(scale)
-                            .clip(CircleShape)
-                            .background(NeonPurple.copy(alpha = 0.2f))
-                            .border(3.dp, NeonPurple, CircleShape),
+                        modifier = Modifier.size(80.dp).scale(scale).clip(CircleShape)
+                            .background(NeonPurple.copy(alpha = 0.2f)).border(3.dp, NeonPurple, CircleShape),
                         contentAlignment = Alignment.Center
                     ) { Text("⏳", fontSize = 32.sp) }
-                    
                     Spacer(Modifier.height(24.dp))
-                    
-                    Text(
-                        text = loadingMessage, 
-                        color = NeonCyan, 
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium, 
-                        textAlign = TextAlign.Center
-                    )
-                    
+                    Text(loadingMessage, color = NeonCyan, fontSize = 16.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(16.dp))
-                    
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .width(200.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = NeonPurple, 
-                        trackColor = NeonPurple.copy(alpha = 0.2f)
-                    )
+                    LinearProgressIndicator(modifier = Modifier.width(200.dp).clip(RoundedCornerShape(4.dp)), color = NeonPurple, trackColor = NeonPurple.copy(alpha = 0.2f))
                 }
             } else {
-                // UI Кнопок
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Кнопка 1: Email
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Button(
                         onClick = onLaunchEmail,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
+                        modifier = Modifier.fillMaxWidth().height(64.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.15f)),
                         shape = RoundedCornerShape(20.dp),
                         border = androidx.compose.foundation.BorderStroke(2.dp, NeonCyan.copy(alpha = 0.5f))
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(NeonCyan.copy(alpha = 0.2f))
-                                .border(1.dp, NeonCyan, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) { Text("📧", fontSize = 18.sp) }
+                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(NeonCyan.copy(alpha = 0.2f)).border(1.dp, NeonCyan, CircleShape), contentAlignment = Alignment.Center) { Text("📧", fontSize = 18.sp) }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text("Войти по email", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
@@ -508,24 +447,14 @@ fun MainScreen(
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Кнопка 2: Анонимный
                     Button(
                         onClick = onOpenDialog,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
+                        modifier = Modifier.fillMaxWidth().height(64.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(alpha = 0.15f)),
                         shape = RoundedCornerShape(20.dp),
                         border = androidx.compose.foundation.BorderStroke(2.dp, NeonPurple.copy(alpha = 0.5f))
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(NeonPurple.copy(alpha = 0.2f))
-                                .border(1.dp, NeonPurple, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) { Text("🛡️", fontSize = 18.sp) }
+                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(NeonPurple.copy(alpha = 0.2f)).border(1.dp, NeonPurple, CircleShape), contentAlignment = Alignment.Center) { Text("🛡️", fontSize = 18.sp) }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text("Анонимный аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NeonPurple)
@@ -535,21 +464,10 @@ fun MainScreen(
                 }
             }
 
-            // Гибкий отступ, прижимающий иконку настроек к низу экрана
             Spacer(modifier = Modifier.weight(0.4f))
 
-            Row(
-                modifier = Modifier
-                    .clickable { onLaunchTyr() }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.KeyboardArrowUp, 
-                    contentDescription = "Настройки",
-                    tint = Color.Gray.copy(alpha = 0.3f), 
-                    modifier = Modifier.size(16.dp)
-                )
+            Row(modifier = Modifier.clickable { onLaunchTyr() }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Настройки", tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
                 Text("⚙️", fontSize = 16.sp, color = Color.Gray.copy(alpha = 0.3f))
             }
