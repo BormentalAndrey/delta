@@ -3,19 +3,22 @@ package com.kakdela.p2p.ui.theme
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 // Неоновая палитра
-private val NeonCyan = Color(0xFF00FFF0)
-private val NeonPink = Color(0xFFFF00C8)
-private val NeonPurple = Color(0xFFD700FF)
-private val BackgroundBlack = Color(0xFF000000)
-private val SurfaceGray = Color(0xFF121212)
+val NeonCyan = Color(0xFF00FFF0)
+val NeonPink = Color(0xFFFF00C8)
+val NeonPurple = Color(0xFFD700FF)
+val BackgroundBlack = Color(0xFF000000)
+val SurfaceGray = Color(0xFF121212)
 
 private val DarkColorScheme = darkColorScheme(
     primary = NeonCyan,
@@ -45,8 +48,12 @@ fun KakdelaTheme(content: @Composable () -> Unit) {
         }
     }
 
-    MaterialTheme(
-        colorScheme = DarkColorScheme,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalIndication provides ripple()
+    ) {
+        MaterialTheme(
+            colorScheme = DarkColorScheme,
+            content = content
+        )
+    }
 }
