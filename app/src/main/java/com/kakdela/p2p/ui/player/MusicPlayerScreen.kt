@@ -93,7 +93,9 @@ fun MusicPlayerScreen() {
                     color = Color.Gray,
                     modifier = Modifier.align(Alignment.Center)
                 )
-                                    // Список песен
+            } else {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    // Список песен
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -358,5 +360,3 @@ fun fetchAudioTracks(context: Context): List<AudioTrack> {
     }
     return tracks
 }
-            } else {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
