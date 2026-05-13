@@ -16,21 +16,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.system.exitProcess
 
-/**
- * Экран пользовательского соглашения.
- * Заменяет OnboardingScreen для прямого юридического подтверждения.
- */
 @Composable
 fun OnboardingScreen(
     onFinished: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
 
-    // Цветовая палитра из вашей неоновой темы
-    val colorBg = Color(0原生_09, 0原生_09, 0原生_0B) // #09090B
+    val colorBg = Color(0xFF09090B)
     val colorCyan = Color(0xFF00FFFF)
     val colorPink = Color(0xFFFF00FF)
     val colorSurface = Color(0xFF18181B)
@@ -42,9 +35,8 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding() // Отступы для статус-бара и навигации
+                .systemBarsPadding()
         ) {
-            // Заголовок
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -60,7 +52,6 @@ fun OnboardingScreen(
                 )
             }
 
-            // Контейнер с текстом соглашения
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -85,14 +76,12 @@ fun OnboardingScreen(
                 }
             }
 
-            // Панель кнопок
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Кнопка принятия (Основная - Циан)
                 Button(
                     onClick = onFinished,
                     modifier = Modifier
@@ -112,18 +101,15 @@ fun OnboardingScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Кнопка отказа (Второстепенная - Розовая обводка)
                 OutlinedButton(
                     onClick = {
-                        // Закрытие приложения при отказе
-                        exitProcess(0)
+                        android.os.Process.killProcess(android.os.Process.myPid())
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colorPink),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colorPink)
                 ) {
                     Text(
                         text = "ОТКЛОНИТЬ И ВЫЙТИ",
@@ -131,7 +117,7 @@ fun OnboardingScreen(
                         fontWeight = FontWeight.Medium
                     )
                 }
-                
+
                 Text(
                     text = "Нажимая «Принять», вы подтверждаете совершеннолетие (18+)",
                     color = Color.Gray,
