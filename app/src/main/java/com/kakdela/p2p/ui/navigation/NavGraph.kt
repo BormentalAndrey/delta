@@ -1,6 +1,7 @@
 package com.kakdela.p2p.ui.navigation
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -70,10 +71,10 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN =================
+            // ================= MAIN: ЧАТЫ = DeltaChat =================
 
             composable(Routes.CHATS) {
-                AiChatScreen()
+                DeltaChatScreen()
             }
 
             // ================= SECTIONS =================
@@ -125,6 +126,39 @@ fun NavGraph(
             composable(Routes.AI_CHAT) {
                 AiChatScreen()
             }
+        }
+    }
+}
+
+// ================= DELTACHAT SCREEN =================
+
+@Composable
+fun DeltaChatScreen() {
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                setClassName(context.packageName, "org.thoughtcrime.securesms.ConversationListActivity")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("DeltaChatScreen", "Error launching DeltaChat", e)
+        }
+    }
+
+    // Заглушка на время загрузки
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(color = Color(0xFF00FFFF))
+            Spacer(Modifier.height(16.dp))
+            Text("Загрузка чатов...", color = Color.White, fontSize = 16.sp)
         }
     }
 }
