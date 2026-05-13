@@ -1,5 +1,7 @@
 package com.kakdela.p2p.ui.navigation
 
+import androidx.compose.ui.viewinterop.AndroidView
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -71,10 +73,10 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ = DeltaChat =================
+            // ================= MAIN: ЧАТЫ = DeltaChat встроенный =================
 
             composable(Routes.CHATS) {
-                DeltaChatScreen()
+                DeltaChatView()
             }
 
             // ================= SECTIONS =================
@@ -130,37 +132,34 @@ fun NavGraph(
     }
 }
 
-// ================= DELTACHAT SCREEN =================
+// ================= DELTACHAT VIEW (встроенный) =================
 
 @Composable
-fun DeltaChatScreen() {
+fun DeltaChatView() {
     val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        try {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                setClassName(context.packageName, "org.thoughtcrime.securesms.ConversationListActivity")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx ->
+            val activity = ctx as? Activity
+            val intent = Intent(ctx, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            android.util.Log.e("DeltaChatScreen", "Error launching DeltaChat", e)
+            
+            // Создаём контейнер для встраивания DeltaChat
+            android.widget.FrameLayout(ctx).apply {
+                id = android.R.id.content
+                layoutParams = android.widget.FrameLayout.LayoutParams(
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                
+                // Запускаем DeltaChat внутри этого контейнера
+                activity?.startActivity(intent)
+                activity?.overridePendingTransition(0, 0)
+            }
         }
-    }
-
-    // Заглушка на время загрузки
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(color = Color(0xFF00FFFF))
-            Spacer(Modifier.height(16.dp))
-            Text("Загрузка чатов...", color = Color.White, fontSize = 16.sp)
-        }
-    }
+    )
 }
 
 // ================= UI HELPERS =================
