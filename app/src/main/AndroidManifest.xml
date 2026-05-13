@@ -110,7 +110,7 @@
             <meta-data android:name="android.service.chooser.chooser_target_service" android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
         </activity>
 
-        <activity android:name="org.thoughtcrime.securesms.ConversationListActivity" android:exported="false" android:label="Как дела?" android:launchMode="singleInstance" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported,android:label,android:launchMode" />
+        <activity android:name="org.thoughtcrime.securesms.ConversationListActivity" android:exported="false" android:label="Как дела?" android:launchMode="standard" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported,android:label,android:launchMode" />
         <activity android:name="org.thoughtcrime.securesms.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported,android:windowSoftInputMode" />
         <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
