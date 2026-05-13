@@ -5,7 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.room.*
 import com.google.ai.client.generativeai.GenerativeModel
-import com.kakdela.p2p.BuildConfig
+import com.launcher.multiapp.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -61,35 +61,19 @@ abstract class AppDatabase : RoomDatabase() {
 // --- Hybrid AI Engine ---
 object HybridAiEngine {
 
-    /**
-     * Приоритет моделей:
-     * 1) Быстрые и дешёвые (Flash)
-     * 2) Latest alias (авто-обновление)
-     * 3) Pro (умнее, но дороже)
-     * 4) Gemma (стабильный fallback)
-     * 5) Preview (последний шанс)
-     */
     private val modelPriorityList = listOf(
-
-        // --- FAST / CHEAP ---
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-2.0-flash-001",
         "gemini-2.0-flash-lite",
         "gemini-2.0-flash-lite-001",
         "gemini-flash-latest",
-
-        // --- SMART ---
         "gemini-2.5-pro",
         "gemini-pro-latest",
-
-        // --- GEMMA (fallback, стабильные) ---
         "gemma-3-27b-it",
         "gemma-3-12b-it",
         "gemma-3-4b-it",
         "gemma-3-1b-it",
-
-        // --- EXPERIMENTAL (последний шанс) ---
         "gemini-3-flash-preview",
         "gemini-exp-1206"
     )
@@ -107,7 +91,6 @@ object HybridAiEngine {
             val db = AppDatabase.getDatabase(context).knowledgeDao()
             val hasInternet = NetworkUtils.isNetworkAvailable(context)
 
-            // --- RAG: поиск похожих знаний ---
             val keywords = userPrompt
                 .split(" ")
                 .filter { it.length > 4 }
@@ -120,7 +103,6 @@ object HybridAiEngine {
                 "Human: ${it.query}\nAI: ${it.answer}"
             }
 
-            // --- Cloud (Gemini / Gemma) ---
             if (hasInternet && BuildConfig.GEMINI_API_KEY.isNotBlank()) {
                 var backoff = 400L
 
@@ -163,7 +145,6 @@ object HybridAiEngine {
                     } catch (e: Exception) {
                         val msg = e.message ?: ""
 
-                        // квоты / временные ошибки → пробуем следующую модель
                         if (
                             msg.contains("429") ||
                             msg.contains("quota", true) ||
@@ -181,7 +162,6 @@ object HybridAiEngine {
                 }
             }
 
-            // --- Local Llama (Offline) ---
             try {
                 if (LlamaBridge.isLibAvailable() && LlamaBridge.isReady()) {
                     val localPrompt = """
