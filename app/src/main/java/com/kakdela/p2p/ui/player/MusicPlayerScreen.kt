@@ -1,4 +1,4 @@
-package com.launcher.multiapp.kakdela.ui.player
+package com.kakdela.p2p.ui.player
 
 import androidx.compose.foundation.BorderStroke
 import android.Manifest
@@ -33,8 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.launcher.multiapp.R
-import com.launcher.multiapp.kakdela.model.AudioTrack
-import com.launcher.multiapp.kakdela.MusicManager
+import com.kakdela.p2p.model.AudioTrack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,4 +87,11 @@ fun MusicPlayerScreen() {
                 .padding(paddingValues)
                 .background(Color.Black)
         ) {
-           
+            if (MusicManager.tracks.isEmpty()) {
+                Text(
+                    text = "Треки не найдены",
+                    color = Color.Gray,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
