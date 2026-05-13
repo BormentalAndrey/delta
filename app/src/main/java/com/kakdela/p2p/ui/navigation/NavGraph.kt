@@ -1,7 +1,5 @@
 package com.kakdela.p2p.ui.navigation
 
-import androidx.compose.ui.viewinterop.AndroidView
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -41,7 +39,8 @@ import com.kakdela.p2p.ui.screens.FileManagerScreen
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
+    onChatsTabSelected: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val isOnline by rememberIsOnline()
@@ -55,6 +54,13 @@ fun NavGraph(
         Routes.ENTERTAINMENT,
         Routes.SETTINGS
     )
+
+    // При входе на вкладку "Чаты" — запускаем DeltaChat
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == Routes.CHATS) {
+            onChatsTabSelected()
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -73,10 +79,22 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ = DeltaChat встроенный =================
+            // ================= MAIN: ЧАТЫ =================
 
             composable(Routes.CHATS) {
-                DeltaChatView()
+                // Пустой экран — DeltaChat уже запущен поверх
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Чаты открыты",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
             }
 
             // ================= SECTIONS =================
@@ -130,36 +148,6 @@ fun NavGraph(
             }
         }
     }
-}
-
-// ================= DELTACHAT VIEW (встроенный) =================
-
-@Composable
-fun DeltaChatView() {
-    val context = LocalContext.current
-    
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { ctx ->
-            val activity = ctx as? Activity
-            val intent = Intent(ctx, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }
-            
-            // Создаём контейнер для встраивания DeltaChat
-            android.widget.FrameLayout(ctx).apply {
-                id = android.R.id.content
-                layoutParams = android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-                )
-                
-                // Запускаем DeltaChat внутри этого контейнера
-                activity?.startActivity(intent)
-                activity?.overridePendingTransition(0, 0)
-            }
-        }
-    )
 }
 
 // ================= UI HELPERS =================
