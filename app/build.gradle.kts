@@ -23,7 +23,7 @@ val tinkVersion = "1.15.0"
 val coilVersion = "2.6.0"
 val poiVersion = "5.2.5"
 val guavaVersion = "33.2.1-android"
-val composeBomVersion = "2024.12.00"
+val composeBomVersion = "2024.11.00"
 val composeCompilerVersion = "1.5.15"
 val activityComposeVersion = "1.9.3"
 val navigationComposeVersion = "2.8.5"
@@ -156,7 +156,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose — обновлённый BOM и зависимости
+    // Compose — исправленный BOM и зависимости
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -196,8 +196,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")
-
-    // WebRTC — используется из DeltaChat (Stream WebRTC удалён)
 
     // Graphics
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
