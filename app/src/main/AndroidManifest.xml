@@ -76,7 +76,6 @@
         android:largeHeap="true"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
-        android:extractNativeLibs="true"
         android:requestLegacyExternalStorage="true"
         tools:replace="android:name,android:label,android:theme,android:allowBackup,android:icon"
         tools:targetApi="34">
@@ -130,7 +129,7 @@
         <activity android:name="com.jbselfcompany.tyr.ui.logs.LogsActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.ui.PeersActivity" android:exported="false" tools:replace="android:exported" />
         <activity android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:windowSoftInputMode" />
-        <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported" />
+        <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported,android:screenOrientation" />
 
         <!-- Tyr Services -->
         <service android:name="com.jbselfcompany.tyr.service.YggmailService" android:enabled="true" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="dataSync" tools:replace="android:exported,android:foregroundServiceType" />
@@ -169,7 +168,10 @@
             android:exported="false" 
             android:grantUriPermissions="true" 
             tools:replace="android:authorities">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+            <meta-data 
+                android:name="android.support.FILE_PROVIDER_PATHS" 
+                android:resource="@xml/file_paths"
+                tools:replace="android:resource" />
         </provider>
         
         <provider 
@@ -177,7 +179,9 @@
             android:authorities="${applicationId}.dcfileprovider" 
             android:exported="false" 
             android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/dc_file_paths" />
+            <meta-data 
+                android:name="android.support.FILE_PROVIDER_PATHS" 
+                android:resource="@xml/dc_file_paths" />
         </provider>
 
     </application>
