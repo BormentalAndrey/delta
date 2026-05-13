@@ -192,13 +192,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")
 
-    // WebRTC — используем webrtc-android из DeltaChat, исключаем из Stream
-    implementation("io.getstream:stream-webrtc-android:1.2.0") {
-        exclude(group = "org.webrtc", module = "google-webrtc")
-    }
-    implementation("io.getstream:stream-webrtc-android-compose:1.1.2") {
-        exclude(group = "org.webrtc", module = "google-webrtc")
-    }
+    // WebRTC — используется из DeltaChat (Stream WebRTC удалён)
 
     // Graphics
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
