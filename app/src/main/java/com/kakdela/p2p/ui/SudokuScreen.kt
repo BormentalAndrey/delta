@@ -10,11 +10,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,190 +64,192 @@ fun SudokuScreen() {
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "СУДОКУ",
-                        color = NeonPrimary,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 28.sp,
-                        letterSpacing = 4.sp,
-                        modifier = Modifier.shadow(12.dp, clip = false, spotColor = NeonPrimary)
-                    )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg),
-                actions = {
-                    IconButton(onClick = { newGame() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Новая игра",
-                            tint = NeonSecondary,
-                            modifier = Modifier.shadow(8.dp, CircleShape, clip = false, spotColor = NeonSecondary)
+    CompositionLocalProvider(LocalIndication provides ripple()) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            "СУДОКУ",
+                            color = NeonPrimary,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 28.sp,
+                            letterSpacing = 4.sp,
+                            modifier = Modifier.shadow(12.dp, clip = false, spotColor = NeonPrimary)
                         )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg),
+                    actions = {
+                        IconButton(onClick = { newGame() }) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = "Новая игра",
+                                tint = NeonSecondary,
+                                modifier = Modifier.shadow(8.dp, CircleShape, clip = false, spotColor = NeonSecondary)
+                            )
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(DarkBg)
+                    .padding(padding),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (isVictory) "🎉 ПОБЕДА! ГЕНИАЛЬНО! 🎉" else "Заполни поле правильно",
+                    color = if (isVictory) NeonSecondary else NeonPrimary,
+                    fontSize = if (isVictory) 28.sp else 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .shadow(
+                            elevation = if (isVictory) 16.dp else 4.dp,
+                            spotColor = if (isVictory) NeonSecondary else NeonPrimary,
+                            clip = false
+                        )
+                )
+
+                Card(
+                    modifier = Modifier
+                        .size(380.dp)
+                        .padding(8.dp)
+                        .shadow(24.dp, RoundedCornerShape(20.dp), clip = false, spotColor = NeonPrimary),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBg),
+                    border = BorderStroke(4.dp, NeonPrimary)
+                ) {
+                    Column {
+                        for (row in 0 until 9) {
+                            Row {
+                                for (col in 0 until 9) {
+                                    val cell = board[row][col]
+                                    val isSelected = selectedRow == row && selectedCol == col
+                                    val hasError = cell.value != 0 && !isValidPlacement(board, row, col, cell.value)
+
+                                    val selectedValue = if (selectedRow in 0..8 && selectedCol in 0..8)
+                                        board[selectedRow][selectedCol].value else 0
+                                    val isSameValue = cell.value == selectedValue && cell.value != 0 && !isSelected
+                                    val isSelectedRow = row == selectedRow
+                                    val isSelectedCol = col == selectedCol
+                                    val isSelectedBlock = selectedRow != -1 &&
+                                            row / 3 == selectedRow / 3 && col / 3 == selectedCol / 3
+
+                                    // Фон ячейки с неоновыми подсветками
+                                    var cellBg = CardBg
+                                    if (isSelectedBlock) cellBg = BlockHighlightBg
+                                    if (isSelectedRow || isSelectedCol) cellBg = NeonSecondary.copy(alpha = 0.25f)
+                                    if (isSameValue) cellBg = NeonAccent.copy(alpha = 0.25f)
+                                    if (isSelected) cellBg = NeonPrimary.copy(alpha = 0.45f)
+
+                                    // Цвет текста
+                                    val textColor = when {
+                                        cell.isFixed -> NeonPrimary
+                                        hasError -> NeonAccent
+                                        else -> NeonSecondary
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .padding(3.dp)
+                                            .background(cellBg)
+                                            .border(
+                                                width = if (col % 3 == 0) 4.dp else 1.dp,
+                                                color = if (col % 3 == 0) GridLineThick else GridLineThin
+                                            )
+                                            .border(
+                                                width = if (row % 3 == 0) 4.dp else 1.dp,
+                                                color = if (row % 3 == 0) GridLineThick else GridLineThin
+                                            )
+                                            .shadow(
+                                                elevation = if (isSelected) 16.dp else if (cell.value != 0) 4.dp else 0.dp,
+                                                shape = RoundedCornerShape(6.dp),
+                                                clip = false,
+                                                spotColor = NeonPrimary.copy(alpha = 0.6f)
+                                            )
+                                            .clickable { selectedRow = row; selectedCol = col },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = if (cell.value == 0) "" else cell.value.toString(),
+                                            fontSize = 32.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = textColor,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .shadow(
+                                                    elevation = 10.dp,
+                                                    spotColor = textColor,
+                                                    ambientColor = textColor.copy(alpha = 0.5f),
+                                                    clip = false
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkBg)
-                .padding(padding),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = if (isVictory) "🎉 ПОБЕДА! ГЕНИАЛЬНО! 🎉" else "Заполни поле правильно",
-                color = if (isVictory) NeonSecondary else NeonPrimary,
-                fontSize = if (isVictory) 28.sp else 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .shadow(
-                        elevation = if (isVictory) 16.dp else 4.dp,
-                        spotColor = if (isVictory) NeonSecondary else NeonPrimary,
-                        clip = false
-                    )
-            )
 
-            Card(
-                modifier = Modifier
-                    .size(380.dp)
-                    .padding(8.dp)
-                    .shadow(24.dp, RoundedCornerShape(20.dp), clip = false, spotColor = NeonPrimary),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBg),
-                border = BorderStroke(4.dp, NeonPrimary)
-            ) {
-                Column {
-                    for (row in 0 until 9) {
-                        Row {
-                            for (col in 0 until 9) {
-                                val cell = board[row][col]
-                                val isSelected = selectedRow == row && selectedCol == col
-                                val hasError = cell.value != 0 && !isValidPlacement(board, row, col, cell.value)
+                Spacer(Modifier.height(32.dp))
 
-                                val selectedValue = if (selectedRow in 0..8 && selectedCol in 0..8)
-                                    board[selectedRow][selectedCol].value else 0
-                                val isSameValue = cell.value == selectedValue && cell.value != 0 && !isSelected
-                                val isSelectedRow = row == selectedRow
-                                val isSelectedCol = col == selectedCol
-                                val isSelectedBlock = selectedRow != -1 &&
-                                        row / 3 == selectedRow / 3 && col / 3 == selectedCol / 3
-
-                                // Фон ячейки с неоновыми подсветками
-                                var cellBg = CardBg
-                                if (isSelectedBlock) cellBg = BlockHighlightBg
-                                if (isSelectedRow || isSelectedCol) cellBg = NeonSecondary.copy(alpha = 0.25f)
-                                if (isSameValue) cellBg = NeonAccent.copy(alpha = 0.25f)
-                                if (isSelected) cellBg = NeonPrimary.copy(alpha = 0.45f)
-
-                                // Цвет текста
-                                val textColor = when {
-                                    cell.isFixed -> NeonPrimary
-                                    hasError -> NeonAccent
-                                    else -> NeonSecondary
-                                }
-
-                                Box(
+                // Кнопки ввода цифр — неоновые круглые с свечением
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    for (chunk in listOf(1..5, 6..9)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        ) {
+                            for (num in chunk) {
+                                Button(
+                                    onClick = { setNumber(num) },
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
-                                        .padding(3.dp)
-                                        .background(cellBg)
-                                        .border(
-                                            width = if (col % 3 == 0) 4.dp else 1.dp,
-                                            color = if (col % 3 == 0) GridLineThick else GridLineThin
-                                        )
-                                        .border(
-                                            width = if (row % 3 == 0) 4.dp else 1.dp,
-                                            color = if (row % 3 == 0) GridLineThick else GridLineThin
-                                        )
-                                        .shadow(
-                                            elevation = if (isSelected) 16.dp else if (cell.value != 0) 4.dp else 0.dp,
-                                            shape = RoundedCornerShape(6.dp),
-                                            clip = false,
-                                            spotColor = NeonPrimary.copy(alpha = 0.6f)
-                                        )
-                                        .clickable { selectedRow = row; selectedCol = col },
-                                    contentAlignment = Alignment.Center
+                                        .size(60.dp)
+                                        .shadow(12.dp, CircleShape, clip = false, spotColor = NeonPrimary),
+                                    shape = CircleShape,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = NeonPrimary.copy(alpha = 0.2f),
+                                        contentColor = NeonPrimary
+                                    ),
+                                    border = BorderStroke(3.dp, NeonPrimary)
                                 ) {
                                     Text(
-                                        text = if (cell.value == 0) "" else cell.value.toString(),
-                                        fontSize = 32.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = textColor,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier
-                                            .shadow(
-                                                elevation = 10.dp,
-                                                spotColor = textColor,
-                                                ambientColor = textColor.copy(alpha = 0.5f),
-                                                clip = false
-                                            )
+                                        num.toString(),
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
                         }
                     }
-                }
-            }
 
-            Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(20.dp))
 
-            // Кнопки ввода цифр — неоновые круглые с свечением
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                for (chunk in listOf(1..5, 6..9)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(vertical = 6.dp)
+                    // Кнопка стирания
+                    Button(
+                        onClick = { setNumber(0) },
+                        modifier = Modifier
+                            .width(220.dp)
+                            .height(60.dp)
+                            .shadow(14.dp, RoundedCornerShape(30.dp), clip = false, spotColor = NeonAccent),
+                        shape = RoundedCornerShape(30.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = NeonAccent.copy(alpha = 0.2f),
+                            contentColor = NeonAccent
+                        ),
+                        border = BorderStroke(3.dp, NeonAccent)
                     ) {
-                        for (num in chunk) {
-                            Button(
-                                onClick = { setNumber(num) },
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .shadow(12.dp, CircleShape, clip = false, spotColor = NeonPrimary),
-                                shape = CircleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = NeonPrimary.copy(alpha = 0.2f),
-                                    contentColor = NeonPrimary
-                                ),
-                                border = BorderStroke(3.dp, NeonPrimary)
-                            ) {
-                                Text(
-                                    num.toString(),
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
+                        Text(
+                            "СТЕРЕТЬ",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
                     }
-                }
-
-                Spacer(Modifier.height(20.dp))
-
-                // Кнопка стирания
-                Button(
-                    onClick = { setNumber(0) },
-                    modifier = Modifier
-                        .width(220.dp)
-                        .height(60.dp)
-                        .shadow(14.dp, RoundedCornerShape(30.dp), clip = false, spotColor = NeonAccent),
-                    shape = RoundedCornerShape(30.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = NeonAccent.copy(alpha = 0.2f),
-                        contentColor = NeonAccent
-                    ),
-                    border = BorderStroke(3.dp, NeonAccent)
-                ) {
-                    Text(
-                        "СТЕРЕТЬ",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
                 }
             }
         }
