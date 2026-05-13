@@ -1,4 +1,4 @@
-package com.launcher.multiapp.kakdela.ui.player
+package com.kakdela.p2p.ui.player
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -184,6 +184,7 @@ class VideoPlayerActivity : ComponentActivity() {
     private fun setupGestures() {
         playerView.setOnTouchListener { _, event ->
             if (isLocked) {
+                // При locked тачи идут только на разблокировку (lockIcon clickable)
                 false
             } else {
                 when (event.actionMasked) {
@@ -245,6 +246,7 @@ class VideoPlayerActivity : ComponentActivity() {
             }
         }
 
+        // Разблокировка по тапу на lockIcon
         lockIcon.setOnClickListener { toggleLock() }
     }
 
