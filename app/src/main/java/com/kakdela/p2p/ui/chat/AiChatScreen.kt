@@ -15,10 +15,12 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalIndication
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,109 +51,111 @@ fun AiChatScreen(vm: AiChatViewModel = viewModel()) {
     // Периодически обновляем статус системы
     LaunchedEffect(Unit) { vm.refreshSystemStatus() }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Как дела? ИИ", color = NeonGreen, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.width(8.dp))
-                        if (vm.isOnline.value) {
-                            Icon(Icons.Default.Cloud, "Online", tint = NeonGreen, modifier = Modifier.size(16.dp))
-                        } else {
-                            Icon(Icons.Default.CloudOff, "Offline", tint = Color.Gray, modifier = Modifier.size(16.dp))
-                        }
-                        Spacer(Modifier.width(4.dp))
-                        if (vm.isModelDownloaded.value) {
-                            Icon(Icons.Default.Memory, "Local Ready", tint = Color.Yellow, modifier = Modifier.size(16.dp))
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg)
-            )
-        },
-        containerColor = DarkBg
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-            // 1. СПИСОК СООБЩЕНИЙ
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(messages) { msg ->
-                    AiChatBubble(msg)
-                    Spacer(Modifier.height(8.dp))
-                }
-
-                if (vm.isTyping.value) {
-                    item {
-                        Text(
-                            "Печатает...",
-                            color = NeonGreen,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
-            }
-
-            // 2. ЗОНА ЗАГРУЗКИ МОДЕЛИ
-            val showDownloadCard = !vm.isModelDownloaded.value
-            if (showDownloadCard) {
-                ModelDownloadCard(
-                    isDownloading = vm.isDownloading.value,
-                    progress = vm.downloadProgress.intValue,
-                    hasInternet = vm.isOnline.value,
-                    onDownload = { vm.downloadModel() }
-                )
-            }
-
-            // 3. ПОЛЕ ВВОДА
-            val canChat = vm.isOnline.value || vm.isModelDownloaded.value
-            if (canChat) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextField(
-                        value = input,
-                        onValueChange = { input = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text(if(vm.isOnline.value) "Спроси онлайн..." else "Спроси локальный ИИ...") },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceColor,
-                            unfocusedContainerColor = SurfaceColor,
-                            focusedTextColor = Color.White,
-                            cursorColor = NeonGreen,
-                        ),
-                        shape = RoundedCornerShape(24.dp),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (input.isNotBlank()) {
-                                vm.sendMessage(input)
-                                input = ""
+    CompositionLocalProvider(LocalIndication provides ripple()) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Как дела? ИИ", color = NeonGreen, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(8.dp))
+                            if (vm.isOnline.value) {
+                                Icon(Icons.Default.Cloud, "Online", tint = NeonGreen, modifier = Modifier.size(16.dp))
+                            } else {
+                                Icon(Icons.Default.CloudOff, "Offline", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
-                        },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = NeonGreen,
-                            disabledContainerColor = Color.Gray
-                        ),
-                        enabled = !vm.isTyping.value
-                    ) {
-                        Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.Black)
+                            Spacer(Modifier.width(4.dp))
+                            if (vm.isModelDownloaded.value) {
+                                Icon(Icons.Default.Memory, "Local Ready", tint = Color.Yellow, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg)
+                )
+            },
+            containerColor = DarkBg
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+
+                // 1. СПИСОК СООБЩЕНИЙ
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(messages) { msg ->
+                        AiChatBubble(msg)
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    if (vm.isTyping.value) {
+                        item {
+                            Text(
+                                "Печатает...",
+                                color = NeonGreen,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
                     }
                 }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Нет сети. Скачайте модель для офлайн работы.", color = Color.Gray)
+
+                // 2. ЗОНА ЗАГРУЗКИ МОДЕЛИ
+                val showDownloadCard = !vm.isModelDownloaded.value
+                if (showDownloadCard) {
+                    ModelDownloadCard(
+                        isDownloading = vm.isDownloading.value,
+                        progress = vm.downloadProgress.intValue,
+                        hasInternet = vm.isOnline.value,
+                        onDownload = { vm.downloadModel() }
+                    )
+                }
+
+                // 3. ПОЛЕ ВВОДА
+                val canChat = vm.isOnline.value || vm.isModelDownloaded.value
+                if (canChat) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = input,
+                            onValueChange = { input = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text(if(vm.isOnline.value) "Спроси онлайн..." else "Спроси локальный ИИ...") },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = SurfaceColor,
+                                unfocusedContainerColor = SurfaceColor,
+                                focusedTextColor = Color.White,
+                                cursorColor = NeonGreen,
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                if (input.isNotBlank()) {
+                                    vm.sendMessage(input)
+                                    input = ""
+                                }
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = NeonGreen,
+                                disabledContainerColor = Color.Gray
+                            ),
+                            enabled = !vm.isTyping.value
+                        ) {
+                            Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.Black)
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Нет сети. Скачайте модель для офлайн работы.", color = Color.Gray)
+                    }
                 }
             }
         }
