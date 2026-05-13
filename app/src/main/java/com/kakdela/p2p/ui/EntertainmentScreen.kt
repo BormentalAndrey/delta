@@ -80,13 +80,6 @@ private val entertainmentItems = listOf(
         route = Routes.AI_CHAT
     ),
     EntertainmentItem(
-        id = "slots_1",
-        title = "Слоты",
-        description = "Неоновый слот-автомат",
-        type = EntertainmentType.GAME,
-        route = Routes.SLOTS_1
-    ),
-    EntertainmentItem(
         id = "tictactoe",
         title = "Крестики-нолики",
         description = "Игра против ИИ",
