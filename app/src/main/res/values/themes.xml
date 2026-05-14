@@ -1,27 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ========== Тема лаунчера (Material Components) ========== -->
-    <style name="Theme.AppLauncher" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!-- ========== Тема лаунчера (наследует DeltaChat) ========== -->
+    <style name="Theme.AppLauncher" parent="TextSecure.LightNoActionBar">
+        <!-- Переопределяем только то, что нужно для нашего UI -->
         <item name="android:statusBarColor">@color/background_black</item>
         <item name="android:navigationBarColor">@color/background_black</item>
-
+        <item name="android:windowLightStatusBar">false</item>
+        
         <item name="colorPrimary">@color/delta_primary</item>
-        <item name="colorPrimaryVariant">@color/delta_primary_lite</item>
-        <item name="colorOnPrimary">@android:color/white</item>
-        <item name="colorSecondary">@color/delta_accent</item>
-        <item name="colorSecondaryVariant">@color/delta_accent_darker</item>
-        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorPrimaryDark">@color/delta_primary</item>
+        <item name="colorAccent">@color/delta_accent</item>
+        
         <item name="colorSurface">@color/surface_gray</item>
         <item name="colorOnSurface">@color/text_gray_light</item>
-        <item name="colorError">@color/md_theme_light_error</item>
-        <item name="colorOnError">@android:color/white</item>
         <item name="android:colorBackground">@color/background_black</item>
         <item name="colorOnBackground">@android:color/white</item>
-
-        <item name="fab_color">@color/delta_primary_lite</item>
-        <item name="colorAccent">@color/delta_accent</item>
-        <item name="colorControlActivated">@color/delta_accent</item>
-        <item name="colorControlHighlight">@color/delta_accent</item>
     </style>
 
     <!-- ========== Тема Kakdela ========== -->
@@ -34,29 +27,18 @@
         <item name="colorPrimary">@color/neon_cyan</item>
         <item name="colorPrimaryVariant">@color/neon_cyan</item>
         <item name="colorOnPrimary">@android:color/black</item>
-        <item name="colorPrimaryContainer">@color/neon_cyan</item>
-        <item name="colorOnPrimaryContainer">@android:color/black</item>
-
         <item name="colorSecondary">@color/neon_pink</item>
         <item name="colorSecondaryVariant">@color/neon_pink</item>
         <item name="colorOnSecondary">@android:color/white</item>
-        <item name="colorSecondaryContainer">@color/neon_pink</item>
-        <item name="colorOnSecondaryContainer">@android:color/white</item>
-
         <item name="colorTertiary">@color/neon_purple</item>
         <item name="colorOnTertiary">@android:color/white</item>
-
-        <item name="android:colorBackground">@color/background_black</item>
         <item name="colorSurface">@color/surface_gray</item>
         <item name="colorOnSurface">@color/text_gray_light</item>
-        <item name="colorOnBackground">@android:color/white</item>
         <item name="colorError">#FF4444</item>
         <item name="colorOnError">@android:color/white</item>
+        <item name="android:colorBackground">@color/background_black</item>
+        <item name="colorOnBackground">@android:color/white</item>
         <item name="colorOutline">#757575</item>
-
-        <item name="colorAccent">@color/neon_pink</item>
-        <item name="colorControlActivated">@color/neon_pink</item>
-        <item name="colorControlHighlight">@color/neon_pink</item>
     </style>
 
     <!-- ========== Тема Kakdela Translucent ========== -->
@@ -66,23 +48,15 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowNoTitle">true</item>
-
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-
         <item name="colorPrimary">@color/neon_cyan</item>
-        <item name="colorPrimaryVariant">@color/neon_cyan</item>
         <item name="colorOnPrimary">@android:color/black</item>
         <item name="colorSecondary">@color/neon_pink</item>
-        <item name="colorSecondaryVariant">@color/neon_pink</item>
         <item name="colorOnSecondary">@android:color/white</item>
         <item name="colorSurface">@android:color/transparent</item>
         <item name="colorOnSurface">@android:color/white</item>
         <item name="colorError">#FF4444</item>
         <item name="colorOnError">@android:color/white</item>
-
-        <item name="colorAccent">@color/neon_pink</item>
-        <item name="colorControlActivated">@color/neon_pink</item>
-        <item name="colorControlHighlight">@color/neon_pink</item>
     </style>
 </resources>
