@@ -1,4 +1,3 @@
-```kotlin
 package com.kakdela.p2p.ui.navigation
 
 import android.view.ViewGroup
@@ -126,8 +125,6 @@ fun NavGraph(
     }
 }
 
-// ================= DELTACHAT LAYOUT VIEW =================
-
 @Composable
 fun DeltaChatLayoutView() {
 
@@ -145,7 +142,6 @@ fun DeltaChatLayoutView() {
             val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
             rootView.addView(deltaLayout)
 
-            // Toolbar
             val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
             if (ctx is AppCompatActivity) {
                 ctx.setSupportActionBar(toolbar)
@@ -155,7 +151,6 @@ fun DeltaChatLayoutView() {
                 }
             }
 
-            // ConversationListFragment (один раз)
             val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
             if (fragmentContainer != null) {
                 val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
@@ -170,14 +165,12 @@ fun DeltaChatLayoutView() {
                 }
             }
 
-            // Кнопка поиска
             val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
             val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
             searchAction?.setOnClickListener { view ->
                 searchToolbar?.display(view.x.toFloat(), view.y.toFloat())
             }
 
-            // Аватар — меню аккаунтов
             val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
             selfAvatar?.setOnClickListener {
                 if (ctx is FragmentActivity) {
@@ -189,7 +182,6 @@ fun DeltaChatLayoutView() {
             rootView
         },
         update = { rootView ->
-            // Обновление динамических данных (заголовок, аватар, статус)
             val ctx = rootView.context
             val toolbarTitle = rootView.findViewById<android.widget.TextView>(R.id.toolbar_title)
             val selfAvatar = rootView.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
@@ -209,8 +201,6 @@ fun DeltaChatLayoutView() {
         }
     )
 }
-
-// ================= UI HELPERS =================
 
 @Composable
 private fun AppBottomBar(
@@ -319,4 +309,3 @@ fun NoInternetScreen(onBack: () -> Unit) {
         }
     }
 }
-```
