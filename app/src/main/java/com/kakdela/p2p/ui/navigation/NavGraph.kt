@@ -125,10 +125,15 @@ fun NavGraph(
 
 @Composable
 fun DeltaChatLayoutView() {
+    // Сохраняем rootView между переключениями вкладок
+    val savedRootView = remember { mutableStateOf<FrameLayout?>(null) }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
+            // Если rootView уже создан — возвращаем его
+            savedRootView.value?.let { return@AndroidView it }
+
             val rootView = FrameLayout(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -136,35 +141,24 @@ fun DeltaChatLayoutView() {
                 )
             }
 
-            // Получаем ID ресурсов динамически
             val pkg = ctx.packageName
             val layoutId = ctx.resources.getIdentifier("conversation_list_activity", "layout", pkg)
-            val toolbarId = ctx.resources.getIdentifier("toolbar", "id", pkg)
-            val fragContainerId = ctx.resources.getIdentifier("fragment_container", "id", pkg)
-            val searchToolbarId = ctx.resources.getIdentifier("search_toolbar", "id", pkg)
-            val searchActionId = ctx.resources.getIdentifier("search_action", "id", pkg)
-            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
-            val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
 
             val inflater = LayoutInflater.from(ctx)
             val deltaLayout = inflater.inflate(layoutId, rootView, false)
             rootView.addView(deltaLayout)
 
             // Toolbar
+            val toolbarId = ctx.resources.getIdentifier("toolbar", "id", pkg)
             if (toolbarId != 0) {
                 val toolbar = deltaLayout.findViewById<Toolbar>(toolbarId)
-                if (ctx is AppCompatActivity) {
+                if (ctx is AppCompatActivity && (ctx as AppCompatActivity).supportActionBar == null) {
                     ctx.setSupportActionBar(toolbar)
-                    toolbar?.setNavigationOnClickListener {
-                        if (searchToolbarId != 0) {
-                            val st = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
-                            if (st?.isVisible == true) st.collapse()
-                        }
-                    }
                 }
             }
 
-            // FragmentContainer
+            // Fragment — только один раз
+            val fragContainerId = ctx.resources.getIdentifier("fragment_container", "id", pkg)
             if (fragContainerId != 0) {
                 val fragmentContainer = deltaLayout.findViewById<FrameLayout>(fragContainerId)
                 if (fragmentContainer != null) {
@@ -181,7 +175,9 @@ fun DeltaChatLayoutView() {
                 }
             }
 
-            // Search
+            // Поиск
+            val searchActionId = ctx.resources.getIdentifier("search_action", "id", pkg)
+            val searchToolbarId = ctx.resources.getIdentifier("search_toolbar", "id", pkg)
             if (searchActionId != 0 && searchToolbarId != 0) {
                 val searchAction = deltaLayout.findViewById<android.widget.ImageView>(searchActionId)
                 val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
@@ -190,7 +186,8 @@ fun DeltaChatLayoutView() {
                 }
             }
 
-            // Avatar menu
+            // Аватар
+            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
             if (selfAvatarId != 0) {
                 val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
                 selfAvatar?.setOnClickListener {
@@ -201,6 +198,7 @@ fun DeltaChatLayoutView() {
                 }
             }
 
+            savedRootView.value = rootView
             rootView
         },
         update = { rootView ->
