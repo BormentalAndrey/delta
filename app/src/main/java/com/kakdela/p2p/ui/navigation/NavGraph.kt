@@ -7,20 +7,23 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.FrameLayout
+import androidx.appcompat.widget.Toolbar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,6 +43,7 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
 
 @Composable
@@ -60,14 +65,6 @@ fun NavGraph(
     )
 
     Scaffold(
-        topBar = {
-            if (currentRoute == Routes.CHATS || currentRoute == "archive") {
-                DeltaChatTopBar(
-                    isArchive = currentRoute == "archive",
-                    onBack = { navController.popBackStack() }
-                )
-            }
-        },
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(currentRoute, navController)
@@ -84,16 +81,10 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ =================
+            // ================= MAIN: ЧАТЫ = DeltaChat =================
 
             composable(Routes.CHATS) {
-                DeltaChatFragmentView(isArchive = false)
-            }
-
-            // ================= АРХИВ =================
-
-            composable("archive") {
-                DeltaChatFragmentView(isArchive = true)
+                DeltaChatLayoutView()
             }
 
             // ================= SECTIONS =================
@@ -149,81 +140,49 @@ fun NavGraph(
     }
 }
 
-// ================= DELTACHAT TOP BAR =================
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DeltaChatTopBar(isArchive: Boolean, onBack: () -> Unit) {
-    TopAppBar(
-        title = {
-            Text(
-                if (isArchive) "Архив" else "Как дела?",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        navigationIcon = {
-            if (isArchive) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Filled.ArrowBack, "Назад", tint = Color.White)
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.Gray)
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = { /* Поиск */ }) {
-                Icon(Icons.Filled.Search, "Поиск", tint = Color.White)
-            }
-            IconButton(onClick = { /* QR */ }) {
-                Icon(Icons.Filled.QrCodeScanner, "QR", tint = Color.White)
-            }
-            IconButton(onClick = { /* Меню */ }) {
-                Icon(Icons.Filled.MoreVert, "Меню", tint = Color.White)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFF121212)
-        )
-    )
-}
-
-// ================= DELTACHAT FRAGMENT VIEW =================
+// ================= DELTACHAT LAYOUT VIEW (полный макет с Toolbar) =================
 
 @Composable
-fun DeltaChatFragmentView(isArchive: Boolean) {
-    var fragmentContainerId by remember { mutableIntStateOf(View.generateViewId()) }
+fun DeltaChatLayoutView() {
+    val context = LocalContext.current
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            FragmentContainerView(ctx).apply {
-                id = fragmentContainerId
+            // Создаём корневой контейнер
+            val rootView = FrameLayout(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
-        },
-        update = { view ->
-            val fragmentManager = (view.context as androidx.fragment.app.FragmentActivity).supportFragmentManager
-            val currentFragment = fragmentManager.findFragmentById(view.id)
-            if (currentFragment == null) {
+
+            // Надуваем макет DeltaChat (conversation_list_activity.xml)
+            val inflater = LayoutInflater.from(ctx)
+            val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
+            rootView.addView(deltaLayout)
+
+            // Находим fragment_container и вставляем ConversationListFragment
+            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
+            if (fragmentContainer != null) {
+                val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
                 val fragment = ConversationListFragment()
-                fragment.arguments = Bundle().apply {
-                    putBoolean(ConversationListFragment.ARCHIVE, isArchive)
-                }
+                val args = Bundle()
+                args.putBoolean(ConversationListFragment.ARCHIVE, false)
+                fragment.arguments = args
+                
                 fragmentManager.beginTransaction()
-                    .replace(view.id, fragment)
+                    .replace(fragmentContainer.id, fragment)
                     .commit()
             }
+
+            // Настраиваем Toolbar
+            val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
+            if (toolbar != null && ctx is FragmentActivity) {
+                // Toolbar уже в макете, DeltaChat сам его настроит
+            }
+
+            rootView
         }
     )
 }
