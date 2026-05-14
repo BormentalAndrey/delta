@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.database.Address
 import com.b44t.messenger.DcContact
+import org.thoughtcrime.securesms.accounts.AccountSelectionListFragment
 
 @Composable
 fun NavGraph(
@@ -149,53 +150,62 @@ fun DeltaChatLayoutView() {
             if (ctx is AppCompatActivity) {
                 ctx.setSupportActionBar(toolbar)
                 toolbar?.setNavigationOnClickListener {
-                    val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
-                    if (searchToolbar?.isVisible == true) {
-                        searchToolbar.collapse()
-                    }
+                    val st = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
+                    if (st?.isVisible == true) st.collapse()
                 }
             }
 
-            // Заголовок и аватар
-            val toolbarTitle = deltaLayout.findViewById<android.widget.TextView>(R.id.toolbar_title)
-            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
-            try {
-                val dcContext = DcHelper.getContext(ctx)
-                val name = dcContext.getConfig("displayname") ?: "Как дела?"
-                toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
-                selfAvatar?.setConnectivity(dcContext.getConnectivity())
-
-                // Загрузка аватара с Glide
-                val glideRequests = GlideApp.with(ctx)
-                val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
-                selfAvatar?.setAvatar(glideRequests, recipient, false)
-            } catch (_: Exception) {
-                toolbarTitle?.text = "Как дела?"
-            }
-
-            // Кнопка поиска — display(float, float)
-            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
-            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
-            searchAction?.setOnClickListener { view ->
-                searchToolbar?.display(view.x, view.y)
-            }
-
-            // ConversationListFragment
+            // ConversationListFragment (один раз)
             val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
             if (fragmentContainer != null) {
                 val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
                 if (fragmentManager.findFragmentById(R.id.fragment_container) == null) {
                     val fragment = ConversationListFragment()
-                    val args = Bundle()
-                    args.putBoolean(ConversationListFragment.ARCHIVE, false)
-                    fragment.arguments = args
+                    fragment.arguments = Bundle().apply {
+                        putBoolean(ConversationListFragment.ARCHIVE, false)
+                    }
                     fragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, fragment)
                         .commit()
                 }
             }
 
+            // Кнопка поиска
+            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
+            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
+            searchAction?.setOnClickListener { view ->
+                searchToolbar?.display(view.x.toFloat(), view.y.toFloat())
+            }
+
+            // Аватар — меню аккаунтов
+            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
+            selfAvatar?.setOnClickListener {
+                if (ctx is FragmentActivity) {
+                    AccountSelectionListFragment.newInstance(false)
+                        .show(ctx.supportFragmentManager, null)
+                }
+            }
+
             rootView
+        },
+        update = { rootView ->
+            // Обновление динамических данных (заголовок, аватар, статус)
+            val ctx = rootView.context
+            val toolbarTitle = rootView.findViewById<android.widget.TextView>(R.id.toolbar_title)
+            val selfAvatar = rootView.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
+
+            try {
+                val dcContext = DcHelper.getContext(ctx)
+                val name = dcContext.getConfig("displayname") ?: "Как дела?"
+                toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
+                selfAvatar?.setConnectivity(dcContext.getConnectivity())
+
+                val glideRequests = GlideApp.with(ctx)
+                val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
+                selfAvatar?.setAvatar(glideRequests, recipient, false)
+            } catch (_: Exception) {
+                toolbarTitle?.text = "Как дела?"
+            }
         }
     )
 }
