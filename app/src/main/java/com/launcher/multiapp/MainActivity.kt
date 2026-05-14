@@ -110,14 +110,7 @@ class MainActivity :
 
                 // Управление видимостью фрагмента
                 LaunchedEffect(currentRoute, isRegistered.value) {
-                    chatContainer?.visibility =
-                        if (
-                            isRegistered.value &&
-                            currentRoute == Routes.CHATS
-                        ) {
-                            View.VISIBLE
-                        } else {
-                            View.GONE
+                    chatContainer?.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) View.VISIBLE else View.GONE
                         }
                 }
 
