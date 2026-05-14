@@ -5,6 +5,12 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,18 +42,31 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import org.thoughtcrime.securesms.ConversationListFragment
+import org.thoughtcrime.securesms.connect.DcHelper
+import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.database.Address
+import com.b44t.messenger.DcContact
+import org.thoughtcrime.securesms.accounts.AccountSelectionListFragment
+
+/**
+ * Глобальная переменная для кэширования View. 
+ * Внимание: использование статики для View может привести к утечкам контекста, 
+ * если Activity пересоздается. В идеале использовать ViewModel для хранения состояния.
+ */
+private var globalChatContainer: FrameLayout? = null
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String,
-    chatLayer: @Composable () -> Unit
+    startDestination: String
 ) {
     val isOnline by rememberIsOnline()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Определяем основные экраны для нижней панели
+    // Определяем, на каких экранах показывать нижнюю панель
     val showBottomBar = currentRoute in listOf(
         Routes.CHATS,
         Routes.DEALS,
@@ -56,101 +77,59 @@ fun NavGraph(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                AppBottomBar(
-                    currentRoute = currentRoute,
-                    navController = navController
-                )
+                AppBottomBar(currentRoute, navController)
             }
         },
-        // Фон Scaffold прозрачный только для чатов, чтобы видеть нативный слой
-        containerColor = if (currentRoute == Routes.CHATS) Color.Transparent else Color.Black
+        containerColor = Color.Black // Общий фон приложения
     ) { paddingValues ->
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            
-            // 1. НИЖНИЙ СЛОЙ: Нативный Delta Chat
-            // Отображается только когда мы на вкладке CHATS
-            if (currentRoute == Routes.CHATS) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues) 
-                ) {
-                    chatLayer()
-                }
-            }
-
-            // 2. ВЕРХНИЙ СЛОЙ: Compose Navigation
+        
+        // Используем Box для наложения слоев, если это необходимо
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+        ) {
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(
-                        if (currentRoute == Routes.CHATS) Color.Transparent else Color.Black
-                    )
+                modifier = Modifier.fillMaxSize()
             ) {
-                // Главные экраны
+                // --- ВКЛАДКА ЧАТЫ (Delta Chat) ---
                 composable(Routes.CHATS) {
-                    // Пусто, так как контент рисуется в слое chatLayer()
+                    DeltaChatView(Modifier.fillMaxSize())
                 }
 
+                // --- ВКЛАДКА ДЕЛА ---
                 composable(Routes.DEALS) {
                     DealsScreen(navController)
                 }
 
+                // --- ВКЛАДКА ДОСУГ ---
                 composable(Routes.ENTERTAINMENT) {
                     EntertainmentScreen(navController)
                 }
 
+                // --- ВКЛАДКА ОПЦИИ ---
                 composable(Routes.SETTINGS) {
                     SettingsScreen(navController)
                 }
 
-                // Инструменты (DEALS)
-                composable(Routes.CALCULATOR) {
-                    CalculatorScreen()
+                // --- ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ ---
+                composable(Routes.MUSIC) { MusicPlayerScreen() }
+                composable(Routes.CALCULATOR) { CalculatorScreen() }
+                composable(Routes.TEXT_EDITOR) { TextEditorScreen(navController) }
+                composable(Routes.AI_CHAT) { AiChatScreen() }
+                composable(Routes.FILE_MANAGER) { 
+                    FileManagerScreen(onExit = { navController.popBackStack() }) 
                 }
+                
+                // Игры
+                composable(Routes.TIC_TAC_TOE) { TicTacToeScreen() }
+                composable(Routes.CHESS) { ChessScreen() }
+                composable(Routes.PACMAN) { PacmanScreen() }
+                composable(Routes.SUDOKU) { SudokuScreen() }
+                composable(Routes.JEWELS) { JewelsBlastScreen() }
 
-                composable(Routes.TEXT_EDITOR) {
-                    TextEditorScreen(navController)
-                }
-
-                composable(Routes.FILE_MANAGER) {
-                    FileManagerScreen(onExit = { navController.popBackStack() })
-                }
-
-                composable(Routes.AI_CHAT) {
-                    AiChatScreen()
-                }
-
-                // Досуг (ENTERTAINMENT)
-                composable(Routes.MUSIC) {
-                    MusicPlayerScreen()
-                }
-
-                composable(Routes.TIC_TAC_TOE) {
-                    TicTacToeScreen()
-                }
-
-                composable(Routes.CHESS) {
-                    ChessScreen()
-                }
-
-                composable(Routes.PACMAN) {
-                    PacmanScreen()
-                }
-
-                composable(Routes.SUDOKU) {
-                    SudokuScreen()
-                }
-
-                composable(Routes.JEWELS) {
-                    JewelsBlastScreen()
-                }
-
-                // Системные: WebView
+                // WebView
                 composable(
                     route = "webview/{url}/{title}",
                     arguments = listOf(
@@ -160,15 +139,126 @@ fun NavGraph(
                 ) { entry ->
                     val url = entry.arguments?.getString("url") ?: ""
                     val title = entry.arguments?.getString("title") ?: ""
-
                     if (isOnline) {
-                        WebViewScreen(url = url, title = title, navController = navController)
+                        WebViewScreen(url, title, navController)
                     } else {
                         NoInternetScreen { navController.popBackStack() }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DeltaChatView(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            // Возвращаем существующий контейнер, чтобы не пересоздавать фрагмент при смене вкладок
+            globalChatContainer?.let { 
+                (it.parent as? ViewGroup)?.removeView(it)
+                return@AndroidView it 
+            }
+
+            val rootView = FrameLayout(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+
+            val pkg = ctx.packageName
+            val layoutId = ctx.resources.getIdentifier("conversation_list_activity", "layout", pkg)
+            if (layoutId == 0) return@AndroidView rootView
+
+            val inflater = LayoutInflater.from(ctx)
+            val deltaLayout = inflater.inflate(layoutId, rootView, false)
+            rootView.addView(deltaLayout)
+
+            // Настройка Toolbar
+            val toolbarId = ctx.resources.getIdentifier("toolbar", "id", pkg)
+            if (toolbarId != 0) {
+                val toolbar = deltaLayout.findViewById<Toolbar>(toolbarId)
+                if (ctx is AppCompatActivity && ctx.supportActionBar == null) {
+                    ctx.setSupportActionBar(toolbar)
+                }
+            }
+
+            // Инициализация Фрагмента списка чатов
+            val fragContainerId = ctx.resources.getIdentifier("fragment_container", "id", pkg)
+            if (fragContainerId != 0 && ctx is FragmentActivity) {
+                val fragmentManager = ctx.supportFragmentManager
+                if (fragmentManager.findFragmentById(fragContainerId) == null) {
+                    val fragment = ConversationListFragment().apply {
+                        arguments = Bundle().apply {
+                            putBoolean(ConversationListFragment.ARCHIVE, false)
+                        }
+                    }
+                    fragmentManager.beginTransaction()
+                        .replace(fragContainerId, fragment)
+                        .commit()
+                }
+            }
+
+            // Логика поиска
+            val searchActionId = ctx.resources.getIdentifier("search_action", "id", pkg)
+            val searchToolbarId = ctx.resources.getIdentifier("search_toolbar", "id", pkg)
+            if (searchActionId != 0 && searchToolbarId != 0) {
+                val searchAction = deltaLayout.findViewById<android.view.View>(searchActionId)
+                val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
+                searchAction?.setOnClickListener { view ->
+                    searchToolbar?.display(view.x, view.y)
+                }
+            }
+
+            // Логика клика по аватару (выбор аккаунта)
+            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
+            if (selfAvatarId != 0 && ctx is FragmentActivity) {
+                val selfAvatar = deltaLayout.findViewById<android.view.View>(selfAvatarId)
+                selfAvatar?.setOnClickListener {
+                    AccountSelectionListFragment.newInstance(false)
+                        .show(ctx.supportFragmentManager, null)
+                }
+            }
+
+            // Динамическое обновление UI (Заголовок и Статус)
+            updateDeltaChatUi(ctx, deltaLayout, pkg)
+
+            globalChatContainer = rootView
+            rootView
+        },
+        update = { /* Здесь можно обновлять View при изменении стейта Compose */ }
+    )
+}
+
+/**
+ * Вспомогательная функция для обновления данных в нативном слое
+ */
+private fun updateDeltaChatUi(ctx: Context, layout: android.view.View, pkg: String) {
+    val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
+    val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
+
+    try {
+        val dcContext = DcHelper.getContext(ctx)
+        
+        if (toolbarTitleId != 0) {
+            val toolbarTitle = layout.findViewById<android.widget.TextView>(toolbarTitleId)
+            val name = dcContext.getConfig("displayname") ?: "Как дела?"
+            toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
+        }
+
+        if (selfAvatarId != 0) {
+            val selfAvatar = layout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
+            selfAvatar?.setConnectivity(dcContext.getConnectivity())
+            val glideRequests = GlideApp.with(ctx)
+            val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
+            selfAvatar?.setAvatar(glideRequests, recipient, false)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }
 
@@ -215,7 +305,9 @@ private fun AppBottomBar(
                         color = if (selected) Color(0xFF00FFFF) else Color.Gray
                     )
                 },
-                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = Color.Transparent
+                )
             )
         }
     }
@@ -227,28 +319,20 @@ fun rememberIsOnline(): State<Boolean> {
     val state = remember { mutableStateOf(true) }
 
     DisposableEffect(context) {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) { state.value = true }
-            override fun onLost(network: Network) {
-                val caps = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-                state.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-            }
+            override fun onLost(network: Network) { state.value = false }
         }
-
-        try {
-            val request = NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build()
-            connectivityManager.registerNetworkCallback(request, callback)
-            val caps = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-            state.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        } catch (_: Exception) {
-            state.value = true
-        }
-
+        
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        
+        cm.registerNetworkCallback(request, callback)
+        
         onDispose {
-            try { connectivityManager.unregisterNetworkCallback(callback) } catch (_: Exception) {}
+            cm.unregisterNetworkCallback(callback)
         }
     }
     return state
@@ -261,31 +345,29 @@ fun NoInternetScreen(onBack: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.padding(24.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.CloudOff,
+                Icons.Default.CloudOff,
                 contentDescription = null,
                 tint = Color(0xFF00FFFF).copy(alpha = 0.6f),
                 modifier = Modifier.size(80.dp)
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
             Text(
-                text = "Нет соединения",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                "Нет соединения", 
+                color = Color.White, 
+                fontSize = 22.sp, 
+                fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
             OutlinedButton(
                 onClick = onBack,
                 border = BorderStroke(1.dp, Color(0xFF00FFFF)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00FFFF))
             ) {
-                Text(text = "ВЕРНУТЬСЯ", fontWeight = FontWeight.Bold)
+                Text("ВЕРНУТЬСЯ")
             }
         }
     }
