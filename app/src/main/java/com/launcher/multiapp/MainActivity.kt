@@ -56,43 +56,28 @@ import java.net.InetSocketAddress
 import java.net.Socket
 
 private val NeonCyan = Color(0xFF00FFFF)
-private val NeonGreen = Color(0xFF00FF9D)
 private val NeonPurple = Color(0xFFB042FF)
 private val DarkBackground = Color(0xFF0A0A0A)
 private val SurfaceGray = Color(0xFF1E1E1E)
 private val DeepPurple = Color(0xFF1A0033)
 
-class MainActivity :
-    FragmentActivity(),
-    BaseConversationListFragment.ConversationSelectedListener {
+class MainActivity : FragmentActivity(), BaseConversationListFragment.ConversationSelectedListener {
 
-    private val configRepository by lazy {
-        TyrApplication.instance.configRepository
-    }
-
-    private val autoconfigServer by lazy {
-        AutoconfigServer(this)
-    }
-
-    private val appPrefs by lazy {
-        getSharedPreferences("app_prefs", MODE_PRIVATE)
-    }
+    private val configRepository by lazy { TyrApplication.instance.configRepository }
+    private val autoconfigServer by lazy { AutoconfigServer(this) }
+    private val appPrefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
 
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
-
-    // Главный state приложения
     private var isRegistered = mutableStateOf(false)
 
-    // Постоянный контейнер DeltaChat
     private var chatContainer: FrameLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        isRegistered.value =
-            appPrefs.getBoolean("registration_completed", false)
+        isRegistered.value = appPrefs.getBoolean("registration_completed", false)
 
         setContent {
             AppTheme {
@@ -100,17 +85,18 @@ class MainActivity :
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-                // Инициализация DeltaChat слоя
+                // Инициализация слоя DeltaChat при регистрации
                 LaunchedEffect(isRegistered.value) {
                     if (isRegistered.value) {
                         initChatLayer()
                     }
                 }
 
-                // Управление видимостью фрагмента (Исправлено: добавлена закрывающая скобка)
+                // Синхронизация видимости нативного слоя с навигацией Compose
                 LaunchedEffect(currentRoute, isRegistered.value) {
                     chatContainer?.let { 
-                        it.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) View.VISIBLE else View.GONE 
+                        it.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) 
+                            View.VISIBLE else View.GONE
                     }
                 }
 
@@ -120,18 +106,14 @@ class MainActivity :
                 ) {
                     if (isRegistered.value) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            // Native DeltaChat Fragment
                             AndroidView(
-                                factory = { ctx ->
-                                    if (chatContainer == null) {
-                                        initChatLayer()
-                                    }
+                                factory = {
+                                    if (chatContainer == null) initChatLayer()
                                     chatContainer!!
                                 },
                                 modifier = Modifier.fillMaxSize()
                             )
 
-                            // Compose Navigation Overlay
                             NavGraph(
                                 navController = navController,
                                 startDestination = Routes.CHATS
@@ -149,19 +131,13 @@ class MainActivity :
                                 showAnonymousDialog.value = false
                                 setupAnonymousAccount(name, password)
                             },
-                            onOpenDialog = {
-                                showAnonymousDialog.value = true
-                            },
-                            onLaunchTyr = {
-                                launchTyr()
-                            }
+                            onOpenDialog = { showAnonymousDialog.value = true },
+                            onLaunchTyr = { launchTyr() }
                         )
 
                         if (showAnonymousDialog.value) {
                             AnonymousRegistrationDialog(
-                                onDismiss = {
-                                    showAnonymousDialog.value = false
-                                },
+                                onDismiss = { showAnonymousDialog.value = false },
                                 onConfirm = { name, password ->
                                     showAnonymousDialog.value = false
                                     setupAnonymousAccount(name, password)
@@ -186,20 +162,13 @@ class MainActivity :
             visibility = View.GONE
         }
 
-        val existing = supportFragmentManager.findFragmentByTag("DELTA_CHAT")
-        if (existing == null) {
+        val fragmentManager = supportFragmentManager
+        if (fragmentManager.findFragmentByTag("DELTA_CHAT") == null) {
             val fragment = ConversationListFragment().apply {
-                arguments = Bundle().apply {
-                    putBoolean("archive", false)
-                }
+                arguments = Bundle().apply { putBoolean("archive", false) }
             }
-
-            supportFragmentManager.beginTransaction()
-                .replace(
-                    chatContainer!!.id,
-                    fragment,
-                    "DELTA_CHAT"
-                )
+            fragmentManager.beginTransaction()
+                .replace(chatContainer!!.id, fragment, "DELTA_CHAT")
                 .commitAllowingStateLoss()
         }
     }
@@ -217,49 +186,33 @@ class MainActivity :
         )
     }
 
-    override fun onSwitchToArchive() {}
-
     override fun onCreateConversation(chatId: Int) {
-        val intent = Intent(
-            this,
-            ConversationActivity::class.java
-        ).apply {
-            putExtra(
-                ConversationActivity.CHAT_ID_EXTRA,
-                chatId
-            )
+        val intent = Intent(this, ConversationActivity::class.java).apply {
+            putExtra(ConversationActivity.CHAT_ID_EXTRA, chatId)
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         startActivity(intent)
     }
 
+    override fun onSwitchToArchive() {}
+
     private fun markRegistrationCompleted() {
-        appPrefs.edit()
-            .putBoolean("registration_completed", true)
-            .apply()
+        appPrefs.edit().putBoolean("registration_completed", true).apply()
     }
 
     private fun launchTyr() {
         try {
-            val intent = Intent(
-                this,
-                com.jbselfcompany.tyr.ui.MainActivity::class.java
-            ).apply {
+            val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
             try {
-                val intent = Intent(
-                    this,
-                    com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity::class.java
-                ).apply {
+                val intent = Intent(this, com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 startActivity(intent)
             } catch (e2: Exception) {
-                e2.printStackTrace()
                 Toast.makeText(this, "Tyr не найден", Toast.LENGTH_LONG).show()
             }
         }
@@ -267,10 +220,9 @@ class MainActivity :
 
     private fun setupAnonymousAccount(name: String, password: String) {
         try {
+            // Сохранение настроек в репозиторий Tyr
             try {
-                configRepository.javaClass
-                    .methods
-                    .find { it.name == "saveDisplayName" }
+                configRepository.javaClass.methods.find { it.name == "saveDisplayName" }
                     ?.invoke(configRepository, name)
             } catch (_: Exception) {}
 
@@ -286,36 +238,30 @@ class MainActivity :
                         YggmailService.start(this@MainActivity)
                     }
 
-                    withContext(Dispatchers.IO) {
-                        waitForServiceReady()
-                    }
+                    withContext(Dispatchers.IO) { waitForServiceReady() }
 
                     val email = configRepository.getMailAddress()
-
                     if (email.isNullOrEmpty()) {
                         isLoading.value = false
-                        Toast.makeText(this@MainActivity, "Не удалось создать аккаунт", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Ошибка адреса", Toast.LENGTH_LONG).show()
                         return@launch
                     }
 
                     loadingMessage.value = "Настройка DeltaChat..."
-
                     val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
                     openDeltaChatWithDclogin(dcloginUrl)
 
                     markRegistrationCompleted()
                     isLoading.value = false
-                    Toast.makeText(this@MainActivity, "Аккаунт создан!", Toast.LENGTH_SHORT).show()
                     isRegistered.value = true
+                    Toast.makeText(this@MainActivity, "Аккаунт готов!", Toast.LENGTH_SHORT).show()
 
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     isLoading.value = false
                     Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             isLoading.value = false
             Toast.makeText(this, "Ошибка инициализации", Toast.LENGTH_LONG).show()
         }
@@ -333,38 +279,28 @@ class MainActivity :
                 if (!email.isNullOrEmpty() && imapReady) {
                     if (!imapWasReady) {
                         imapWasReady = true
-                        withContext(Dispatchers.Main) {
-                            loadingMessage.value = "Подключение к сети..."
-                        }
+                        withContext(Dispatchers.Main) { loadingMessage.value = "Подключение..." }
                         delay(5000)
                     }
-                    withContext(Dispatchers.Main) {
-                        loadingMessage.value = "Всё готово!"
-                    }
+                    withContext(Dispatchers.Main) { loadingMessage.value = "Всё готово!" }
                     delay(1500)
                     return
                 } else {
-                    withContext(Dispatchers.Main) {
-                        loadingMessage.value = "Запуск сервера..."
-                    }
+                    withContext(Dispatchers.Main) { loadingMessage.value = "Запуск сервера..." }
                 }
             }
             delay(2000)
         }
-        throw IllegalStateException("Таймаут ожидания")
+        throw IllegalStateException("Таймаут")
     }
 
-    private suspend fun isImapReady(): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                Socket().use { socket ->
-                    socket.connect(InetSocketAddress("127.0.0.1", 1143), 2000)
-                    true
-                }
-            } catch (_: Exception) {
-                false
+    private suspend fun isImapReady(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress("127.0.0.1", 1143), 2000)
+                true
             }
-        }
+        } catch (_: Exception) { false }
     }
 
     private fun openDeltaChatWithDclogin(dcloginUrl: String) {
@@ -375,7 +311,6 @@ class MainActivity :
             }
             startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
             Toast.makeText(this, "DeltaChat не найден", Toast.LENGTH_LONG).show()
         }
     }
@@ -408,33 +343,20 @@ fun AnonymousRegistrationDialog(
                         .background(NeonPurple.copy(alpha = 0.2f))
                         .border(2.dp, NeonPurple, CircleShape),
                     contentAlignment = Alignment.Center
-                ) {
-                    Text("🛡️", fontSize = 28.sp)
-                }
+                ) { Text("🛡️", fontSize = 28.sp) }
 
                 Spacer(Modifier.height(16.dp))
                 Text("Анонимный аккаунт", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Придумайте имя и пароль.\nВсё остальное настроится автоматически.",
-                    fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center
-                )
+                Text("P2P почта без серверов", fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center)
 
                 Spacer(Modifier.height(24.dp))
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Ваше имя", color = NeonCyan) },
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonCyan,
-                        unfocusedBorderColor = NeonCyan.copy(alpha = 0.3f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = NeonCyan
-                    )
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonCyan)
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -442,42 +364,27 @@ fun AnonymousRegistrationDialog(
                     value = password,
                     onValueChange = { password = it; passwordError = null },
                     label = { Text("Пароль", color = NeonPurple) },
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonPurple,
-                        unfocusedBorderColor = NeonPurple.copy(alpha = 0.3f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = NeonPurple,
-                        errorBorderColor = Color.Red
-                    ),
                     isError = passwordError != null,
-                    supportingText = passwordError?.let { { Text(it, color = Color.Red) } }
+                    supportingText = passwordError?.let { { Text(it, color = Color.Red) } },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonPurple)
                 )
 
                 Spacer(Modifier.height(24.dp))
                 Button(
                     onClick = {
-                        when {
-                            name.isBlank() -> { passwordError = "Введите имя" }
-                            password.length < 6 -> { passwordError = "Минимум 6 символов" }
-                            else -> { onConfirm(name.trim(), password) }
-                        }
+                        if (name.isBlank() || password.length < 6) {
+                            passwordError = "Проверьте данные"
+                        } else onConfirm(name.trim(), password)
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
                     shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Создать аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                }
+                ) { Text("Создать аккаунт", fontWeight = FontWeight.Bold, color = Color.White) }
 
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onDismiss) {
-                    Text("Отмена", color = Color.Gray)
-                }
+                TextButton(onClick = onDismiss) { Text("Отмена", color = Color.Gray) }
             }
         }
     }
@@ -494,114 +401,55 @@ fun MainScreen(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
-        initialValue = 1f, targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ), label = "scale"
+        initialValue = 1f, targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutCubic), RepeatMode.Reverse),
+        label = "scale"
     )
 
-    val gradientShift by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "gradient"
-    )
-
-    Box(
-        modifier = Modifier.fillMaxSize().background(
-            Brush.verticalGradient(
-                listOf(DeepPurple, Color(0xFF0D0020).copy(alpha = 0.9f), DarkBackground),
-                startY = 0f + gradientShift * 200f,
-                endY = 1000f + gradientShift * 200f
-            )
-        )
-    ) {
-        Box(modifier = Modifier.size(300.dp).offset((-100).dp, (-50).dp).clip(CircleShape).background(NeonPurple.copy(alpha = 0.05f)))
-        Box(modifier = Modifier.size(200.dp).offset(250.dp, 600.dp).clip(CircleShape).background(NeonCyan.copy(alpha = 0.05f)))
-
+    Box(modifier = Modifier.fillMaxSize().background(
+        Brush.verticalGradient(listOf(DeepPurple, Color(0xFF0D0020).copy(0.9f), DarkBackground))
+    )) {
         Column(
             modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 32.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.weight(0.3f))
-            // Замените R.drawable.intro1 на ваш реальный ресурс
             Image(
                 painter = painterResource(id = R.drawable.intro1),
-                contentDescription = "Логотип",
+                contentDescription = "Logo",
                 modifier = Modifier.size(200.dp).scale(scale)
             )
             Spacer(modifier = Modifier.weight(0.5f))
 
             if (isLoading) {
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier.size(80.dp).scale(scale).clip(CircleShape)
-                            .background(NeonPurple.copy(alpha = 0.2f))
-                            .border(3.dp, NeonPurple, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("⏳", fontSize = 32.sp)
-                    }
-                    Spacer(Modifier.height(24.dp))
-                    Text(loadingMessage, color = NeonCyan, fontSize = 16.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = NeonPurple)
                     Spacer(Modifier.height(16.dp))
-                    LinearProgressIndicator(
-                        modifier = Modifier.width(200.dp).clip(RoundedCornerShape(4.dp)),
-                        color = NeonPurple,
-                        trackColor = NeonPurple.copy(alpha = 0.2f)
-                    )
+                    Text(loadingMessage, color = NeonCyan)
                 }
             } else {
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button(
-                        onClick = onLaunchEmail,
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(2.dp, NeonCyan.copy(alpha = 0.5f))
-                    ) {
-                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(NeonCyan.copy(alpha = 0.2f)).border(1.dp, NeonCyan, CircleShape), contentAlignment = Alignment.Center) {
-                            Text("📧", fontSize = 18.sp)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Войти по email", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
-                            Text("Стандартная регистрация", fontSize = 12.sp, color = Color.Gray)
-                        }
-                    }
+                Button(
+                    onClick = onLaunchEmail,
+                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(0.15f)),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(2.dp, NeonCyan.copy(0.5f))
+                ) { Text("Войти по email", color = NeonCyan, fontWeight = FontWeight.Bold) }
 
-                    Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
-                    Button(
-                        onClick = onOpenDialog,
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(2.dp, NeonPurple.copy(alpha = 0.5f))
-                    ) {
-                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(NeonPurple.copy(alpha = 0.2f)).border(1.dp, NeonPurple, CircleShape), contentAlignment = Alignment.Center) {
-                            Text("🛡️", fontSize = 18.sp)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Анонимный аккаунт", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NeonPurple)
-                            Text("Автоматическая настройка", fontSize = 12.sp, color = Color.Gray)
-                        }
-                    }
-                }
+                Button(
+                    onClick = onOpenDialog,
+                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(0.15f)),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(2.dp, NeonPurple.copy(0.5f))
+                ) { Text("Анонимный аккаунт", color = NeonPurple, fontWeight = FontWeight.Bold) }
             }
 
             Spacer(modifier = Modifier.weight(0.4f))
-
-            Row(
-                modifier = Modifier.clickable { onLaunchTyr() }.padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Настройки", tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("⚙️", fontSize = 16.sp, color = Color.Gray.copy(alpha = 0.3f))
+            IconButton(onClick = onLaunchTyr) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Settings", tint = Color.Gray)
             }
         }
     }
