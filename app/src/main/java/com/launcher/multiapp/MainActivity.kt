@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -70,7 +71,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Проверяем, был ли завершен вход ранее
+        // Проверяем статус регистрации
         isRegistered.value = appPrefs.getBoolean("registration_completed", false)
 
         setContent {
@@ -84,12 +85,11 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                         startDestination = Routes.CHATS
                     )
                 } else {
-                    // Экран регистрации/входа
-                    MainOnboardingScreen(
+                    // Экран приветствия и регистрации
+                    MainScreen(
                         isLoading = isLoading.value,
                         loadingMessage = loadingMessage.value,
                         onLaunchEmail = {
-                            // Логика стандартного входа через Delta Chat
                             markRegistrationCompleted()
                             isRegistered.value = true
                         },
@@ -100,7 +100,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                     if (showAnonymousDialog.value) {
                         AnonymousRegistrationDialog(
                             onDismiss = { showAnonymousDialog.value = false },
-                            onConfirm = { name, pass ->
+                            onConfirm = { name: String, pass: String ->
                                 showAnonymousDialog.value = false
                                 setupP2PAccount(name, pass)
                             }
@@ -111,16 +111,12 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
         }
     }
 
-    /**
-     * Логика автоматической настройки P2P-аккаунта
-     */
     private fun setupP2PAccount(name: String, password: String) {
         isLoading.value = true
         loadingMessage.value = "Инициализация P2P-узла..."
 
         lifecycleScope.launch {
             try {
-                // 1. Сохраняем базовый конфиг в Tyr
                 withContext(Dispatchers.IO) {
                     try {
                         configRepository.javaClass.methods
@@ -131,29 +127,24 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                     configRepository.setOnboardingCompleted(true)
                 }
 
-                // 2. Запускаем YggmailService, если он еще не в работе
                 if (!YggmailService.isRunning) {
                     YggmailService.start(this@MainActivity)
                 }
 
-                // 3. Ждем готовности IMAP/SMTP порта на 127.0.0.1
                 waitForServiceReady()
 
-                // 4. Генерируем магическую ссылку для Delta Chat
                 val email = configRepository.getMailAddress()
                 if (email.isNullOrEmpty()) throw Exception("Сеть не назначила адрес")
 
-                loadingMessage.value = "Синхронизация с мессенджером..."
+                loadingMessage.value = "Синхронизация..."
                 val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
                 
-                // 5. Отправляем Intent в Delta Chat (внутри этого же APK)
                 openDeltaChatDeepLink(dcloginUrl)
 
                 markRegistrationCompleted()
                 isRegistered.value = true
                 
             } catch (e: Exception) {
-                isLoading.value = false
                 Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isLoading.value = false
@@ -163,20 +154,18 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
 
     private suspend fun waitForServiceReady() = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        val timeout = 120_000L // 2 минуты на холодный запуск P2P
+        val timeout = 120_000L
 
         while (System.currentTimeMillis() - startTime < timeout) {
             if (YggmailService.isRunning && isPortOpen("127.0.0.1", 1143)) {
                 withContext(Dispatchers.Main) { loadingMessage.value = "Сеть найдена!" }
-                delay(2000)
+                delay(1500)
                 return@withContext
             }
-            withContext(Dispatchers.Main) { 
-                loadingMessage.value = "Поиск P2P пиров..." 
-            }
+            withContext(Dispatchers.Main) { loadingMessage.value = "Поиск P2P пиров..." }
             delay(3000)
         }
-        throw Exception("Таймаут подключения к P2P")
+        throw Exception("Таймаут P2P")
     }
 
     private fun isPortOpen(host: String, port: Int): Boolean {
@@ -193,7 +182,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Компонент чата не готов", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "DeltaChat не найден", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -206,7 +195,6 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
         startActivity(intent)
     }
 
-    // Обработка клика по чату в нативном фрагменте
     override fun onCreateConversation(chatId: Int) {
         val intent = Intent(this, ConversationActivity::class.java).apply {
             putExtra(ConversationActivity.CHAT_ID_EXTRA, chatId)
@@ -228,4 +216,115 @@ fun AppTheme(content: @Composable () -> Unit) {
         ),
         content = content
     )
+}
+
+@Composable
+fun MainScreen(
+    isLoading: Boolean,
+    loadingMessage: String,
+    onLaunchEmail: () -> Unit,
+    onOpenDialog: () -> Unit,
+    onLaunchTyr: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f, targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ), label = "scale"
+    )
+
+    Box(modifier = Modifier.fillMaxSize().background(
+        Brush.verticalGradient(listOf(DeepPurple, DarkBackground))
+    )) {
+        Column(
+            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.weight(1f))
+            Image(
+                painter = painterResource(id = R.drawable.intro1),
+                contentDescription = null,
+                modifier = Modifier.size(180.dp).scale(scale)
+            )
+            Spacer(Modifier.weight(1f))
+
+            if (isLoading) {
+                CircularProgressIndicator(color = NeonCyan)
+                Spacer(Modifier.height(16.dp))
+                Text(loadingMessage, color = NeonCyan, textAlign = TextAlign.Center)
+            } else {
+                Button(
+                    onClick = onLaunchEmail,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.1f)),
+                    border = BorderStroke(1.dp, NeonCyan)
+                ) {
+                    Text("Войти по Email", color = NeonCyan)
+                }
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = onOpenDialog,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(alpha = 0.1f)),
+                    border = BorderStroke(1.dp, NeonPurple)
+                ) {
+                    Text("Анонимный аккаунт", color = NeonPurple)
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                "Настройки сети",
+                modifier = Modifier.clickable { onLaunchTyr() }.padding(8.dp),
+                color = Color.Gray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun AnonymousRegistrationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SurfaceGray),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("Создать узел", color = NeonCyan, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Имя") },
+                    singleLine = true
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Пароль") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = { if (name.isNotBlank() && password.length >= 6) onConfirm(name, password) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple)
+                ) {
+                    Text("Готово")
+                }
+            }
+        }
+    }
 }
