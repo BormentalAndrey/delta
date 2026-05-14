@@ -139,9 +139,9 @@ fun NavGraph(
 
 @Composable
 fun DeltaChatFragmentView() {
-    val context = LocalContext.current
     var fragmentContainerId by remember { mutableIntStateOf(View.generateViewId()) }
 
+    // Не добавляем отступы — DeltaChat сам управляет своими insets
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
