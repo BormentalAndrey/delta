@@ -341,4 +341,3 @@ fun NoInternetScreen(onBack: () -> Unit) {
         }
     }
 }
-```
