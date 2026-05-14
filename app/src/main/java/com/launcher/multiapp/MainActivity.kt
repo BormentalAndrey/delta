@@ -16,7 +16,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -33,15 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.AutoconfigServer
-import com.kakdela.p2p.ui.navigation.NavGraph
-import com.kakdela.p2p.ui.navigation.Routes
 import kotlinx.coroutines.*
-import org.thoughtcrime.securesms.BaseConversationListFragment
 
 private val NeonCyan = Color(0xFF00FFFF)
 private val NeonGreen = Color(0xFF00FF9D)
@@ -50,8 +50,7 @@ private val DarkBackground = Color(0xFF0A0A0A)
 private val SurfaceGray = Color(0xFF1E1E1E)
 private val DeepPurple = Color(0xFF1A0033)
 
-class MainActivity : FragmentActivity(), 
-    BaseConversationListFragment.ConversationSelectedListener {
+class MainActivity : FragmentActivity() {
 
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
@@ -60,35 +59,22 @@ class MainActivity : FragmentActivity(),
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
-    private var navController: NavHostController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (appPrefs.getBoolean("registration_completed", false)) {
-            setContent {
-                MaterialTheme(
-                    colorScheme = darkColorScheme(
-                        primary = NeonCyan,
-                        secondary = NeonPurple,
-                        background = DarkBackground,
-                        surface = SurfaceGray,
-                    )
-                ) {
-                    val controller = rememberNavController()
-                    this.navController = controller
+            // Запускаем ConversationListActivity (настоящий DeltaChat)
+            startActivity(Intent(this, org.thoughtcrime.securesms.ConversationListActivity::class.java))
 
-                    Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
-                        NavGraph(
-                            navController = controller,
-                            startDestination = Routes.CHATS
-                        )
-                    }
-                }
+            // MainActivity показывает только BottomBar
+            setContent {
+                MainBottomBar()
             }
             return
         }
 
+        // Экран регистрации
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
@@ -128,20 +114,76 @@ class MainActivity : FragmentActivity(),
         }
     }
 
-    // ========== ConversationSelectedListener ==========
+    // ========== BottomBar ==========
 
-    override fun onSwitchToArchive() {
-        navController?.navigate("archive") {
-            launchSingleTop = true
-        }
-    }
+    @Composable
+    fun MainBottomBar() {
+        val context = LocalContext.current
 
-    override fun onCreateConversation(chatId: Int) {
-        val intent = Intent(this, org.thoughtcrime.securesms.ConversationActivity::class.java).apply {
-            putExtra(org.thoughtcrime.securesms.ConversationActivity.CHAT_ID_EXTRA, chatId)
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        MaterialTheme(
+            colorScheme = darkColorScheme(
+                primary = NeonCyan,
+                secondary = NeonPurple,
+                background = Color.Transparent,
+                surface = Color.Transparent,
+            )
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                NavigationBar(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    containerColor = Color(0xFF010101),
+                    tonalElevation = 0.dp
+                ) {
+                    NavigationBarItem(
+                        selected = true,
+                        onClick = {
+                            val intent = Intent(context, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            }
+                            context.startActivity(intent)
+                        },
+                        icon = { Icon(Icons.Outlined.ChatBubbleOutline, "Чаты", tint = Color(0xFF00FFFF)) },
+                        label = { Text("Чаты", color = Color(0xFF00FFFF), fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = {
+                            val intent = Intent(context, com.kakdela.p2p.MainActivity::class.java).apply {
+                                putExtra("screen", "deals")
+                                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            }
+                            context.startActivity(intent)
+                        },
+                        icon = { Icon(Icons.Filled.Checklist, "Дела", tint = Color.Gray) },
+                        label = { Text("Дела", color = Color.Gray, fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = {
+                            val intent = Intent(context, com.kakdela.p2p.MainActivity::class.java).apply {
+                                putExtra("screen", "entertainment")
+                                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            }
+                            context.startActivity(intent)
+                        },
+                        icon = { Icon(Icons.Outlined.PlayCircleOutline, "Досуг", tint = Color.Gray) },
+                        label = { Text("Досуг", color = Color.Gray, fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = {
+                            val intent = Intent(context, com.kakdela.p2p.MainActivity::class.java).apply {
+                                putExtra("screen", "settings")
+                                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            }
+                            context.startActivity(intent)
+                        },
+                        icon = { Icon(Icons.Filled.Settings, "Настройки", tint = Color.Gray) },
+                        label = { Text("Настройки", color = Color.Gray, fontSize = 10.sp) }
+                    )
+                }
+            }
         }
-        startActivity(intent)
     }
 
     // ========== Остальные методы ==========
