@@ -46,317 +46,121 @@ fun NavGraph(
     startDestination: String,
     chatLayer: @Composable () -> Unit
 ) {
-
     val isOnline by rememberIsOnline()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
 
-    val backStackEntry by
-        navController.currentBackStackEntryAsState()
-
-    val currentRoute =
-        backStackEntry?.destination?.route
-
-    val showBottomBar =
-        currentRoute in listOf(
-            Routes.CHATS,
-            Routes.DEALS,
-            Routes.ENTERTAINMENT,
-            Routes.SETTINGS
-        )
+    // Определяем, на какой вкладке показывать BottomBar
+    val showBottomBar = currentRoute in listOf(
+        Routes.CHATS,
+        Routes.DEALS,
+        Routes.ENTERTAINMENT,
+        Routes.SETTINGS
+    )
 
     Scaffold(
-
         modifier = Modifier.fillMaxSize(),
-
         bottomBar = {
-
             if (showBottomBar) {
-
                 AppBottomBar(
                     currentRoute = currentRoute,
                     navController = navController
                 )
             }
         },
-
-        // КРИТИЧНО:
-        // прозрачный scaffold на экране чатов
-        containerColor =
-            if (currentRoute == Routes.CHATS) {
-                Color.Transparent
-            } else {
-                AppBlack
-            }
-
+        // Делаем фон Scaffold прозрачным только для экрана чатов
+        containerColor = if (currentRoute == Routes.CHATS) Color.Transparent else AppBlack
     ) { paddingValues ->
 
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            // ====================================================
-            // NATIVE DELTACHAT LAYER
-            // ====================================================
-            // ВАЖНО:
-            // НЕ удаляем layer из composition.
-            // Fragment должен жить всегда.
-            // Меняем visibility в MainActivity.
-            // ====================================================
-
+        Box(modifier = Modifier.fillMaxSize()) {
+            
+            // --- СЛОЙ 0: НАТИВНЫЙ (Delta Chat Fragment) ---
+            // Он всегда в дереве, чтобы не терять состояние фрагмента.
+            // Padding применяется только снизу, чтобы контент не заходил под BottomBar.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(bottom = if (showBottomBar) paddingValues.calculateBottomPadding() else 0.dp)
             ) {
                 chatLayer()
             }
 
-            // ====================================================
-            // COMPOSE NAVIGATION OVERLAY
-            // ====================================================
-
+            // --- СЛОЙ 1: COMPOSE NAVIGATION ---
             NavHost(
                 navController = navController,
-
                 startDestination = startDestination,
-
                 modifier = Modifier
                     .fillMaxSize()
-                    .zIndex(1f)
+                    .zIndex(1f) // Поверх нативного слоя
                     .background(
-                        if (currentRoute == Routes.CHATS) {
-                            Color.Transparent
-                        } else {
-                            AppBlack
-                        }
+                        if (currentRoute == Routes.CHATS) Color.Transparent else AppBlack
                     )
             ) {
-
-                // ====================================================
-                // CHATS
-                // ====================================================
-
+                // Главные экраны
                 composable(Routes.CHATS) {
-
-                    // Пустой прозрачный overlay
-                    // над native DeltaChat fragment
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                    )
+                    // Оставляем пустым, чтобы видеть chatLayer через прозрачный фон NavHost
+                    Box(modifier = Modifier.fillMaxSize())
                 }
-
-                // ====================================================
-                // DEALS
-                // ====================================================
 
                 composable(Routes.DEALS) {
-
-                    ScreenContainer(
-                        paddingValues = paddingValues
-                    ) {
-
-                        DealsScreen(navController)
-                    }
+                    ScreenContainer(paddingValues) { DealsScreen(navController) }
                 }
-
-                // ====================================================
-                // ENTERTAINMENT
-                // ====================================================
 
                 composable(Routes.ENTERTAINMENT) {
-
-                    ScreenContainer(
-                        paddingValues = paddingValues
-                    ) {
-
-                        EntertainmentScreen(navController)
-                    }
+                    ScreenContainer(paddingValues) { EntertainmentScreen(navController) }
                 }
-
-                // ====================================================
-                // SETTINGS
-                // ====================================================
 
                 composable(Routes.SETTINGS) {
-
-                    ScreenContainer(
-                        paddingValues = paddingValues
-                    ) {
-
-                        SettingsScreen(navController)
-                    }
+                    ScreenContainer(paddingValues) { SettingsScreen(navController) }
                 }
 
-                // ====================================================
-                // MUSIC
-                // ====================================================
-
+                // Инструменты и Досуг (Без нижнего бара)
                 composable(Routes.MUSIC) {
-
-                    ScreenContainer {
-
-                        MusicPlayerScreen()
-                    }
+                    ScreenContainer { MusicPlayerScreen() }
                 }
-
-                // ====================================================
-                // WEBVIEW
-                // ====================================================
-
-                composable(
-                    route = "webview/{url}/{title}",
-
-                    arguments = listOf(
-
-                        navArgument("url") {
-                            type = NavType.StringType
-                        },
-
-                        navArgument("title") {
-                            type = NavType.StringType
-                        }
-                    )
-                ) { entry ->
-
-                    val url =
-                        entry.arguments?.getString("url")
-                            ?: ""
-
-                    val title =
-                        entry.arguments?.getString("title")
-                            ?: ""
-
-                    ScreenContainer {
-
-                        if (isOnline) {
-
-                            WebViewScreen(
-                                url = url,
-                                title = title,
-                                navController = navController
-                            )
-
-                        } else {
-
-                            NoInternetScreen(
-                                onBack = {
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // ====================================================
-                // CALCULATOR
-                // ====================================================
 
                 composable(Routes.CALCULATOR) {
-
-                    ScreenContainer {
-
-                        CalculatorScreen()
-                    }
+                    ScreenContainer { CalculatorScreen() }
                 }
-
-                // ====================================================
-                // TEXT EDITOR
-                // ====================================================
 
                 composable(Routes.TEXT_EDITOR) {
-
-                    ScreenContainer {
-
-                        TextEditorScreen(navController)
-                    }
+                    ScreenContainer { TextEditorScreen(navController) }
                 }
-
-                // ====================================================
-                // FILE MANAGER
-                // ====================================================
-
-                composable(Routes.FILE_MANAGER) {
-
-                    ScreenContainer {
-
-                        FileManagerScreen(
-                            onExit = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                }
-
-                // ====================================================
-                // TIC TAC TOE
-                // ====================================================
-
-                composable(Routes.TIC_TAC_TOE) {
-
-                    ScreenContainer {
-
-                        TicTacToeScreen()
-                    }
-                }
-
-                // ====================================================
-                // CHESS
-                // ====================================================
-
-                composable(Routes.CHESS) {
-
-                    ScreenContainer {
-
-                        ChessScreen()
-                    }
-                }
-
-                // ====================================================
-                // PACMAN
-                // ====================================================
-
-                composable(Routes.PACMAN) {
-
-                    ScreenContainer {
-
-                        PacmanScreen()
-                    }
-                }
-
-                // ====================================================
-                // SUDOKU
-                // ====================================================
-
-                composable(Routes.SUDOKU) {
-
-                    ScreenContainer {
-
-                        SudokuScreen()
-                    }
-                }
-
-                // ====================================================
-                // JEWELS
-                // ====================================================
-
-                composable(Routes.JEWELS) {
-
-                    ScreenContainer {
-
-                        JewelsBlastScreen()
-                    }
-                }
-
-                // ====================================================
-                // AI CHAT
-                // ====================================================
 
                 composable(Routes.AI_CHAT) {
+                    ScreenContainer { AiChatScreen() }
+                }
+
+                composable(Routes.FILE_MANAGER) {
+                    ScreenContainer { 
+                        FileManagerScreen(onExit = { navController.popBackStack() }) 
+                    }
+                }
+
+                // Игры
+                composable(Routes.TIC_TAC_TOE) { ScreenContainer { TicTacToeScreen() } }
+                composable(Routes.CHESS) { ScreenContainer { ChessScreen() } }
+                composable(Routes.PACMAN) { ScreenContainer { PacmanScreen() } }
+                composable(Routes.JEWELS) { ScreenContainer { JewelsBlastScreen() } }
+                composable(Routes.SUDOKU) { ScreenContainer { SudokuScreen() } }
+
+                // WebView с обработкой интернета
+                composable(
+                    route = "webview/{url}/{title}",
+                    arguments = listOf(
+                        navArgument("url") { type = NavType.StringType },
+                        navArgument("title") { type = NavType.StringType }
+                    )
+                ) { entry ->
+                    val url = entry.arguments?.getString("url") ?: ""
+                    val title = entry.arguments?.getString("title") ?: ""
 
                     ScreenContainer {
-
-                        AiChatScreen()
+                        if (isOnline) {
+                            WebViewScreen(url, title, navController)
+                        } else {
+                            NoInternetScreen(onBack = { navController.popBackStack() })
+                        }
                     }
                 }
             }
@@ -366,10 +170,9 @@ fun NavGraph(
 
 @Composable
 private fun ScreenContainer(
-    paddingValues: PaddingValues = PaddingValues(),
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     content: @Composable BoxScope.() -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -385,101 +188,47 @@ private fun AppBottomBar(
     currentRoute: String?,
     navController: NavHostController
 ) {
-
     NavigationBar(
         containerColor = BottomBarBlack,
-        tonalElevation = 0.dp
+        tonalElevation = 0.dp,
+        modifier = Modifier.height(72.dp)
     ) {
-
         val items = listOf(
-
-            Triple(
-                Routes.CHATS,
-                Icons.Outlined.ChatBubbleOutline,
-                "Чаты"
-            ),
-
-            Triple(
-                Routes.DEALS,
-                Icons.Filled.Checklist,
-                "Дела"
-            ),
-
-            Triple(
-                Routes.ENTERTAINMENT,
-                Icons.Outlined.PlayCircleOutline,
-                "Досуг"
-            ),
-
-            Triple(
-                Routes.SETTINGS,
-                Icons.Filled.Settings,
-                "Опции"
-            )
+            Triple(Routes.CHATS, Icons.Outlined.ChatBubbleOutline, "Чаты"),
+            Triple(Routes.DEALS, Icons.Filled.Checklist, "Дела"),
+            Triple(Routes.ENTERTAINMENT, Icons.Outlined.PlayCircleOutline, "Досуг"),
+            Triple(Routes.SETTINGS, Icons.Filled.Settings, "Опции")
         )
 
         items.forEach { (route, icon, label) ->
-
-            val selected =
-                currentRoute == route
-
+            val selected = currentRoute == route
             NavigationBarItem(
-
                 selected = selected,
-
                 onClick = {
-
                     if (!selected) {
-
                         navController.navigate(route) {
-
-                            popUpTo(
-                                navController.graph.startDestinationId
-                            ) {
-                                saveState = true
-                            }
-
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
                 },
-
                 icon = {
-
                     Icon(
                         imageVector = icon,
-
                         contentDescription = label,
-
-                        tint =
-                            if (selected) {
-                                NeonCyan
-                            } else {
-                                Color.Gray
-                            }
+                        tint = if (selected) NeonCyan else Color.Gray
                     )
                 },
-
                 label = {
-
                     Text(
                         text = label,
-
                         fontSize = 10.sp,
-
-                        color =
-                            if (selected) {
-                                NeonCyan
-                            } else {
-                                Color.Gray
-                            }
+                        color = if (selected) NeonCyan else Color.Gray
                     )
                 },
-
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor =
-                        NeonCyan.copy(alpha = 0.12f)
+                    indicatorColor = NeonCyan.copy(alpha = 0.1f)
                 )
             )
         }
@@ -488,179 +237,52 @@ private fun AppBottomBar(
 
 @Composable
 fun rememberIsOnline(): State<Boolean> {
-
     val context = LocalContext.current
-
-    val state = remember {
-        mutableStateOf(true)
-    }
+    val state = remember { mutableStateOf(true) }
 
     DisposableEffect(context) {
-
-        val connectivityManager =
-            context.getSystemService(
-                Context.CONNECTIVITY_SERVICE
-            ) as ConnectivityManager
-
-        val callback =
-            object : ConnectivityManager.NetworkCallback() {
-
-                override fun onAvailable(network: Network) {
-                    state.value = true
-                }
-
-                override fun onLost(network: Network) {
-                    state.value =
-                        hasInternetConnection(connectivityManager)
-                }
-
-                override fun onUnavailable() {
-                    state.value = false
-                }
-            }
-
-        try {
-
-            val request =
-                NetworkRequest.Builder()
-                    .addCapability(
-                        NetworkCapabilities.NET_CAPABILITY_INTERNET
-                    )
-                    .build()
-
-            connectivityManager.registerNetworkCallback(
-                request,
-                callback
-            )
-
-            state.value =
-                hasInternetConnection(connectivityManager)
-
-        } catch (_: Exception) {
-
-            state.value = true
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) { state.value = true }
+            override fun onLost(network: Network) { state.value = checkConnectivity(cm) }
+            override fun onUnavailable() { state.value = false }
         }
 
-        onDispose {
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        
+        cm.registerNetworkCallback(request, callback)
+        state.value = checkConnectivity(cm)
 
-            try {
-
-                connectivityManager.unregisterNetworkCallback(
-                    callback
-                )
-
-            } catch (_: Exception) {
-            }
-        }
+        onDispose { cm.unregisterNetworkCallback(callback) }
     }
-
     return state
 }
 
-private fun hasInternetConnection(
-    connectivityManager: ConnectivityManager
-): Boolean {
-
-    return try {
-
-        val network =
-            connectivityManager.activeNetwork
-                ?: return false
-
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(network)
-                ?: return false
-
-        capabilities.hasCapability(
-            NetworkCapabilities.NET_CAPABILITY_INTERNET
-        )
-
-    } catch (_: Exception) {
-
-        true
-    }
+private fun checkConnectivity(cm: ConnectivityManager): Boolean {
+    val network = cm.activeNetwork ?: return false
+    val caps = cm.getNetworkCapabilities(network) ?: return false
+    return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
 @Composable
-fun NoInternetScreen(
-    onBack: () -> Unit
-) {
-
+fun NoInternetScreen(onBack: () -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppBlack),
-
+        modifier = Modifier.fillMaxSize().background(AppBlack),
         contentAlignment = Alignment.Center
     ) {
-
-        Column(
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-
-            verticalArrangement =
-                Arrangement.Center,
-
-            modifier = Modifier.padding(24.dp)
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.CloudOff,
-
-                contentDescription = null,
-
-                tint = NeonCyan.copy(alpha = 0.6f),
-
-                modifier = Modifier.size(80.dp)
-            )
-
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.CloudOff, null, tint = NeonCyan.copy(0.6f), modifier = Modifier.size(80.dp))
             Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "Нет соединения",
-
-                color = Color.White,
-
-                fontSize = 22.sp,
-
-                fontWeight = FontWeight.Bold,
-
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Проверьте интернет и попробуйте снова",
-
-                color = Color.Gray,
-
-                fontSize = 14.sp,
-
-                textAlign = TextAlign.Center
-            )
-
+            Text("Нет соединения", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(32.dp))
-
             OutlinedButton(
                 onClick = onBack,
-
-                border = BorderStroke(
-                    1.dp,
-                    NeonCyan
-                ),
-
-                colors =
-                    ButtonDefaults.outlinedButtonColors(
-                        contentColor = NeonCyan
-                    )
+                border = BorderStroke(1.dp, NeonCyan),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
             ) {
-
-                Text(
-                    text = "ВЕРНУТЬСЯ",
-
-                    fontWeight = FontWeight.Bold
-                )
+                Text("ВЕРНУТЬСЯ")
             }
         }
     }
