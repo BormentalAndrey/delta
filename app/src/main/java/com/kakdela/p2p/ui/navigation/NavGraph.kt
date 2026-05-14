@@ -47,7 +47,6 @@ import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
 import org.thoughtcrime.securesms.connect.DcHelper
 import com.b44t.messenger.DcContact
-import com.b44t.messenger.DcContext
 
 @Composable
 fun NavGraph(
@@ -84,23 +83,14 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ = DeltaChat =================
-
             composable(Routes.CHATS) {
                 DeltaChatLayoutView()
             }
 
-            // ================= SECTIONS =================
-
             composable(Routes.DEALS) { DealsScreen(navController) }
             composable(Routes.ENTERTAINMENT) { EntertainmentScreen(navController) }
-            composable(Routes.SETTINGS) {
-                SettingsScreen(navController)
-            }
-
+            composable(Routes.SETTINGS) { SettingsScreen(navController) }
             composable(Routes.MUSIC) { MusicPlayerScreen() }
-
-            // ================= WEBVIEW =================
 
             composable(
                 route = "webview/{url}/{title}",
@@ -111,7 +101,6 @@ fun NavGraph(
             ) { entry ->
                 val url = entry.arguments?.getString("url") ?: ""
                 val title = entry.arguments?.getString("title") ?: ""
-
                 if (isOnline) {
                     WebViewScreen(url, title, navController)
                 } else {
@@ -119,35 +108,23 @@ fun NavGraph(
                 }
             }
 
-            // ================= TOOLS & GAMES =================
-
             composable(Routes.CALCULATOR) { CalculatorScreen() }
             composable(Routes.TEXT_EDITOR) { TextEditorScreen(navController) }
-
-            composable(Routes.FILE_MANAGER) {
-                FileManagerScreen(onExit = { navController.popBackStack() })
-            }
-
+            composable(Routes.FILE_MANAGER) { FileManagerScreen(onExit = { navController.popBackStack() }) }
             composable(Routes.TIC_TAC_TOE) { TicTacToeScreen() }
             composable(Routes.CHESS) { ChessScreen() }
             composable(Routes.PACMAN) { PacmanScreen() }
             composable(Routes.SUDOKU) { SudokuScreen() }
             composable(Routes.JEWELS) { JewelsBlastScreen() }
-
-            // ================= AI CHAT =================
-
-            composable(Routes.AI_CHAT) {
-                AiChatScreen()
-            }
+            composable(Routes.AI_CHAT) { AiChatScreen() }
         }
     }
 }
 
-// ================= DELTACHAT LAYOUT VIEW (с инициализацией Toolbar и аватара) =================
+// ================= DELTACHAT LAYOUT VIEW =================
 
 @Composable
 fun DeltaChatLayoutView() {
-    val context = LocalContext.current
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
@@ -159,65 +136,58 @@ fun DeltaChatLayoutView() {
                 )
             }
 
-            // Надуваем макет DeltaChat
             val inflater = LayoutInflater.from(ctx)
             val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
             rootView.addView(deltaLayout)
 
-            // --- Инициализация Toolbar (как в ConversationListActivity) ---
+            // Toolbar
             val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
-            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
-            val unreadIndicator = deltaLayout.findViewById<android.widget.ImageView>(R.id.unread_indicator)
             val toolbarTitle = deltaLayout.findViewById<android.widget.TextView>(R.id.toolbar_title)
             val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
             val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
+            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
             val avatarAndTitle = deltaLayout.findViewById<android.widget.LinearLayout>(R.id.avatar_and_title)
-            val selfAvatarContainer = deltaLayout.findViewById<android.widget.RelativeLayout>(R.id.self_avatar_container)
 
             if (ctx is AppCompatActivity) {
                 ctx.setSupportActionBar(toolbar)
                 toolbar?.setNavigationOnClickListener {
-                    // Кнопка "Назад" — скрыть поиск
                     if (searchToolbar?.isVisible == true) {
                         searchToolbar.collapse()
                     }
                 }
             }
 
-            // --- Настройка аватара (как в ConversationListActivity.refresh()) ---
+            // Заголовок и аватар
             try {
                 val dcContext = DcHelper.getContext(ctx)
-                val self = dcContext.getContact(DcContact.DC_CONTACT_ID_SELF)
                 val name = dcContext.getConfig("displayname") ?: "Как дела?"
                 toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
                 selfAvatar?.setConnectivity(dcContext.getConnectivity())
-                selfAvatar?.setAvatar(
-                    ctx,
-                    org.thoughtcrime.securesms.recipients.Recipient.from(ctx, 
-                        org.thoughtcrime.securesms.database.Address.fromChat(DcContact.DC_CONTACT_ID_SELF)
-                    ),
-                    false
-                )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 toolbarTitle?.text = "Как дела?"
             }
 
-            // --- Кнопка поиска (как в ConversationListActivity) ---
+            // Кнопка поиска
             searchAction?.setOnClickListener {
                 searchToolbar?.display(searchAction)
             }
 
-            // --- Аватар — меню аккаунтов ---
+            // Меню аккаунтов
+            val activity = ctx as? android.app.Activity
             selfAvatar?.setOnClickListener {
-                org.thoughtcrime.securesms.connect.AccountManager.getInstance()
-                    .showSwitchAccountMenu(ctx as android.app.Activity, false)
+                activity?.let {
+                    org.thoughtcrime.securesms.connect.AccountManager.getInstance()
+                        .showSwitchAccountMenu(it, false)
+                }
             }
             avatarAndTitle?.setOnClickListener {
-                org.thoughtcrime.securesms.connect.AccountManager.getInstance()
-                    .showSwitchAccountMenu(ctx as android.app.Activity, false)
+                activity?.let {
+                    org.thoughtcrime.securesms.connect.AccountManager.getInstance()
+                        .showSwitchAccountMenu(it, false)
+                }
             }
 
-            // --- Вставляем ConversationListFragment ---
+            // ConversationListFragment
             val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
             if (fragmentContainer != null) {
                 val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
@@ -226,7 +196,6 @@ fun DeltaChatLayoutView() {
                     val args = Bundle()
                     args.putBoolean(ConversationListFragment.ARCHIVE, false)
                     fragment.arguments = args
-
                     fragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, fragment)
                         .commit()
@@ -258,7 +227,6 @@ private fun AppBottomBar(
 
         items.forEach { (route, icon, label) ->
             val selected = currentRoute == route
-
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -296,34 +264,22 @@ fun rememberIsOnline(): State<Boolean> {
 
     DisposableEffect(context) {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                state.value = true
-            }
-
-            override fun onLost(network: Network) {
-                state.value = false
-            }
+            override fun onAvailable(network: Network) { state.value = true }
+            override fun onLost(network: Network) { state.value = false }
         }
-
         try {
             val request = NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 .build()
-
             cm.registerNetworkCallback(request, callback)
-
             val caps = cm.getNetworkCapabilities(cm.activeNetwork)
             state.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             state.value = true
         }
-
         onDispose {
-            try {
-                cm.unregisterNetworkCallback(callback)
-            } catch (_: Exception) { }
+            try { cm.unregisterNetworkCallback(callback) } catch (_: Exception) {}
         }
     }
 
@@ -333,9 +289,7 @@ fun rememberIsOnline(): State<Boolean> {
 @Composable
 fun NoInternetScreen(onBack: () -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
+        modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -350,20 +304,12 @@ fun NoInternetScreen(onBack: () -> Unit) {
                 modifier = Modifier.size(80.dp)
             )
             Spacer(Modifier.height(24.dp))
-            Text(
-                "Нет соединения",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
+            Text("Нет соединения", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(Modifier.height(32.dp))
             OutlinedButton(
                 onClick = onBack,
                 border = BorderStroke(1.dp, Color(0xFF00FFFF)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF00FFFF)
-                )
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00FFFF))
             ) {
                 Text("ВЕРНУТЬСЯ", fontWeight = FontWeight.Bold)
             }
