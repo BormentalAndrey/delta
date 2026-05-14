@@ -124,13 +124,13 @@ class MainActivity :
                         Box(modifier = Modifier.fillMaxSize()) {
 
                             // Native DeltaChat Fragment
-                            AndroidView(
-                                factory = {
-                                    if (chatContainer == null) {
-                                        initChatLayer()
-                                    }
+                           AndroidView(
+                               factory = { ctx ->
+                                  if (chatContainer == null) {
+                                     initChatLayer()
+                                }
                                     chatContainer!!
-                                },
+                               },
                                 modifier = Modifier.fillMaxSize()
                             )
 
