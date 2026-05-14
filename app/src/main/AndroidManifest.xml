@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ========== PERMISSIONS ========== -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -41,13 +40,11 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
-    <!-- ========== FEATURES ========== -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.location" android:required="false" />
 
-    <!-- ========== QUERIES ========== -->
     <queries>
         <package android:name="com.b44t.messenger" />
         <package android:name="com.github.arcanechat" />
@@ -59,10 +56,8 @@
         </intent>
     </queries>
 
-    <!-- ========== OVERRIDE LIBRARIES ========== -->
     <uses-sdk tools:overrideLibrary="com.jbselfcompany.tyr, go.mobile.gojni, androidx.core.telecom, im.conversations.webrtc" />
 
-    <!-- ========== APPLICATION ========== -->
     <application
         android:name="com.launcher.multiapp.TyrApplicationWrapper"
         android:allowBackup="false"
@@ -81,7 +76,7 @@
         tools:replace="android:name,android:label,android:theme,android:allowBackup,android:icon"
         tools:targetApi="34">
 
-        <!-- ===== LAUNCHER ===== -->
+        <!-- LAUNCHER — только MainActivity -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true"
@@ -95,7 +90,31 @@
             </intent-filter>
         </activity>
 
-        <!-- ===== DELTACHAT ACTIVITIES ===== -->
+        <!-- DeltaChat — ConversationListActivity (настоящая, без изменений) -->
+        <activity 
+            android:name="org.thoughtcrime.securesms.ConversationListActivity" 
+            android:exported="false"
+            android:label="Как дела?"
+            android:launchMode="singleTask"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" 
+            android:theme="@style/Theme.DeltaChat" 
+            tools:replace="android:theme,android:exported,android:label,android:launchMode" />
+
+        <!-- DeltaChat — ConversationActivity -->
+        <activity 
+            android:name="org.thoughtcrime.securesms.ConversationActivity" 
+            android:exported="false"
+            android:parentActivityName="org.thoughtcrime.securesms.ConversationListActivity"
+            android:windowSoftInputMode="adjustResize" 
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" 
+            android:theme="@style/Theme.DeltaChat" 
+            tools:replace="android:theme,android:exported,android:windowSoftInputMode,android:parentActivityName">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.ConversationListActivity"
+                tools:replace="android:value" />
+        </activity>
+
         <activity android:name="org.thoughtcrime.securesms.ShareActivity" android:exported="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:launchMode="singleTask" android:taskAffinity="" android:windowSoftInputMode="stateHidden" android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -110,34 +129,17 @@
             <meta-data android:name="android.service.chooser.chooser_target_service" android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
         </activity>
 
-        <activity android:name="org.thoughtcrime.securesms.ConversationListActivity" android:exported="false" tools:replace="android:exported" />
-
-        <activity 
-            android:name="org.thoughtcrime.securesms.ConversationActivity" 
-            android:exported="false"
-            android:parentActivityName="com.launcher.multiapp.MainActivity"
-            android:windowSoftInputMode="adjustResize" 
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" 
-            android:theme="@style/Theme.DeltaChat" 
-            tools:replace="android:theme,android:exported,android:windowSoftInputMode,android:parentActivityName">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.launcher.multiapp.MainActivity"
-                tools:replace="android:value" />
-        </activity>
-
         <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.SettingsActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.AccountActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
         <activity android:name="org.thoughtcrime.securesms.RegistrationActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
 
-        <!-- DeltaChat Services -->
         <service android:name="org.thoughtcrime.securesms.service.ImapService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.SmtpService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
 
-        <!-- ===== TYR ACTIVITIES ===== -->
+        <!-- Tyr -->
         <activity android:name="com.jbselfcompany.tyr.ui.MainActivity" android:exported="false" android:launchMode="singleTask" android:theme="@style/Theme.Tyr" tools:replace="android:exported,android:theme,android:launchMode" />
         <activity android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity" android:exported="false" android:theme="@style/Theme.Tyr.Onboarding" tools:replace="android:exported,android:theme" />
         <activity android:name="com.jbselfcompany.tyr.ui.AboutActivity" android:exported="false" tools:replace="android:exported" />
@@ -147,10 +149,8 @@
         <activity android:name="com.jbselfcompany.tyr.chat.ui.ConversationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" tools:replace="android:exported,android:windowSoftInputMode" />
         <activity android:name="com.journeyapps.barcodescanner.CaptureActivity" android:exported="false" tools:replace="android:exported" />
 
-        <!-- Tyr Services -->
         <service android:name="com.jbselfcompany.tyr.service.YggmailService" android:enabled="true" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="dataSync" tools:replace="android:exported,android:foregroundServiceType" />
 
-        <!-- Tyr Receivers -->
         <receiver android:name="com.jbselfcompany.tyr.receiver.BootReceiver" android:exported="true" android:enabled="true" tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -158,7 +158,7 @@
         </receiver>
         <receiver android:name="com.jbselfcompany.tyr.receiver.MaintenanceReceiver" android:exported="false" android:enabled="true" tools:replace="android:exported" />
 
-        <!-- ===== KAKDELA P2P ACTIVITIES ===== -->
+        <!-- Kakdela P2P -->
         <activity android:name="com.kakdela.p2p.MainActivity" android:exported="false" android:theme="@style/Theme.Kakdela" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" android:windowSoftInputMode="adjustResize" />
         <activity android:name="com.kakdela.p2p.ui.call.CallActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:launchMode="singleInstance" android:screenOrientation="portrait" android:windowSoftInputMode="adjustNothing" />
         <activity android:name="com.kakdela.p2p.game.JewelsBlastActivity" android:exported="false" android:screenOrientation="portrait" android:configChanges="orientation|screenSize|keyboardHidden">
@@ -167,37 +167,20 @@
         <activity android:name="com.kakdela.p2p.ui.player.VideoPlayerActivity" android:exported="false" android:screenOrientation="sensor" android:configChanges="orientation|screenSize|keyboardHidden|layoutDirection" />
         <activity android:name="com.kakdela.p2p.ui.browser.BrowserActivity" android:exported="false" android:theme="@style/Theme.Kakdela" android:configChanges="orientation|screenSize" />
 
-        <!-- Kakdela Services -->
         <service android:name="com.kakdela.p2p.services.P2PService" android:enabled="true" android:exported="false" android:foregroundServiceType="connectedDevice|microphone|dataSync" tools:targetApi="34" />
 
-        <!-- Kakdela Receivers -->
         <receiver android:name="com.kakdela.p2p.auth.SmsReceiver" android:permission="android.permission.BROADCAST_SMS" android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
 
-        <!-- ===== FILE PROVIDERS ===== -->
-        <provider 
-            android:name="androidx.core.content.FileProvider" 
-            android:authorities="${applicationId}.fileprovider" 
-            android:exported="false" 
-            android:grantUriPermissions="true" 
-            tools:replace="android:authorities">
-            <meta-data 
-                android:name="android.support.FILE_PROVIDER_PATHS" 
-                android:resource="@xml/file_paths"
-                tools:replace="android:resource" />
+        <!-- File Providers -->
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true" tools:replace="android:authorities">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" tools:replace="android:resource" />
         </provider>
-        
-        <provider 
-            android:name="androidx.core.content.FileProvider" 
-            android:authorities="${applicationId}.dcfileprovider" 
-            android:exported="false" 
-            android:grantUriPermissions="true">
-            <meta-data 
-                android:name="android.support.FILE_PROVIDER_PATHS" 
-                android:resource="@xml/dc_file_paths" />
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.dcfileprovider" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/dc_file_paths" />
         </provider>
 
     </application>
