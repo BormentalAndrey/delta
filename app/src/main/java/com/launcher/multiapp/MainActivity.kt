@@ -106,17 +106,19 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                 ) {
                     if (isRegistered.value) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            AndroidView(
-                                factory = {
-                                    if (chatContainer == null) initChatLayer()
-                                    chatContainer!!
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
-
+                            // Вызываем NavGraph и передаем AndroidView в качестве chatLayer
                             NavGraph(
                                 navController = navController,
-                                startDestination = Routes.CHATS
+                                startDestination = Routes.CHATS,
+                                chatLayer = {
+                                    AndroidView(
+                                        factory = {
+                                            if (chatContainer == null) initChatLayer()
+                                            chatContainer!!
+                                        },
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             )
                         }
                     } else {
@@ -220,7 +222,6 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
 
     private fun setupAnonymousAccount(name: String, password: String) {
         try {
-            // Сохранение настроек в репозиторий Tyr
             try {
                 configRepository.javaClass.methods.find { it.name == "saveDisplayName" }
                     ?.invoke(configRepository, name)
