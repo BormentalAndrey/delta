@@ -3,6 +3,5 @@
     <!-- Ссылки на ресурсы DeltaChat -->
     <item name="container" type="id">@android:id/empty</item>
     <item name="pref_profile_info_headline" type="string">Профиль</item>
-    <item name="app_name" type="string">Как дела?</item>
     <item name="search" type="string">Поиск</item>
 </resources>
