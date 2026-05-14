@@ -77,7 +77,7 @@ private val entertainmentItems = listOf(
         title = "AI Чат",
         description = "Умный помощник",
         type = EntertainmentType.INTERNAL_CHAT,
-        route = Routes.AI_CHAT
+        route = "https://chat.deepseek.com"
     ),
     EntertainmentItem(
         id = "tictactoe",
@@ -121,13 +121,6 @@ private val entertainmentItems = listOf(
         type = EntertainmentType.WEB,
         url = "https://pikabu.ru"
     ),
-    EntertainmentItem(
-        id = "crazygames",
-        title = "CrazyGames",
-        description = "Игры онлайн",
-        type = EntertainmentType.WEB,
-        url = "https://www.crazygames.com"
-    )
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
