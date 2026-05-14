@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -43,7 +42,6 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
-import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
 
 @Composable
@@ -149,7 +147,6 @@ fun DeltaChatLayoutView() {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            // Создаём корневой контейнер
             val rootView = FrameLayout(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -157,29 +154,33 @@ fun DeltaChatLayoutView() {
                 )
             }
 
-            // Надуваем макет DeltaChat (conversation_list_activity.xml)
+            // Получаем ID ресурсов из модуля deltachat
+            val layoutId = ctx.resources.getIdentifier(
+                "conversation_list_activity", "layout", "org.thoughtcrime.securesms"
+            )
+            val fragmentContainerId = ctx.resources.getIdentifier(
+                "fragment_container", "id", "org.thoughtcrime.securesms"
+            )
+            val toolbarId = ctx.resources.getIdentifier(
+                "toolbar", "id", "org.thoughtcrime.securesms"
+            )
+
             val inflater = LayoutInflater.from(ctx)
-            val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
+            val deltaLayout = inflater.inflate(layoutId, rootView, false)
             rootView.addView(deltaLayout)
 
-            // Находим fragment_container и вставляем ConversationListFragment
-            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
+            // Вставляем ConversationListFragment
+            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(fragmentContainerId)
             if (fragmentContainer != null) {
                 val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
                 val fragment = ConversationListFragment()
                 val args = Bundle()
                 args.putBoolean(ConversationListFragment.ARCHIVE, false)
                 fragment.arguments = args
-                
+
                 fragmentManager.beginTransaction()
                     .replace(fragmentContainer.id, fragment)
                     .commit()
-            }
-
-            // Настраиваем Toolbar
-            val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
-            if (toolbar != null && ctx is FragmentActivity) {
-                // Toolbar уже в макете, DeltaChat сам его настроит
             }
 
             rootView
