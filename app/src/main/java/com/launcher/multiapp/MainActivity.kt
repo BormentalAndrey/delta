@@ -110,8 +110,7 @@ class MainActivity :
 
                 // Управление видимостью фрагмента
                 LaunchedEffect(currentRoute, isRegistered.value) {
-                    chatContainer?.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) View.VISIBLE else View.GONE
-                }
+                    chatContainer?.let { it.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) View.VISIBLE else View.GONE }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
