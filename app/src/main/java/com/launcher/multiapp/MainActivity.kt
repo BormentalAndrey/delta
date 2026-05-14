@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
@@ -59,6 +60,7 @@ class MainActivity : FragmentActivity(),
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
+    private var navController: NavHostController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,10 +75,12 @@ class MainActivity : FragmentActivity(),
                         surface = SurfaceGray,
                     )
                 ) {
+                    val controller = rememberNavController()
+                    this.navController = controller
+
                     Surface(modifier = Modifier.fillMaxSize(), color = DarkBackground) {
-                        val navController = rememberNavController()
                         NavGraph(
-                            navController = navController,
+                            navController = controller,
                             startDestination = Routes.CHATS
                         )
                     }
@@ -127,17 +131,15 @@ class MainActivity : FragmentActivity(),
     // ========== ConversationSelectedListener ==========
 
     override fun onSwitchToArchive() {
-        val intent = Intent(this, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
-            putExtra(org.thoughtcrime.securesms.ConversationListFragment.ARCHIVE, true)
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        navController?.navigate("archive") {
+            launchSingleTop = true
         }
-        startActivity(intent)
     }
 
     override fun onCreateConversation(chatId: Int) {
         val intent = Intent(this, org.thoughtcrime.securesms.ConversationActivity::class.java).apply {
             putExtra(org.thoughtcrime.securesms.ConversationActivity.CHAT_ID_EXTRA, chatId)
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         startActivity(intent)
     }
