@@ -134,6 +134,14 @@ class MainActivity : FragmentActivity(),
         startActivity(intent)
     }
 
+    override fun onCreateConversation(chatId: Int) {
+        val intent = Intent(this, org.thoughtcrime.securesms.ConversationActivity::class.java).apply {
+            putExtra(org.thoughtcrime.securesms.ConversationActivity.CHAT_ID_EXTRA, chatId)
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        startActivity(intent)
+    }
+
     // ========== Остальные методы ==========
 
     private fun markRegistrationCompleted() {
@@ -271,7 +279,7 @@ class MainActivity : FragmentActivity(),
     }
 }
 
-// ================= COMPOSABLE ФУНКЦИИ (без изменений) =================
+// ================= COMPOSABLE ФУНКЦИИ =================
 
 @Composable
 fun AnonymousRegistrationDialog(
