@@ -51,6 +51,10 @@ import org.thoughtcrime.securesms.database.Address
 import com.b44t.messenger.DcContact
 import org.thoughtcrime.securesms.accounts.AccountSelectionListFragment
 
+// Глобально сохраняем rootView DeltaChat, чтобы он не уничтожался при переключении вкладок
+private var globalChatRootView: FrameLayout? = null
+private var globalChatInitialized = false
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -125,14 +129,14 @@ fun NavGraph(
 
 @Composable
 fun DeltaChatLayoutView() {
-    // Сохраняем rootView между переключениями вкладок
-    val savedRootView = remember { mutableStateOf<FrameLayout?>(null) }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            // Если rootView уже создан — возвращаем его
-            savedRootView.value?.let { return@AndroidView it }
+            // Если уже создан глобально — возвращаем его
+            if (globalChatRootView != null) {
+                return@AndroidView globalChatRootView!!
+            }
 
             val rootView = FrameLayout(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -198,36 +202,8 @@ fun DeltaChatLayoutView() {
                 }
             }
 
-            savedRootView.value = rootView
+            globalChatRootView = rootView
             rootView
-        },
-        update = { rootView ->
-            val ctx = rootView.context
-            val pkg = ctx.packageName
-            val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
-            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
-
-            if (toolbarTitleId != 0) {
-                val toolbarTitle = rootView.findViewById<android.widget.TextView>(toolbarTitleId)
-                try {
-                    val dcContext = DcHelper.getContext(ctx)
-                    val name = dcContext.getConfig("displayname") ?: "Как дела?"
-                    toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
-                } catch (_: Exception) {
-                    toolbarTitle?.text = "Как дела?"
-                }
-            }
-
-            if (selfAvatarId != 0) {
-                val selfAvatar = rootView.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
-                try {
-                    val dcContext = DcHelper.getContext(ctx)
-                    selfAvatar?.setConnectivity(dcContext.getConnectivity())
-                    val glideRequests = GlideApp.with(ctx)
-                    val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
-                    selfAvatar?.setAvatar(glideRequests, recipient, false)
-                } catch (_: Exception) {}
-            }
         }
     )
 }
