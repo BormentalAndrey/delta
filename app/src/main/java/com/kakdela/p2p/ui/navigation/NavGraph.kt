@@ -1,4 +1,3 @@
-```kotlin
 package com.kakdela.p2p.ui.navigation
 
 import android.view.ViewGroup
