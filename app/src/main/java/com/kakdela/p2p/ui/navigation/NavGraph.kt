@@ -11,16 +11,16 @@ import android.view.View
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +60,14 @@ fun NavGraph(
     )
 
     Scaffold(
+        topBar = {
+            if (currentRoute == Routes.CHATS || currentRoute == "archive") {
+                DeltaChatTopBar(
+                    isArchive = currentRoute == "archive",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(currentRoute, navController)
@@ -76,10 +84,16 @@ fun NavGraph(
                 .background(Color.Black)
         ) {
 
-            // ================= MAIN: ЧАТЫ = DeltaChat Fragment =================
+            // ================= MAIN: ЧАТЫ =================
 
             composable(Routes.CHATS) {
-                DeltaChatFragmentView()
+                DeltaChatFragmentView(isArchive = false)
+            }
+
+            // ================= АРХИВ =================
+
+            composable("archive") {
+                DeltaChatFragmentView(isArchive = true)
             }
 
             // ================= SECTIONS =================
@@ -135,13 +149,58 @@ fun NavGraph(
     }
 }
 
+// ================= DELTACHAT TOP BAR =================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeltaChatTopBar(isArchive: Boolean, onBack: () -> Unit) {
+    TopAppBar(
+        title = {
+            Text(
+                if (isArchive) "Архив" else "Как дела?",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        navigationIcon = {
+            if (isArchive) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Filled.ArrowBack, "Назад", tint = Color.White)
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray)
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = { /* Поиск */ }) {
+                Icon(Icons.Filled.Search, "Поиск", tint = Color.White)
+            }
+            IconButton(onClick = { /* QR */ }) {
+                Icon(Icons.Filled.QrCodeScanner, "QR", tint = Color.White)
+            }
+            IconButton(onClick = { /* Меню */ }) {
+                Icon(Icons.Filled.MoreVert, "Меню", tint = Color.White)
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color(0xFF121212)
+        )
+    )
+}
+
 // ================= DELTACHAT FRAGMENT VIEW =================
 
 @Composable
-fun DeltaChatFragmentView() {
+fun DeltaChatFragmentView(isArchive: Boolean) {
     var fragmentContainerId by remember { mutableIntStateOf(View.generateViewId()) }
 
-    // Не добавляем отступы — DeltaChat сам управляет своими insets
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
@@ -155,12 +214,12 @@ fun DeltaChatFragmentView() {
         },
         update = { view ->
             val fragmentManager = (view.context as androidx.fragment.app.FragmentActivity).supportFragmentManager
-            if (fragmentManager.findFragmentById(view.id) == null) {
+            val currentFragment = fragmentManager.findFragmentById(view.id)
+            if (currentFragment == null) {
                 val fragment = ConversationListFragment()
-                val args = Bundle()
-                args.putBoolean(ConversationListFragment.ARCHIVE, false)
-                fragment.arguments = args
-                
+                fragment.arguments = Bundle().apply {
+                    putBoolean(ConversationListFragment.ARCHIVE, isArchive)
+                }
                 fragmentManager.beginTransaction()
                     .replace(view.id, fragment)
                     .commit()
