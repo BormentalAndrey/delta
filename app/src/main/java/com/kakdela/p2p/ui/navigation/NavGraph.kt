@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,146 +36,347 @@ import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
 
+private val NeonCyan = Color(0xFF00FFFF)
+private val AppBlack = Color.Black
+private val BottomBarBlack = Color(0xFF010101)
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
+    chatLayer: @Composable () -> Unit
 ) {
-    val isOnline by rememberIsOnline()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute in listOf(
-        Routes.CHATS,
-        Routes.DEALS,
-        Routes.ENTERTAINMENT,
-        Routes.SETTINGS
-    )
+    val isOnline by rememberIsOnline()
+
+    val backStackEntry by
+        navController.currentBackStackEntryAsState()
+
+    val currentRoute =
+        backStackEntry?.destination?.route
+
+    val showBottomBar =
+        currentRoute in listOf(
+            Routes.CHATS,
+            Routes.DEALS,
+            Routes.ENTERTAINMENT,
+            Routes.SETTINGS
+        )
 
     Scaffold(
+
+        modifier = Modifier.fillMaxSize(),
+
         bottomBar = {
+
             if (showBottomBar) {
-                AppBottomBar(currentRoute, navController)
+
+                AppBottomBar(
+                    currentRoute = currentRoute,
+                    navController = navController
+                )
             }
         },
-        // Важно: контейнер самого Scaffold должен быть прозрачным на экране чатов,
-        // чтобы видеть нативный слой под ним.
-        containerColor = if (currentRoute == Routes.CHATS) Color.Transparent else Color.Black
+
+        // КРИТИЧНО:
+        // прозрачный scaffold на экране чатов
+        containerColor =
+            if (currentRoute == Routes.CHATS) {
+                Color.Transparent
+            } else {
+                AppBlack
+            }
+
     ) { paddingValues ->
 
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier
-                .padding(paddingValues)
-                // Если мы на экране чатов, убираем фон у NavHost
-                .background(if (currentRoute == Routes.CHATS) Color.Transparent else Color.Black)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
 
-            // ЭКРАН ЧАТОВ (DeltaChat)
-            composable(Routes.CHATS) {
-                // Оставляем пустым и прозрачным. 
-                // MainActivity увидит этот роут и покажет нативный FrameLayout под Compose.
-                Box(modifier = Modifier.fillMaxSize())
+            // ====================================================
+            // NATIVE DELTACHAT LAYER
+            // ====================================================
+            // ВАЖНО:
+            // НЕ удаляем layer из composition.
+            // Fragment должен жить всегда.
+            // Меняем visibility в MainActivity.
+            // ====================================================
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                chatLayer()
             }
 
-            // ОСТАЛЬНЫЕ ЭКРАНЫ (должны иметь черный фон, чтобы перекрывать слой чатов)
-            composable(Routes.DEALS) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    DealsScreen(navController) 
+            // ====================================================
+            // COMPOSE NAVIGATION OVERLAY
+            // ====================================================
+
+            NavHost(
+                navController = navController,
+
+                startDestination = startDestination,
+
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f)
+                    .background(
+                        if (currentRoute == Routes.CHATS) {
+                            Color.Transparent
+                        } else {
+                            AppBlack
+                        }
+                    )
+            ) {
+
+                // ====================================================
+                // CHATS
+                // ====================================================
+
+                composable(Routes.CHATS) {
+
+                    // Пустой прозрачный overlay
+                    // над native DeltaChat fragment
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    )
                 }
-            }
 
-            composable(Routes.ENTERTAINMENT) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    EntertainmentScreen(navController) 
+                // ====================================================
+                // DEALS
+                // ====================================================
+
+                composable(Routes.DEALS) {
+
+                    ScreenContainer(
+                        paddingValues = paddingValues
+                    ) {
+
+                        DealsScreen(navController)
+                    }
                 }
-            }
 
-            composable(Routes.SETTINGS) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    SettingsScreen(navController) 
+                // ====================================================
+                // ENTERTAINMENT
+                // ====================================================
+
+                composable(Routes.ENTERTAINMENT) {
+
+                    ScreenContainer(
+                        paddingValues = paddingValues
+                    ) {
+
+                        EntertainmentScreen(navController)
+                    }
                 }
-            }
 
-            composable(Routes.MUSIC) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    MusicPlayerScreen() 
+                // ====================================================
+                // SETTINGS
+                // ====================================================
+
+                composable(Routes.SETTINGS) {
+
+                    ScreenContainer(
+                        paddingValues = paddingValues
+                    ) {
+
+                        SettingsScreen(navController)
+                    }
                 }
-            }
 
-            composable(
-                route = "webview/{url}/{title}",
-                arguments = listOf(
-                    navArgument("url") { type = NavType.StringType },
-                    navArgument("title") { type = NavType.StringType }
-                )
-            ) { entry ->
-                val url = entry.arguments?.getString("url") ?: ""
-                val title = entry.arguments?.getString("title") ?: ""
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    if (isOnline) {
-                        WebViewScreen(url, title, navController)
-                    } else {
-                        NoInternetScreen { navController.popBackStack() }
+                // ====================================================
+                // MUSIC
+                // ====================================================
+
+                composable(Routes.MUSIC) {
+
+                    ScreenContainer {
+
+                        MusicPlayerScreen()
+                    }
+                }
+
+                // ====================================================
+                // WEBVIEW
+                // ====================================================
+
+                composable(
+                    route = "webview/{url}/{title}",
+
+                    arguments = listOf(
+
+                        navArgument("url") {
+                            type = NavType.StringType
+                        },
+
+                        navArgument("title") {
+                            type = NavType.StringType
+                        }
+                    )
+                ) { entry ->
+
+                    val url =
+                        entry.arguments?.getString("url")
+                            ?: ""
+
+                    val title =
+                        entry.arguments?.getString("title")
+                            ?: ""
+
+                    ScreenContainer {
+
+                        if (isOnline) {
+
+                            WebViewScreen(
+                                url = url,
+                                title = title,
+                                navController = navController
+                            )
+
+                        } else {
+
+                            NoInternetScreen(
+                                onBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // ====================================================
+                // CALCULATOR
+                // ====================================================
+
+                composable(Routes.CALCULATOR) {
+
+                    ScreenContainer {
+
+                        CalculatorScreen()
+                    }
+                }
+
+                // ====================================================
+                // TEXT EDITOR
+                // ====================================================
+
+                composable(Routes.TEXT_EDITOR) {
+
+                    ScreenContainer {
+
+                        TextEditorScreen(navController)
+                    }
+                }
+
+                // ====================================================
+                // FILE MANAGER
+                // ====================================================
+
+                composable(Routes.FILE_MANAGER) {
+
+                    ScreenContainer {
+
+                        FileManagerScreen(
+                            onExit = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                }
+
+                // ====================================================
+                // TIC TAC TOE
+                // ====================================================
+
+                composable(Routes.TIC_TAC_TOE) {
+
+                    ScreenContainer {
+
+                        TicTacToeScreen()
+                    }
+                }
+
+                // ====================================================
+                // CHESS
+                // ====================================================
+
+                composable(Routes.CHESS) {
+
+                    ScreenContainer {
+
+                        ChessScreen()
+                    }
+                }
+
+                // ====================================================
+                // PACMAN
+                // ====================================================
+
+                composable(Routes.PACMAN) {
+
+                    ScreenContainer {
+
+                        PacmanScreen()
+                    }
+                }
+
+                // ====================================================
+                // SUDOKU
+                // ====================================================
+
+                composable(Routes.SUDOKU) {
+
+                    ScreenContainer {
+
+                        SudokuScreen()
+                    }
+                }
+
+                // ====================================================
+                // JEWELS
+                // ====================================================
+
+                composable(Routes.JEWELS) {
+
+                    ScreenContainer {
+
+                        JewelsBlastScreen()
+                    }
+                }
+
+                // ====================================================
+                // AI CHAT
+                // ====================================================
+
+                composable(Routes.AI_CHAT) {
+
+                    ScreenContainer {
+
+                        AiChatScreen()
                     }
                 }
             }
-
-            composable(Routes.CALCULATOR) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    CalculatorScreen() 
-                }
-            }
-
-            composable(Routes.TEXT_EDITOR) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    TextEditorScreen(navController) 
-                }
-            }
-
-            composable(Routes.FILE_MANAGER) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    FileManagerScreen(onExit = { navController.popBackStack() }) 
-                }
-            }
-
-            composable(Routes.TIC_TAC_TOE) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    TicTacToeScreen() 
-                }
-            }
-
-            composable(Routes.CHESS) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    ChessScreen() 
-                }
-            }
-
-            composable(Routes.PACMAN) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    PacmanScreen() 
-                }
-            }
-
-            composable(Routes.SUDOKU) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    SudokuScreen() 
-                }
-            }
-
-            composable(Routes.JEWELS) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    JewelsBlastScreen() 
-                }
-            }
-
-            composable(Routes.AI_CHAT) { 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    AiChatScreen() 
-                }
-            }
         }
+    }
+}
+
+@Composable
+private fun ScreenContainer(
+    paddingValues: PaddingValues = PaddingValues(),
+    content: @Composable BoxScope.() -> Unit
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .background(AppBlack)
+    ) {
+        content()
     }
 }
 
@@ -183,44 +385,102 @@ private fun AppBottomBar(
     currentRoute: String?,
     navController: NavHostController
 ) {
+
     NavigationBar(
-        containerColor = Color(0xFF010101),
+        containerColor = BottomBarBlack,
         tonalElevation = 0.dp
     ) {
+
         val items = listOf(
-            Triple(Routes.CHATS, Icons.Outlined.ChatBubbleOutline, "Чаты"),
-            Triple(Routes.DEALS, Icons.Filled.Checklist, "Дела"),
-            Triple(Routes.ENTERTAINMENT, Icons.Outlined.PlayCircleOutline, "Досуг"),
-            Triple(Routes.SETTINGS, Icons.Filled.Settings, "Опции")
+
+            Triple(
+                Routes.CHATS,
+                Icons.Outlined.ChatBubbleOutline,
+                "Чаты"
+            ),
+
+            Triple(
+                Routes.DEALS,
+                Icons.Filled.Checklist,
+                "Дела"
+            ),
+
+            Triple(
+                Routes.ENTERTAINMENT,
+                Icons.Outlined.PlayCircleOutline,
+                "Досуг"
+            ),
+
+            Triple(
+                Routes.SETTINGS,
+                Icons.Filled.Settings,
+                "Опции"
+            )
         )
 
         items.forEach { (route, icon, label) ->
-            val selected = currentRoute == route
+
+            val selected =
+                currentRoute == route
+
             NavigationBarItem(
+
                 selected = selected,
+
                 onClick = {
+
                     if (!selected) {
+
                         navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+
+                            popUpTo(
+                                navController.graph.startDestinationId
+                            ) {
+                                saveState = true
+                            }
+
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
                 },
+
                 icon = {
+
                     Icon(
-                        icon,
+                        imageVector = icon,
+
                         contentDescription = label,
-                        tint = if (selected) Color(0xFF00FFFF) else Color.Gray
+
+                        tint =
+                            if (selected) {
+                                NeonCyan
+                            } else {
+                                Color.Gray
+                            }
                     )
                 },
+
                 label = {
+
                     Text(
-                        label,
+                        text = label,
+
                         fontSize = 10.sp,
-                        color = if (selected) Color(0xFF00FFFF) else Color.Gray
+
+                        color =
+                            if (selected) {
+                                NeonCyan
+                            } else {
+                                Color.Gray
+                            }
                     )
-                }
+                },
+
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor =
+                        NeonCyan.copy(alpha = 0.12f)
+                )
             )
         }
     }
@@ -228,59 +488,179 @@ private fun AppBottomBar(
 
 @Composable
 fun rememberIsOnline(): State<Boolean> {
+
     val context = LocalContext.current
-    val state = remember { mutableStateOf(true) }
+
+    val state = remember {
+        mutableStateOf(true)
+    }
 
     DisposableEffect(context) {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { state.value = true }
-            override fun onLost(network: Network) { state.value = false }
-        }
+
+        val connectivityManager =
+            context.getSystemService(
+                Context.CONNECTIVITY_SERVICE
+            ) as ConnectivityManager
+
+        val callback =
+            object : ConnectivityManager.NetworkCallback() {
+
+                override fun onAvailable(network: Network) {
+                    state.value = true
+                }
+
+                override fun onLost(network: Network) {
+                    state.value =
+                        hasInternetConnection(connectivityManager)
+                }
+
+                override fun onUnavailable() {
+                    state.value = false
+                }
+            }
+
         try {
-            val request = NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build()
-            cm.registerNetworkCallback(request, callback)
-            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
-            state.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+
+            val request =
+                NetworkRequest.Builder()
+                    .addCapability(
+                        NetworkCapabilities.NET_CAPABILITY_INTERNET
+                    )
+                    .build()
+
+            connectivityManager.registerNetworkCallback(
+                request,
+                callback
+            )
+
+            state.value =
+                hasInternetConnection(connectivityManager)
+
         } catch (_: Exception) {
+
             state.value = true
         }
+
         onDispose {
-            try { cm.unregisterNetworkCallback(callback) } catch (_: Exception) {}
+
+            try {
+
+                connectivityManager.unregisterNetworkCallback(
+                    callback
+                )
+
+            } catch (_: Exception) {
+            }
         }
     }
 
     return state
 }
 
+private fun hasInternetConnection(
+    connectivityManager: ConnectivityManager
+): Boolean {
+
+    return try {
+
+        val network =
+            connectivityManager.activeNetwork
+                ?: return false
+
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(network)
+                ?: return false
+
+        capabilities.hasCapability(
+            NetworkCapabilities.NET_CAPABILITY_INTERNET
+        )
+
+    } catch (_: Exception) {
+
+        true
+    }
+}
+
 @Composable
-fun NoInternetScreen(onBack: () -> Unit) {
+fun NoInternetScreen(
+    onBack: () -> Unit
+) {
+
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppBlack),
+
         contentAlignment = Alignment.Center
     ) {
+
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+
+            verticalArrangement =
+                Arrangement.Center,
+
             modifier = Modifier.padding(24.dp)
         ) {
+
             Icon(
-                Icons.Default.CloudOff,
+                imageVector = Icons.Default.CloudOff,
+
                 contentDescription = null,
-                tint = Color(0xFF00FFFF).copy(alpha = 0.6f),
+
+                tint = NeonCyan.copy(alpha = 0.6f),
+
                 modifier = Modifier.size(80.dp)
             )
+
             Spacer(Modifier.height(24.dp))
-            Text("Нет соединения", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+
+            Text(
+                text = "Нет соединения",
+
+                color = Color.White,
+
+                fontSize = 22.sp,
+
+                fontWeight = FontWeight.Bold,
+
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = "Проверьте интернет и попробуйте снова",
+
+                color = Color.Gray,
+
+                fontSize = 14.sp,
+
+                textAlign = TextAlign.Center
+            )
+
             Spacer(Modifier.height(32.dp))
+
             OutlinedButton(
                 onClick = onBack,
-                border = BorderStroke(1.dp, Color(0xFF00FFFF)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00FFFF))
+
+                border = BorderStroke(
+                    1.dp,
+                    NeonCyan
+                ),
+
+                colors =
+                    ButtonDefaults.outlinedButtonColors(
+                        contentColor = NeonCyan
+                    )
             ) {
-                Text("ВЕРНУТЬСЯ", fontWeight = FontWeight.Bold)
+
+                Text(
+                    text = "ВЕРНУТЬСЯ",
+
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
