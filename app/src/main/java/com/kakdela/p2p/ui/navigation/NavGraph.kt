@@ -1,3 +1,4 @@
+```kotlin
 package com.kakdela.p2p.ui.navigation
 
 import android.view.ViewGroup
@@ -43,7 +44,6 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
-import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
 import org.thoughtcrime.securesms.connect.DcHelper
 import org.thoughtcrime.securesms.mms.GlideApp
@@ -57,7 +57,6 @@ fun NavGraph(
     navController: NavHostController,
     startDestination: String
 ) {
-    val context = LocalContext.current
     val isOnline by rememberIsOnline()
 
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -138,44 +137,68 @@ fun DeltaChatLayoutView() {
                 )
             }
 
+            // Получаем ID ресурсов динамически
+            val pkg = ctx.packageName
+            val layoutId = ctx.resources.getIdentifier("conversation_list_activity", "layout", pkg)
+            val toolbarId = ctx.resources.getIdentifier("toolbar", "id", pkg)
+            val fragContainerId = ctx.resources.getIdentifier("fragment_container", "id", pkg)
+            val searchToolbarId = ctx.resources.getIdentifier("search_toolbar", "id", pkg)
+            val searchActionId = ctx.resources.getIdentifier("search_action", "id", pkg)
+            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
+            val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
+
             val inflater = LayoutInflater.from(ctx)
-            val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
+            val deltaLayout = inflater.inflate(layoutId, rootView, false)
             rootView.addView(deltaLayout)
 
-            val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
-            if (ctx is AppCompatActivity) {
-                ctx.setSupportActionBar(toolbar)
-                toolbar?.setNavigationOnClickListener {
-                    val st = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
-                    if (st?.isVisible == true) st.collapse()
-                }
-            }
-
-            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
-            if (fragmentContainer != null) {
-                val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
-                if (fragmentManager.findFragmentById(R.id.fragment_container) == null) {
-                    val fragment = ConversationListFragment()
-                    fragment.arguments = Bundle().apply {
-                        putBoolean(ConversationListFragment.ARCHIVE, false)
+            // Toolbar
+            if (toolbarId != 0) {
+                val toolbar = deltaLayout.findViewById<Toolbar>(toolbarId)
+                if (ctx is AppCompatActivity) {
+                    ctx.setSupportActionBar(toolbar)
+                    toolbar?.setNavigationOnClickListener {
+                        if (searchToolbarId != 0) {
+                            val st = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
+                            if (st?.isVisible == true) st.collapse()
+                        }
                     }
-                    fragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, fragment)
-                        .commit()
                 }
             }
 
-            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
-            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
-            searchAction?.setOnClickListener { view ->
-                searchToolbar?.display(view.x.toFloat(), view.y.toFloat())
+            // FragmentContainer
+            if (fragContainerId != 0) {
+                val fragmentContainer = deltaLayout.findViewById<FrameLayout>(fragContainerId)
+                if (fragmentContainer != null) {
+                    val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
+                    if (fragmentManager.findFragmentById(fragContainerId) == null) {
+                        val fragment = ConversationListFragment()
+                        fragment.arguments = Bundle().apply {
+                            putBoolean(ConversationListFragment.ARCHIVE, false)
+                        }
+                        fragmentManager.beginTransaction()
+                            .replace(fragContainerId, fragment)
+                            .commit()
+                    }
+                }
             }
 
-            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
-            selfAvatar?.setOnClickListener {
-                if (ctx is FragmentActivity) {
-                    AccountSelectionListFragment.newInstance(false)
-                        .show(ctx.supportFragmentManager, null)
+            // Search
+            if (searchActionId != 0 && searchToolbarId != 0) {
+                val searchAction = deltaLayout.findViewById<android.widget.ImageView>(searchActionId)
+                val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
+                searchAction?.setOnClickListener { view ->
+                    searchToolbar?.display(view.x.toFloat(), view.y.toFloat())
+                }
+            }
+
+            // Avatar menu
+            if (selfAvatarId != 0) {
+                val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
+                selfAvatar?.setOnClickListener {
+                    if (ctx is FragmentActivity) {
+                        AccountSelectionListFragment.newInstance(false)
+                            .show(ctx.supportFragmentManager, null)
+                    }
                 }
             }
 
@@ -183,20 +206,30 @@ fun DeltaChatLayoutView() {
         },
         update = { rootView ->
             val ctx = rootView.context
-            val toolbarTitle = rootView.findViewById<android.widget.TextView>(R.id.toolbar_title)
-            val selfAvatar = rootView.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
+            val pkg = ctx.packageName
+            val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
+            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
 
-            try {
-                val dcContext = DcHelper.getContext(ctx)
-                val name = dcContext.getConfig("displayname") ?: "Как дела?"
-                toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
-                selfAvatar?.setConnectivity(dcContext.getConnectivity())
+            if (toolbarTitleId != 0) {
+                val toolbarTitle = rootView.findViewById<android.widget.TextView>(toolbarTitleId)
+                try {
+                    val dcContext = DcHelper.getContext(ctx)
+                    val name = dcContext.getConfig("displayname") ?: "Как дела?"
+                    toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
+                } catch (_: Exception) {
+                    toolbarTitle?.text = "Как дела?"
+                }
+            }
 
-                val glideRequests = GlideApp.with(ctx)
-                val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
-                selfAvatar?.setAvatar(glideRequests, recipient, false)
-            } catch (_: Exception) {
-                toolbarTitle?.text = "Как дела?"
+            if (selfAvatarId != 0) {
+                val selfAvatar = rootView.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
+                try {
+                    val dcContext = DcHelper.getContext(ctx)
+                    selfAvatar?.setConnectivity(dcContext.getConnectivity())
+                    val glideRequests = GlideApp.with(ctx)
+                    val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
+                    selfAvatar?.setAvatar(glideRequests, recipient, false)
+                } catch (_: Exception) {}
             }
         }
     )
@@ -309,3 +342,4 @@ fun NoInternetScreen(onBack: () -> Unit) {
         }
     }
 }
+```
