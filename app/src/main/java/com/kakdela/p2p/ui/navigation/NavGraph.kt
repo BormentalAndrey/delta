@@ -1,3 +1,4 @@
+```kotlin
 package com.kakdela.p2p.ui.navigation
 
 import android.view.ViewGroup
@@ -46,6 +47,9 @@ import com.kakdela.p2p.ui.screens.FileManagerScreen
 import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
 import org.thoughtcrime.securesms.connect.DcHelper
+import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.database.Address
 import com.b44t.messenger.DcContact
 
 @Composable
@@ -142,15 +146,10 @@ fun DeltaChatLayoutView() {
 
             // Toolbar
             val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
-            val toolbarTitle = deltaLayout.findViewById<android.widget.TextView>(R.id.toolbar_title)
-            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
-            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
-            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
-            val avatarAndTitle = deltaLayout.findViewById<android.widget.LinearLayout>(R.id.avatar_and_title)
-
             if (ctx is AppCompatActivity) {
                 ctx.setSupportActionBar(toolbar)
                 toolbar?.setNavigationOnClickListener {
+                    val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
                     if (searchToolbar?.isVisible == true) {
                         searchToolbar.collapse()
                     }
@@ -158,33 +157,27 @@ fun DeltaChatLayoutView() {
             }
 
             // Заголовок и аватар
+            val toolbarTitle = deltaLayout.findViewById<android.widget.TextView>(R.id.toolbar_title)
+            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
             try {
                 val dcContext = DcHelper.getContext(ctx)
                 val name = dcContext.getConfig("displayname") ?: "Как дела?"
                 toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
                 selfAvatar?.setConnectivity(dcContext.getConnectivity())
+
+                // Загрузка аватара с Glide
+                val glideRequests = GlideApp.with(ctx)
+                val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
+                selfAvatar?.setAvatar(glideRequests, recipient, false)
             } catch (_: Exception) {
                 toolbarTitle?.text = "Как дела?"
             }
 
-            // Кнопка поиска
-            searchAction?.setOnClickListener {
-                searchToolbar?.display(searchAction)
-            }
-
-            // Меню аккаунтов
-            val activity = ctx as? android.app.Activity
-            selfAvatar?.setOnClickListener {
-                activity?.let {
-                    org.thoughtcrime.securesms.connect.AccountManager.getInstance()
-                        .showSwitchAccountMenu(it, false)
-                }
-            }
-            avatarAndTitle?.setOnClickListener {
-                activity?.let {
-                    org.thoughtcrime.securesms.connect.AccountManager.getInstance()
-                        .showSwitchAccountMenu(it, false)
-                }
+            // Кнопка поиска — display(float, float)
+            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
+            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
+            searchAction?.setOnClickListener { view ->
+                searchToolbar?.display(view.x, view.y)
             }
 
             // ConversationListFragment
@@ -316,3 +309,4 @@ fun NoInternetScreen(onBack: () -> Unit) {
         }
     }
 }
+```
