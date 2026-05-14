@@ -40,6 +40,7 @@ import com.jbselfcompany.tyr.utils.AutoconfigServer
 import com.kakdela.p2p.ui.navigation.NavGraph
 import com.kakdela.p2p.ui.navigation.Routes
 import kotlinx.coroutines.*
+import org.thoughtcrime.securesms.BaseConversationListFragment
 
 private val NeonCyan = Color(0xFF00FFFF)
 private val NeonGreen = Color(0xFF00FF9D)
@@ -48,7 +49,8 @@ private val DarkBackground = Color(0xFF0A0A0A)
 private val SurfaceGray = Color(0xFF1E1E1E)
 private val DeepPurple = Color(0xFF1A0033)
 
-class MainActivity : FragmentActivity() {
+class MainActivity : FragmentActivity(), 
+    BaseConversationListFragment.ConversationSelectedListener {
 
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
@@ -121,6 +123,18 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+
+    // ========== ConversationSelectedListener ==========
+
+    override fun onSwitchToArchive() {
+        val intent = Intent(this, org.thoughtcrime.securesms.ConversationListActivity::class.java).apply {
+            putExtra(org.thoughtcrime.securesms.ConversationListFragment.ARCHIVE, true)
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        startActivity(intent)
+    }
+
+    // ========== Остальные методы ==========
 
     private fun markRegistrationCompleted() {
         appPrefs.edit().putBoolean("registration_completed", true).apply()
@@ -257,7 +271,7 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-// ================= COMPOSABLE ФУНКЦИИ =================
+// ================= COMPOSABLE ФУНКЦИИ (без изменений) =================
 
 @Composable
 fun AnonymousRegistrationDialog(
