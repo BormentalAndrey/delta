@@ -38,7 +38,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.service.YggmailService
@@ -81,45 +80,33 @@ class MainActivity :
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
-
-    // Главный state приложения
     private var isRegistered = mutableStateOf(false)
 
-    // Постоянный контейнер DeltaChat
+    // Persistent DeltaChat container
     private var chatContainer: FrameLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         isRegistered.value =
-            appPrefs.getBoolean("registration_completed", false)
+            appPrefs.getBoolean(
+                "registration_completed",
+                false
+            )
+
+        // IMPORTANT:
+        // Initialize native layer BEFORE compose
+        // if user already registered
+        if (isRegistered.value) {
+            initChatLayer()
+        }
 
         setContent {
+
             AppTheme {
 
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                // Инициализация DeltaChat слоя
-                LaunchedEffect(isRegistered.value) {
-                    if (isRegistered.value) {
-                        initChatLayer()
-                    }
-                }
-
-                // Управление видимостью фрагмента
-                LaunchedEffect(currentRoute, isRegistered.value) {
-                    chatContainer?.visibility =
-                        if (
-                            isRegistered.value &&
-                            currentRoute == Routes.CHATS
-                        ) {
-                            View.VISIBLE
-                        } else {
-                            View.GONE
-                        }
-                }
+                val navController =
+                    rememberNavController()
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -128,40 +115,63 @@ class MainActivity :
 
                     if (isRegistered.value) {
 
-                        Box(modifier = Modifier.fillMaxSize()) {
+                        NavGraph(
+                            navController = navController,
+                            startDestination = Routes.CHATS,
 
-                            // Native DeltaChat Fragment
-                            AndroidView(
-                                factory = {
-                                    if (chatContainer == null) {
-                                        initChatLayer()
+                            // Native DeltaChat Layer
+                            chatLayer = {
+
+                                AndroidView(
+
+                                    factory = {
+
+                                        if (chatContainer == null) {
+                                            initChatLayer()
+                                        }
+
+                                        chatContainer!!.apply {
+                                            visibility = View.VISIBLE
+                                        }
+                                    },
+
+                                    modifier = Modifier.fillMaxSize(),
+
+                                    update = { view ->
+
+                                        // Prevent OEM bugs
+                                        // and invisible fragment issue
+                                        view.visibility = View.VISIBLE
                                     }
-                                    chatContainer!!
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            // Compose Navigation Overlay
-                            NavGraph(
-                                navController = navController,
-                                startDestination = Routes.CHATS
-                            )
-                        }
+                                )
+                            }
+                        )
 
                     } else {
 
                         MainScreen(
                             isLoading = isLoading.value,
-                            loadingMessage = loadingMessage.value,
+
+                            loadingMessage =
+                                loadingMessage.value,
 
                             onLaunchEmail = {
+
                                 markRegistrationCompleted()
+
                                 isRegistered.value = true
+
+                                initChatLayer()
                             },
 
                             onSetupAnonymous = { name, password ->
+
                                 showAnonymousDialog.value = false
-                                setupAnonymousAccount(name, password)
+
+                                setupAnonymousAccount(
+                                    name,
+                                    password
+                                )
                             },
 
                             onOpenDialog = {
@@ -174,14 +184,21 @@ class MainActivity :
                         )
 
                         if (showAnonymousDialog.value) {
+
                             AnonymousRegistrationDialog(
+
                                 onDismiss = {
                                     showAnonymousDialog.value = false
                                 },
 
                                 onConfirm = { name, password ->
+
                                     showAnonymousDialog.value = false
-                                    setupAnonymousAccount(name, password)
+
+                                    setupAnonymousAccount(
+                                        name,
+                                        password
+                                    )
                                 }
                             )
                         }
@@ -193,9 +210,12 @@ class MainActivity :
 
     private fun initChatLayer() {
 
-        if (chatContainer != null) return
+        if (chatContainer != null) {
+            return
+        }
 
         chatContainer = FrameLayout(this).apply {
+
             id = View.generateViewId()
 
             layoutParams = ViewGroup.LayoutParams(
@@ -203,32 +223,44 @@ class MainActivity :
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
 
-            visibility = View.GONE
+            visibility = View.VISIBLE
         }
 
-        val existing =
-            supportFragmentManager.findFragmentByTag("DELTA_CHAT")
+        val existingFragment =
+            supportFragmentManager.findFragmentByTag(
+                "DELTA_CHAT"
+            )
 
-        if (existing == null) {
+        if (existingFragment == null) {
 
-            val fragment = ConversationListFragment().apply {
-                arguments = Bundle().apply {
-                    putBoolean("archive", false)
+            val fragment =
+                ConversationListFragment().apply {
+
+                    arguments = Bundle().apply {
+                        putBoolean("archive", false)
+                    }
                 }
-            }
 
             supportFragmentManager.beginTransaction()
+
+                // CRITICAL FOR PRODUCTION
+                .setReorderingAllowed(true)
+
                 .replace(
                     chatContainer!!.id,
                     fragment,
                     "DELTA_CHAT"
                 )
-                .commitAllowingStateLoss()
+
+                .commitNowAllowingStateLoss()
         }
     }
 
     @Composable
-    fun AppTheme(content: @Composable () -> Unit) {
+    fun AppTheme(
+        content: @Composable () -> Unit
+    ) {
+
         MaterialTheme(
             colorScheme = darkColorScheme(
                 primary = NeonCyan,
@@ -244,25 +276,43 @@ class MainActivity :
 
     override fun onCreateConversation(chatId: Int) {
 
-        val intent = Intent(
-            this,
-            ConversationActivity::class.java
-        ).apply {
+        try {
 
-            putExtra(
-                ConversationActivity.CHAT_ID_EXTRA,
-                chatId
-            )
+            val intent = Intent(
+                this,
+                ConversationActivity::class.java
+            ).apply {
 
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(
+                    ConversationActivity.CHAT_ID_EXTRA,
+                    chatId
+                )
+
+                flags =
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+
+            startActivity(intent)
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            Toast.makeText(
+                this,
+                "Ошибка открытия чата",
+                Toast.LENGTH_LONG
+            ).show()
         }
-
-        startActivity(intent)
     }
 
     private fun markRegistrationCompleted() {
+
         appPrefs.edit()
-            .putBoolean("registration_completed", true)
+            .putBoolean(
+                "registration_completed",
+                true
+            )
             .apply()
     }
 
@@ -318,19 +368,23 @@ class MainActivity :
 
         try {
 
-            // Если есть поддержка имени
             try {
-                configRepository.javaClass
-                    .methods
-                    .find { it.name == "saveDisplayName" }
+
+                configRepository.javaClass.methods
+                    .find {
+                        it.name == "saveDisplayName"
+                    }
                     ?.invoke(configRepository, name)
+
             } catch (_: Exception) {
             }
 
             configRepository.savePassword(password)
+
             configRepository.setOnboardingCompleted(true)
 
             isLoading.value = true
+
             loadingMessage.value =
                 "Создание защищённого аккаунта..."
 
@@ -339,7 +393,10 @@ class MainActivity :
                 try {
 
                     if (!YggmailService.isRunning) {
-                        YggmailService.start(this@MainActivity)
+
+                        YggmailService.start(
+                            this@MainActivity
+                        )
                     }
 
                     withContext(Dispatchers.IO) {
@@ -371,10 +428,16 @@ class MainActivity :
                             password
                         )
 
-                    // Можно оставить для совместимости
-                    openDeltaChatWithDclogin(dcloginUrl)
+                    try {
+                        openDeltaChatWithDclogin(
+                            dcloginUrl
+                        )
+                    } catch (_: Exception) {
+                    }
 
                     markRegistrationCompleted()
+
+                    initChatLayer()
 
                     isLoading.value = false
 
@@ -384,7 +447,6 @@ class MainActivity :
                         Toast.LENGTH_SHORT
                     ).show()
 
-                    // Переход без recreate()
                     isRegistered.value = true
 
                 } catch (e: Exception) {
@@ -419,11 +481,14 @@ class MainActivity :
         timeoutMs: Long = 120000L
     ) {
 
-        val startTime = System.currentTimeMillis()
+        val startTime =
+            System.currentTimeMillis()
+
         var imapWasReady = false
 
         while (
-            System.currentTimeMillis() - startTime < timeoutMs
+            System.currentTimeMillis() - startTime <
+            timeoutMs
         ) {
 
             if (YggmailService.isRunning) {
@@ -431,15 +496,20 @@ class MainActivity :
                 val email =
                     configRepository.getMailAddress()
 
-                val imapReady = isImapReady()
+                val imapReady =
+                    isImapReady()
 
-                if (!email.isNullOrEmpty() && imapReady) {
+                if (
+                    !email.isNullOrEmpty() &&
+                    imapReady
+                ) {
 
                     if (!imapWasReady) {
 
                         imapWasReady = true
 
                         withContext(Dispatchers.Main) {
+
                             loadingMessage.value =
                                 "Подключение к сети..."
                         }
@@ -448,26 +518,29 @@ class MainActivity :
                     }
 
                     withContext(Dispatchers.Main) {
-                        loadingMessage.value = "Всё готово!"
+
+                        loadingMessage.value =
+                            "Всё готово!"
                     }
 
                     delay(1500)
 
                     return
+                }
 
-                } else {
+                withContext(Dispatchers.Main) {
 
-                    withContext(Dispatchers.Main) {
-                        loadingMessage.value =
-                            "Запуск сервера..."
-                    }
+                    loadingMessage.value =
+                        "Запуск сервера..."
                 }
             }
 
             delay(2000)
         }
 
-        throw IllegalStateException("Таймаут ожидания")
+        throw IllegalStateException(
+            "Таймаут ожидания"
+        )
     }
 
     private suspend fun isImapReady(): Boolean {
@@ -490,6 +563,7 @@ class MainActivity :
                 }
 
             } catch (_: Exception) {
+
                 false
             }
         }
@@ -501,12 +575,15 @@ class MainActivity :
 
         try {
 
-            val intent = Intent(Intent.ACTION_VIEW).apply {
+            val intent =
+                Intent(Intent.ACTION_VIEW).apply {
 
-                data = Uri.parse(dcloginUrl)
+                    data = Uri.parse(dcloginUrl)
 
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                    )
+                }
 
             startActivity(intent)
 
@@ -523,7 +600,9 @@ class MainActivity :
     }
 }
 
-// ================= COMPOSABLES =================
+// ========================================================
+// COMPOSABLES
+// ========================================================
 
 @Composable
 fun AnonymousRegistrationDialog(
@@ -543,7 +622,9 @@ fun AnonymousRegistrationDialog(
         mutableStateOf<String?>(null)
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss
+    ) {
 
         Card(
             modifier = Modifier
@@ -563,7 +644,9 @@ fun AnonymousRegistrationDialog(
 
             Column(
                 modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Box(
@@ -579,30 +662,47 @@ fun AnonymousRegistrationDialog(
                             CircleShape
                         ),
 
-                    contentAlignment = Alignment.Center
+                    contentAlignment =
+                        Alignment.Center
                 ) {
-                    Text("🛡️", fontSize = 28.sp)
+
+                    Text(
+                        "🛡️",
+                        fontSize = 28.sp
+                    )
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(
+                    Modifier.height(16.dp)
+                )
 
                 Text(
-                    "Анонимный аккаунт",
+                    text = "Анонимный аккаунт",
+
                     fontSize = 24.sp,
+
                     fontWeight = FontWeight.Bold,
+
                     color = NeonCyan
                 )
 
-                Spacer(Modifier.height(4.dp))
+                Spacer(
+                    Modifier.height(4.dp)
+                )
 
                 Text(
-                    "Придумайте имя и пароль.\nВсё остальное настроится автоматически.",
+                    text = "Придумайте имя и пароль.\nВсё остальное настроится автоматически.",
+
                     fontSize = 14.sp,
+
                     color = Color.Gray,
+
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(
+                    Modifier.height(24.dp)
+                )
 
                 OutlinedTextField(
                     value = name,
@@ -626,27 +726,33 @@ fun AnonymousRegistrationDialog(
 
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = NeonCyan,
+
                         unfocusedBorderColor =
                             NeonCyan.copy(alpha = 0.3f),
 
                         focusedTextColor = Color.White,
+
                         unfocusedTextColor = Color.White,
 
                         cursorColor = NeonCyan
                     )
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(
+                    Modifier.height(12.dp)
+                )
 
                 OutlinedTextField(
                     value = password,
 
                     onValueChange = {
+
                         password = it
                         passwordError = null
                     },
 
                     label = {
+
                         Text(
                             "Пароль",
                             color = NeonPurple
@@ -660,34 +766,48 @@ fun AnonymousRegistrationDialog(
                     shape = RoundedCornerShape(12.dp),
 
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password
+                        keyboardType =
+                            KeyboardType.Password
                     ),
 
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonPurple,
+
+                        focusedBorderColor =
+                            NeonPurple,
+
                         unfocusedBorderColor =
                             NeonPurple.copy(alpha = 0.3f),
 
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
+                        focusedTextColor =
+                            Color.White,
 
-                        cursorColor = NeonPurple,
-                        errorBorderColor = Color.Red
+                        unfocusedTextColor =
+                            Color.White,
+
+                        cursorColor =
+                            NeonPurple,
+
+                        errorBorderColor =
+                            Color.Red
                     ),
 
-                    isError = passwordError != null,
+                    isError =
+                        passwordError != null,
 
-                    supportingText = passwordError?.let {
-                        {
-                            Text(
-                                it,
-                                color = Color.Red
-                            )
+                    supportingText =
+                        passwordError?.let {
+                            {
+                                Text(
+                                    it,
+                                    color = Color.Red
+                                )
+                            }
                         }
-                    }
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(
+                    Modifier.height(24.dp)
+                )
 
                 Button(
                     onClick = {
@@ -695,16 +815,19 @@ fun AnonymousRegistrationDialog(
                         when {
 
                             name.isBlank() -> {
+
                                 passwordError =
                                     "Введите имя"
                             }
 
                             password.length < 6 -> {
+
                                 passwordError =
                                     "Минимум 6 символов"
                             }
 
                             else -> {
+
                                 onConfirm(
                                     name.trim(),
                                     password
@@ -725,346 +848,29 @@ fun AnonymousRegistrationDialog(
                 ) {
 
                     Text(
-                        "Создать аккаунт",
+                        text = "Создать аккаунт",
+
                         fontSize = 18.sp,
+
                         fontWeight = FontWeight.Bold,
+
                         color = Color.White
                     )
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(
+                    Modifier.height(8.dp)
+                )
 
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss
+                ) {
+
                     Text(
-                        "Отмена",
+                        text = "Отмена",
                         color = Color.Gray
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun MainScreen(
-    isLoading: Boolean,
-    loadingMessage: String,
-    onLaunchEmail: () -> Unit,
-    onSetupAnonymous: (String, String) -> Unit,
-    onOpenDialog: () -> Unit,
-    onLaunchTyr: () -> Unit
-) {
-
-    val infiniteTransition =
-        rememberInfiniteTransition(label = "pulse")
-
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.08f,
-
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                2000,
-                easing = EaseInOutCubic
-            ),
-
-            repeatMode = RepeatMode.Reverse
-        ),
-
-        label = "scale"
-    )
-
-    val gradientShift by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                4000,
-                easing = LinearEasing
-            ),
-
-            repeatMode = RepeatMode.Reverse
-        ),
-
-        label = "gradient"
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        DeepPurple,
-                        Color(0xFF0D0020)
-                            .copy(alpha = 0.9f),
-                        DarkBackground
-                    ),
-
-                    startY = 0f + gradientShift * 200f,
-                    endY = 1000f + gradientShift * 200f
-                )
-            )
-    ) {
-
-        Box(
-            modifier = Modifier
-                .size(300.dp)
-                .offset((-100).dp, (-50).dp)
-                .clip(CircleShape)
-                .background(
-                    NeonPurple.copy(alpha = 0.05f)
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .offset(250.dp, 600.dp)
-                .clip(CircleShape)
-                .background(
-                    NeonCyan.copy(alpha = 0.05f)
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .padding(
-                    horizontal = 32.dp,
-                    vertical = 24.dp
-                ),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Spacer(modifier = Modifier.weight(0.3f))
-
-            Image(
-                painter = painterResource(id = R.drawable.intro1),
-                contentDescription = "Логотип",
-
-                modifier = Modifier
-                    .size(200.dp)
-                    .scale(scale)
-            )
-
-            Spacer(modifier = Modifier.weight(0.5f))
-
-            if (isLoading) {
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
-
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .scale(scale)
-                            .clip(CircleShape)
-                            .background(
-                                NeonPurple.copy(alpha = 0.2f)
-                            )
-                            .border(
-                                3.dp,
-                                NeonPurple,
-                                CircleShape
-                            ),
-
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("⏳", fontSize = 32.sp)
-                    }
-
-                    Spacer(Modifier.height(24.dp))
-
-                    Text(
-                        loadingMessage,
-                        color = NeonCyan,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .width(200.dp)
-                            .clip(
-                                RoundedCornerShape(4.dp)
-                            ),
-
-                        color = NeonPurple,
-
-                        trackColor =
-                            NeonPurple.copy(alpha = 0.2f)
-                    )
-                }
-
-            } else {
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
-
-                    Button(
-                        onClick = onLaunchEmail,
-
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor =
-                                NeonCyan.copy(alpha = 0.15f)
-                        ),
-
-                        shape = RoundedCornerShape(20.dp),
-
-                        border = BorderStroke(
-                            2.dp,
-                            NeonCyan.copy(alpha = 0.5f)
-                        )
-                    ) {
-
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    NeonCyan.copy(alpha = 0.2f)
-                                )
-                                .border(
-                                    1.dp,
-                                    NeonCyan,
-                                    CircleShape
-                                ),
-
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("📧", fontSize = 18.sp)
-                        }
-
-                        Spacer(Modifier.width(12.dp))
-
-                        Column(
-                            Modifier.weight(1f)
-                        ) {
-
-                            Text(
-                                "Войти по email",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NeonCyan
-                            )
-
-                            Text(
-                                "Стандартная регистрация",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Button(
-                        onClick = onOpenDialog,
-
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor =
-                                NeonPurple.copy(alpha = 0.15f)
-                        ),
-
-                        shape = RoundedCornerShape(20.dp),
-
-                        border = BorderStroke(
-                            2.dp,
-                            NeonPurple.copy(alpha = 0.5f)
-                        )
-                    ) {
-
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    NeonPurple.copy(alpha = 0.2f)
-                                )
-                                .border(
-                                    1.dp,
-                                    NeonPurple,
-                                    CircleShape
-                                ),
-
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("🛡️", fontSize = 18.sp)
-                        }
-
-                        Spacer(Modifier.width(12.dp))
-
-                        Column(
-                            Modifier.weight(1f)
-                        ) {
-
-                            Text(
-                                "Анонимный аккаунт",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NeonPurple
-                            )
-
-                            Text(
-                                "Автоматическая настройка",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(0.4f))
-
-            Row(
-                modifier = Modifier
-                    .clickable {
-                        onLaunchTyr()
-                    }
-                    .padding(8.dp),
-
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Icon(
-                    Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Настройки",
-
-                    tint = Color.Gray.copy(alpha = 0.3f),
-
-                    modifier = Modifier.size(16.dp)
-                )
-
-                Spacer(Modifier.width(4.dp))
-
-                Text(
-                    "⚙️",
-                    fontSize = 16.sp,
-                    color = Color.Gray.copy(alpha = 0.3f)
-                )
             }
         }
     }
