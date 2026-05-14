@@ -109,6 +109,13 @@ private val dealItems = listOf(
         description = "Автомобили",
         type = DealType.WEB,
         url = "https://www.drom.ru"
+    ),
+    DealItem(
+        id = "avito",
+        title = "Авито",
+        description = "Доска объявлений",
+        type = DealType.WEB,
+        url = "https://www.avito.ru/"
     )
 )
 
