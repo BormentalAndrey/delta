@@ -1,5 +1,3 @@
-app/src/main/java/com/launcher/multiapp/MainActivity.kt
-
 package com.launcher.multiapp
 
 import android.content.Intent
