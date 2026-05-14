@@ -1,10 +1,13 @@
 package com.kakdela.p2p.ui.navigation
 
+import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,33 +27,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.kakdela.p2p.data.IdentityRepository
 import com.kakdela.p2p.ui.*
+import com.kakdela.p2p.ui.auth.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
+import com.kakdela.p2p.ui.chat.ChatScreen
+import com.kakdela.p2p.ui.onboarding.OnboardingScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
+import com.kakdela.p2p.ui.slots.Slots1Screen
+import com.kakdela.p2p.ui.ChatViewModel
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import com.kakdela.p2p.ui.terminal.TerminalActivity
+import com.kakdela.p2p.viewmodel.ChatViewModelFactory
 
-private val NeonCyan = Color(0xFF00FFFF)
-private val AppBlack = Color.Black
-private val BottomBarBlack = Color(0xFF010101)
+private const val ROUTE_ONBOARDING = "onboarding"
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    identityRepository: IdentityRepository,
     startDestination: String,
-    chatLayer: @Composable () -> Unit
+    chatLayer: @Composable () -> Unit // Параметр для встраивания Delta Chat из MainActivity
 ) {
+    val context = LocalContext.current
     val isOnline by rememberIsOnline()
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Определяем, на какой вкладке показывать BottomBar
+    val messageRepository = identityRepository.messageRepository
+
+    // Маршруты, на которых должна отображаться нижняя панель
     val showBottomBar = currentRoute in listOf(
         Routes.CHATS,
         Routes.DEALS,
@@ -59,109 +73,171 @@ fun NavGraph(
     )
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                AppBottomBar(
-                    currentRoute = currentRoute,
-                    navController = navController
-                )
+                // Surface гарантирует, что панель навигации находится на верхнем слое
+                Surface(
+                    tonalElevation = 8.dp,
+                    shadowElevation = 12.dp,
+                    color = Color(0xFF010101)
+                ) {
+                    AppBottomBar(currentRoute, navController)
+                }
             }
         },
-        // Делаем фон Scaffold прозрачным только для экрана чатов
-        containerColor = if (currentRoute == Routes.CHATS) Color.Transparent else AppBlack
+        containerColor = Color.Black
     ) { paddingValues ->
+        // paddingValues автоматически содержат высоту BottomBar, предотвращая перекрытие
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues) // Ограничивает область NavHost, чтобы контент не залезал под панель
+                .background(Color.Black)
+        ) {
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            
-            // --- СЛОЙ 0: НАТИВНЫЙ (Delta Chat Fragment) ---
-            // Он всегда в дереве, чтобы не терять состояние фрагмента.
-            // Padding применяется только снизу, чтобы контент не заходил под BottomBar.
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = if (showBottomBar) paddingValues.calculateBottomPadding() else 0.dp)
-            ) {
-                chatLayer()
+            // ================= AUTH & ONBOARDING =================
+
+            composable(Routes.SPLASH) {
+                SplashScreen {
+                    val authPrefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+                    val isLoggedIn = authPrefs.getBoolean("is_logged_in", false)
+                    val appPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    val isOnboardingShown = appPrefs.getBoolean("onboarding_shown", false)
+
+                    val destination = when {
+                        isLoggedIn -> Routes.CHATS
+                        isOnboardingShown -> Routes.CHOICE
+                        else -> ROUTE_ONBOARDING
+                    }
+
+                    navController.navigate(destination) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
             }
 
-            // --- СЛОЙ 1: COMPOSE NAVIGATION ---
-            NavHost(
-                navController = navController,
-                startDestination = startDestination,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f) // Поверх нативного слоя
-                    .background(
-                        if (currentRoute == Routes.CHATS) Color.Transparent else AppBlack
-                    )
-            ) {
-                // Главные экраны
-                composable(Routes.CHATS) {
-                    // Оставляем пустым, чтобы видеть chatLayer через прозрачный фон NavHost
-                    Box(modifier = Modifier.fillMaxSize())
-                }
-
-                composable(Routes.DEALS) {
-                    ScreenContainer(paddingValues) { DealsScreen(navController) }
-                }
-
-                composable(Routes.ENTERTAINMENT) {
-                    ScreenContainer(paddingValues) { EntertainmentScreen(navController) }
-                }
-
-                composable(Routes.SETTINGS) {
-                    ScreenContainer(paddingValues) { SettingsScreen(navController) }
-                }
-
-                // Инструменты и Досуг (Без нижнего бара)
-                composable(Routes.MUSIC) {
-                    ScreenContainer { MusicPlayerScreen() }
-                }
-
-                composable(Routes.CALCULATOR) {
-                    ScreenContainer { CalculatorScreen() }
-                }
-
-                composable(Routes.TEXT_EDITOR) {
-                    ScreenContainer { TextEditorScreen(navController) }
-                }
-
-                composable(Routes.AI_CHAT) {
-                    ScreenContainer { AiChatScreen() }
-                }
-
-                composable(Routes.FILE_MANAGER) {
-                    ScreenContainer { 
-                        FileManagerScreen(onExit = { navController.popBackStack() }) 
-                    }
-                }
-
-                // Игры
-                composable(Routes.TIC_TAC_TOE) { ScreenContainer { TicTacToeScreen() } }
-                composable(Routes.CHESS) { ScreenContainer { ChessScreen() } }
-                composable(Routes.PACMAN) { ScreenContainer { PacmanScreen() } }
-                composable(Routes.JEWELS) { ScreenContainer { JewelsBlastScreen() } }
-                composable(Routes.SUDOKU) { ScreenContainer { SudokuScreen() } }
-
-                // WebView с обработкой интернета
-                composable(
-                    route = "webview/{url}/{title}",
-                    arguments = listOf(
-                        navArgument("url") { type = NavType.StringType },
-                        navArgument("title") { type = NavType.StringType }
-                    )
-                ) { entry ->
-                    val url = entry.arguments?.getString("url") ?: ""
-                    val title = entry.arguments?.getString("title") ?: ""
-
-                    ScreenContainer {
-                        if (isOnline) {
-                            WebViewScreen(url, title, navController)
-                        } else {
-                            NoInternetScreen(onBack = { navController.popBackStack() })
+            composable(ROUTE_ONBOARDING) {
+                OnboardingScreen(
+                    onFinished = {
+                        val appPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                        appPrefs.edit().putBoolean("onboarding_shown", true).apply()
+                        navController.navigate(Routes.CHOICE) {
+                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(Routes.CHOICE) {
+                RegistrationChoiceScreen(
+                    onPhone = { navController.navigate(Routes.AUTH_PHONE) },
+                    onEmailOnly = { navController.navigate(Routes.AUTH_EMAIL) }
+                )
+            }
+
+            composable(Routes.AUTH_EMAIL) {
+                EmailAuthScreen(identityRepository) {
+                    navController.navigate(Routes.CHATS) {
+                        popUpTo(Routes.CHOICE) { inclusive = true }
+                    }
+                }
+            }
+
+            composable(Routes.AUTH_PHONE) {
+                PhoneAuthScreen {
+                    navController.navigate(Routes.CHATS) {
+                        popUpTo(Routes.CHOICE) { inclusive = true }
+                    }
+                }
+            }
+
+            // ================= MAIN (DELTA CHAT) =================
+
+            composable(Routes.CHATS) {
+                // Вместо обычного экрана вызываем переданный слой Delta Chat.
+                // Список чатов внутри фрагмента будет прокручиваться нативно.
+                Box(modifier = Modifier.fillMaxSize()) {
+                    chatLayer()
+                }
+            }
+
+            composable(Routes.CONTACTS) {
+                ContactsScreen(
+                    identityRepository = identityRepository,
+                    onContactClick = { contact ->
+                        contact.userHash?.let { hash ->
+                            navController.navigate(Routes.buildChatRoute(hash))
+                        } ?: Toast.makeText(
+                            context,
+                            "Пользователь ещё не в P2P-сети",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+            }
+
+            // ================= DIRECT CHAT =================
+
+            composable(
+                route = Routes.CHAT_DIRECT,
+                arguments = listOf(navArgument("chatId") { type = NavType.StringType })
+            ) { entry ->
+                val chatId = entry.arguments?.getString("chatId") ?: return@composable
+                val app = context.applicationContext as Application
+                val vm: ChatViewModel = viewModel(
+                    factory = ChatViewModelFactory(identityRepository, messageRepository, app)
+                )
+
+                LaunchedEffect(chatId) { vm.initChat(chatId) }
+                val messages by vm.messages.collectAsState()
+
+                ChatScreen(
+                    chatPartnerId = chatId,
+                    messages = messages,
+                    identityRepository = identityRepository,
+                    onSendMessage = vm::sendMessage,
+                    onSendFile = vm::sendFile,
+                    onSendAudio = { uri, dur -> vm.sendFile(uri, "audio_$dur.mp3") },
+                    onScheduleMessage = vm::scheduleMessage,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ================= SECTIONS & TOOLS =================
+
+            composable(Routes.DEALS) { DealsScreen(navController) }
+            composable(Routes.ENTERTAINMENT) { EntertainmentScreen(navController) }
+            composable(Routes.SETTINGS) { SettingsScreen(navController, identityRepository) }
+            composable(Routes.MUSIC) { MusicPlayerScreen() }
+            composable(Routes.CALCULATOR) { CalculatorScreen() }
+            composable(Routes.TEXT_EDITOR) { TextEditorScreen(navController) }
+            composable(Routes.FILE_MANAGER) { FileManagerScreen(onExit = { navController.popBackStack() }) }
+            composable(Routes.SLOTS_1) { Slots1Screen(navController) }
+            composable(Routes.TIC_TAC_TOE) { TicTacToeScreen() }
+            composable(Routes.CHESS) { ChessScreen() }
+            composable(Routes.PACMAN) { PacmanScreen() }
+            composable(Routes.SUDOKU) { SudokuScreen() }
+            composable(Routes.JEWELS) { JewelsBlastScreen() }
+            composable(Routes.AI_CHAT) { AiChatScreen() }
+
+            composable(
+                route = "webview/{url}/{title}",
+                arguments = listOf(
+                    navArgument("url") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType }
+                )
+            ) { entry ->
+                val url = entry.arguments?.getString("url") ?: ""
+                val title = entry.arguments?.getString("title") ?: ""
+                if (isOnline) WebViewScreen(url, title, navController)
+                else NoInternetScreen { navController.popBackStack() }
+            }
+
+            composable(Routes.TERMINAL) {
+                LaunchedEffect(Unit) {
+                    context.startActivity(Intent(context, TerminalActivity::class.java))
                 }
             }
         }
@@ -169,29 +245,11 @@ fun NavGraph(
 }
 
 @Composable
-private fun ScreenContainer(
-    paddingValues: PaddingValues = PaddingValues(0.dp),
-    content: @Composable BoxScope.() -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .background(AppBlack)
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun AppBottomBar(
-    currentRoute: String?,
-    navController: NavHostController
-) {
+private fun AppBottomBar(currentRoute: String?, navController: NavHostController) {
     NavigationBar(
-        containerColor = BottomBarBlack,
+        containerColor = Color(0xFF010101),
         tonalElevation = 0.dp,
-        modifier = Modifier.height(72.dp)
+        modifier = Modifier.height(70.dp) // Фиксированная высота для стабильности
     ) {
         val items = listOf(
             Triple(Routes.CHATS, Icons.Outlined.ChatBubbleOutline, "Чаты"),
@@ -214,22 +272,12 @@ private fun AppBottomBar(
                     }
                 },
                 icon = {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = label,
-                        tint = if (selected) NeonCyan else Color.Gray
-                    )
+                    Icon(icon, contentDescription = label, tint = if (selected) Color(0xFF00FFFF) else Color.Gray)
                 },
                 label = {
-                    Text(
-                        text = label,
-                        fontSize = 10.sp,
-                        color = if (selected) NeonCyan else Color.Gray
-                    )
+                    Text(label, fontSize = 10.sp, color = if (selected) Color(0xFF00FFFF) else Color.Gray)
                 },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = NeonCyan.copy(alpha = 0.1f)
-                )
+                colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
             )
         }
     }
@@ -239,50 +287,29 @@ private fun AppBottomBar(
 fun rememberIsOnline(): State<Boolean> {
     val context = LocalContext.current
     val state = remember { mutableStateOf(true) }
-
     DisposableEffect(context) {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) { state.value = true }
-            override fun onLost(network: Network) { state.value = checkConnectivity(cm) }
-            override fun onUnavailable() { state.value = false }
+            override fun onLost(network: Network) { state.value = false }
         }
-
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-        
+        val request = NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build()
         cm.registerNetworkCallback(request, callback)
-        state.value = checkConnectivity(cm)
-
         onDispose { cm.unregisterNetworkCallback(callback) }
     }
     return state
 }
 
-private fun checkConnectivity(cm: ConnectivityManager): Boolean {
-    val network = cm.activeNetwork ?: return false
-    val caps = cm.getNetworkCapabilities(network) ?: return false
-    return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-}
-
 @Composable
 fun NoInternetScreen(onBack: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize().background(AppBlack),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.CloudOff, null, tint = NeonCyan.copy(0.6f), modifier = Modifier.size(80.dp))
-            Spacer(Modifier.height(24.dp))
+            Icon(Icons.Default.CloudOff, null, tint = Color(0xFF00FFFF), modifier = Modifier.size(80.dp))
+            Spacer(Modifier.height(16.dp))
             Text("Нет соединения", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(32.dp))
-            OutlinedButton(
-                onClick = onBack,
-                border = BorderStroke(1.dp, NeonCyan),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
-            ) {
-                Text("ВЕРНУТЬСЯ")
+            Spacer(Modifier.height(24.dp))
+            OutlinedButton(onClick = onBack, border = BorderStroke(1.dp, Color(0xFF00FFFF))) {
+                Text("ВЕРНУТЬСЯ", color = Color(0xFF00FFFF))
             }
         }
     }
