@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -42,7 +43,11 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import com.launcher.multiapp.R
 import org.thoughtcrime.securesms.ConversationListFragment
+import org.thoughtcrime.securesms.connect.DcHelper
+import com.b44t.messenger.DcContact
+import com.b44t.messenger.DcContext
 
 @Composable
 fun NavGraph(
@@ -138,7 +143,7 @@ fun NavGraph(
     }
 }
 
-// ================= DELTACHAT LAYOUT VIEW (полный макет с Toolbar) =================
+// ================= DELTACHAT LAYOUT VIEW (с инициализацией Toolbar и аватара) =================
 
 @Composable
 fun DeltaChatLayoutView() {
@@ -154,33 +159,78 @@ fun DeltaChatLayoutView() {
                 )
             }
 
-            // Получаем ID ресурсов из модуля deltachat
-            val layoutId = ctx.resources.getIdentifier(
-                "conversation_list_activity", "layout", "org.thoughtcrime.securesms"
-            )
-            val fragmentContainerId = ctx.resources.getIdentifier(
-                "fragment_container", "id", "org.thoughtcrime.securesms"
-            )
-            val toolbarId = ctx.resources.getIdentifier(
-                "toolbar", "id", "org.thoughtcrime.securesms"
-            )
-
+            // Надуваем макет DeltaChat
             val inflater = LayoutInflater.from(ctx)
-            val deltaLayout = inflater.inflate(layoutId, rootView, false)
+            val deltaLayout = inflater.inflate(R.layout.conversation_list_activity, rootView, false)
             rootView.addView(deltaLayout)
 
-            // Вставляем ConversationListFragment
-            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(fragmentContainerId)
+            // --- Инициализация Toolbar (как в ConversationListActivity) ---
+            val toolbar = deltaLayout.findViewById<Toolbar>(R.id.toolbar)
+            val selfAvatar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(R.id.self_avatar)
+            val unreadIndicator = deltaLayout.findViewById<android.widget.ImageView>(R.id.unread_indicator)
+            val toolbarTitle = deltaLayout.findViewById<android.widget.TextView>(R.id.toolbar_title)
+            val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(R.id.search_toolbar)
+            val searchAction = deltaLayout.findViewById<android.widget.ImageView>(R.id.search_action)
+            val avatarAndTitle = deltaLayout.findViewById<android.widget.LinearLayout>(R.id.avatar_and_title)
+            val selfAvatarContainer = deltaLayout.findViewById<android.widget.RelativeLayout>(R.id.self_avatar_container)
+
+            if (ctx is AppCompatActivity) {
+                ctx.setSupportActionBar(toolbar)
+                toolbar?.setNavigationOnClickListener {
+                    // Кнопка "Назад" — скрыть поиск
+                    if (searchToolbar?.isVisible == true) {
+                        searchToolbar.collapse()
+                    }
+                }
+            }
+
+            // --- Настройка аватара (как в ConversationListActivity.refresh()) ---
+            try {
+                val dcContext = DcHelper.getContext(ctx)
+                val self = dcContext.getContact(DcContact.DC_CONTACT_ID_SELF)
+                val name = dcContext.getConfig("displayname") ?: "Как дела?"
+                toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
+                selfAvatar?.setConnectivity(dcContext.getConnectivity())
+                selfAvatar?.setAvatar(
+                    ctx,
+                    org.thoughtcrime.securesms.recipients.Recipient.from(ctx, 
+                        org.thoughtcrime.securesms.database.Address.fromChat(DcContact.DC_CONTACT_ID_SELF)
+                    ),
+                    false
+                )
+            } catch (e: Exception) {
+                toolbarTitle?.text = "Как дела?"
+            }
+
+            // --- Кнопка поиска (как в ConversationListActivity) ---
+            searchAction?.setOnClickListener {
+                searchToolbar?.display(searchAction)
+            }
+
+            // --- Аватар — меню аккаунтов ---
+            selfAvatar?.setOnClickListener {
+                org.thoughtcrime.securesms.connect.AccountManager.getInstance()
+                    .showSwitchAccountMenu(ctx as android.app.Activity, false)
+            }
+            avatarAndTitle?.setOnClickListener {
+                org.thoughtcrime.securesms.connect.AccountManager.getInstance()
+                    .showSwitchAccountMenu(ctx as android.app.Activity, false)
+            }
+
+            // --- Вставляем ConversationListFragment ---
+            val fragmentContainer = deltaLayout.findViewById<FrameLayout>(R.id.fragment_container)
             if (fragmentContainer != null) {
                 val fragmentManager = (ctx as FragmentActivity).supportFragmentManager
-                val fragment = ConversationListFragment()
-                val args = Bundle()
-                args.putBoolean(ConversationListFragment.ARCHIVE, false)
-                fragment.arguments = args
+                if (fragmentManager.findFragmentById(R.id.fragment_container) == null) {
+                    val fragment = ConversationListFragment()
+                    val args = Bundle()
+                    args.putBoolean(ConversationListFragment.ARCHIVE, false)
+                    fragment.arguments = args
 
-                fragmentManager.beginTransaction()
-                    .replace(fragmentContainer.id, fragment)
-                    .commit()
+                    fragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .commit()
+                }
             }
 
             rootView
