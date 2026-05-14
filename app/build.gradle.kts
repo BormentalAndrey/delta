@@ -1,10 +1,13 @@
 import java.util.Properties
 import java.io.FileInputStream
+import org.gradle.api.tasks.Copy
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    // Если используете Firebase/Google Services:
+    // id("com.google.gms.google-services")
 }
 
 /* ------------------------- Local properties ------------------------- */
@@ -29,9 +32,28 @@ val activityComposeVersion = "1.9.3"
 val navigationComposeVersion = "2.8.5"
 val lifecycleVersion = "2.8.7"
 
+/* ------------------------- GDX Native Copy Task (КРИТИЧЕСКИ ВАЖНО) ------------------------- */
+// Эта задача извлекает libgdx.so из JAR-файлов и кладет их в папку jniLibs
+val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
+    val platforms = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+    into(layout.projectDirectory.dir("src/main/jniLibs"))
+
+    platforms.forEach { platform ->
+        val cfg = configurations.detachedConfiguration(
+            dependencies.create(
+                "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-$platform"
+            )
+        )
+        from(cfg.map { zipTree(it) }) {
+            include("**/*.so")
+            into(platform)
+        }
+    }
+}
+
 android {
     namespace = "com.launcher.multiapp"
-    compileSdk = 36
+    compileSdk = 36 // Можно оставить 36 или откатить на 35, если есть конфликты
 
     defaultConfig {
         applicationId = "com.launcher.multiapp"
@@ -47,6 +69,16 @@ android {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
 
+        // Если JewelsBlast использует C++ код напрямую через CMake:
+        /*
+        externalNativeBuild {
+            cmake {
+                cppFlags("-std=c++17", "-O3", "-frtti", "-fexceptions")
+                arguments("-DANDROID_STL=c++_shared")
+            }
+        }
+        */
+
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
@@ -54,30 +86,31 @@ android {
         buildConfigField(
             "String",
             "GEMINI_API_KEY",
-            "\"${System.getenv("GEMINI_API_KEY")
-                ?: localProperties.getProperty("GEMINI_API_KEY", "")}\""
+            "\"${System.getenv("GEMINI_API_KEY") ?: localProperties.getProperty("GEMINI_API_KEY", "")}\""
         )
     }
 
+    /*
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+    */
+
     flavorDimensions += "none"
     productFlavors {
-        create("foss") {
-            dimension = "none"
-        }
-        create("gplay") {
-            dimension = "none"
-        }
+        create("foss") { dimension = "none" }
+        create("gplay") { dimension = "none" }
     }
 
     signingConfigs {
         create("release") {
             storeFile = file("my-release-key.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-                ?: localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
-            keyAlias = System.getenv("KEY_ALIAS")
-                ?: localProperties.getProperty("RELEASE_KEY_ALIAS", "")
-            keyPassword = System.getenv("KEY_PASSWORD")
-                ?: localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
+            keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS", "")
+            keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
         }
     }
 
@@ -116,7 +149,8 @@ android {
 
     sourceSets {
         getByName("main") {
-            jniLibs.srcDirs("delta/libs")
+            // Объединяем пути для библиотек DeltaChat и libGDX
+            jniLibs.srcDirs("delta/libs", "src/main/jniLibs")
         }
     }
 
@@ -129,7 +163,6 @@ android {
             excludes += setOf(
                 "/META-INF/{AL2.0,LGPL2.1}",
                 "META-INF/DEPENDENCIES",
-                "META-INF/INDEX.LIST",
                 "META-INF/NOTICE*",
                 "META-INF/LICENSE*",
                 "META-INF/kotlinx-coroutines-core.kotlin_module",
@@ -140,7 +173,13 @@ android {
     }
 }
 
-/* ------------------------- Dependencies ------------------------- */
+/* ------------------------- Hook natives (Автозапуск задачи) ------------------------- */
+tasks.whenTaskAdded {
+    if (name.contains("merge", true) && name.contains("JniLibFolders", true)) {
+        dependsOn(copyAndroidNatives)
+    }
+}
+
 dependencies {
     // Основные модули
     implementation(project(":deltachat"))
@@ -156,7 +195,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose — исправленный BOM и зависимости
+    // Compose
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -166,14 +205,10 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
 
-    // Material
+    // Coil & UI
+    implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.transition:transition:1.5.1")
-
-    // Coil
-    implementation("io.coil-kt:coil-compose:$coilVersion")
 
     // Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
@@ -195,9 +230,8 @@ dependencies {
     // Media
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
-    implementation("androidx.media3:media3-session:$media3Version")
 
-    // Graphics
+    // Graphics / libGDX
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
@@ -210,12 +244,6 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:$poiVersion")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
-    // Core desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
-
-    // Debug
-    debugImplementation("androidx.compose.ui:ui-tooling")
-
-    // Tests
     testImplementation("junit:junit:4.13.2")
 }
