@@ -6,11 +6,9 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Bundle
-import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -43,19 +40,6 @@ import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
 import org.thoughtcrime.securesms.ConversationListFragment
-import org.thoughtcrime.securesms.connect.DcHelper
-import org.thoughtcrime.securesms.mms.GlideApp
-import org.thoughtcrime.securesms.recipients.Recipient
-import org.thoughtcrime.securesms.database.Address
-import com.b44t.messenger.DcContact
-import org.thoughtcrime.securesms.accounts.AccountSelectionListFragment
-
-/**
- * Глобальная переменная для кэширования View. 
- * Внимание: использование статики для View может привести к утечкам контекста, 
- * если Activity пересоздается. В идеале использовать ViewModel для хранения состояния.
- */
-private var globalChatContainer: FrameLayout? = null
 
 @Composable
 fun NavGraph(
@@ -66,7 +50,6 @@ fun NavGraph(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Определяем, на каких экранах показывать нижнюю панель
     val showBottomBar = currentRoute in listOf(
         Routes.CHATS,
         Routes.DEALS,
@@ -80,186 +63,106 @@ fun NavGraph(
                 AppBottomBar(currentRoute, navController)
             }
         },
-        containerColor = Color.Black // Общий фон приложения
+        containerColor = Color.Black
     ) { paddingValues ->
         
-        // Используем Box для наложения слоев, если это необходимо
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            NavHost(
-                navController = navController,
-                startDestination = startDestination,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // --- ВКЛАДКА ЧАТЫ (Delta Chat) ---
-                composable(Routes.CHATS) {
-                    DeltaChatView(Modifier.fillMaxSize())
-                }
+            // --- ВКЛАДКА ЧАТЫ (Интеграция Delta Chat) ---
+            composable(Routes.CHATS) {
+                DeltaChatView(Modifier.fillMaxSize())
+            }
 
-                // --- ВКЛАДКА ДЕЛА ---
-                composable(Routes.DEALS) {
-                    DealsScreen(navController)
-                }
+            // --- ВКЛАДКА ДЕЛА ---
+            composable(Routes.DEALS) {
+                DealsScreen(navController)
+            }
 
-                // --- ВКЛАДКА ДОСУГ ---
-                composable(Routes.ENTERTAINMENT) {
-                    EntertainmentScreen(navController)
-                }
+            // --- ВКЛАДКА ДОСУГ ---
+            composable(Routes.ENTERTAINMENT) {
+                EntertainmentScreen(navController)
+            }
 
-                // --- ВКЛАДКА ОПЦИИ ---
-                composable(Routes.SETTINGS) {
-                    SettingsScreen(navController)
-                }
+            // --- ВКЛАДКА ОПЦИИ ---
+            composable(Routes.SETTINGS) {
+                SettingsScreen(navController)
+            }
 
-                // --- ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ ---
-                composable(Routes.MUSIC) { MusicPlayerScreen() }
-                composable(Routes.CALCULATOR) { CalculatorScreen() }
-                composable(Routes.TEXT_EDITOR) { TextEditorScreen(navController) }
-                composable(Routes.AI_CHAT) { AiChatScreen() }
-                composable(Routes.FILE_MANAGER) { 
-                    FileManagerScreen(onExit = { navController.popBackStack() }) 
-                }
-                
-                // Игры
-                composable(Routes.TIC_TAC_TOE) { TicTacToeScreen() }
-                composable(Routes.CHESS) { ChessScreen() }
-                composable(Routes.PACMAN) { PacmanScreen() }
-                composable(Routes.SUDOKU) { SudokuScreen() }
-                composable(Routes.JEWELS) { JewelsBlastScreen() }
+            // --- ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ ---
+            composable(Routes.MUSIC) { MusicPlayerScreen() }
+            composable(Routes.CALCULATOR) { CalculatorScreen() }
+            composable(Routes.TEXT_EDITOR) { TextEditorScreen(navController) }
+            composable(Routes.AI_CHAT) { AiChatScreen() }
+            composable(Routes.FILE_MANAGER) { 
+                FileManagerScreen(onExit = { navController.popBackStack() }) 
+            }
+            
+            // Игры
+            composable(Routes.TIC_TAC_TOE) { TicTacToeScreen() }
+            composable(Routes.CHESS) { ChessScreen() }
+            composable(Routes.PACMAN) { PacmanScreen() }
+            composable(Routes.SUDOKU) { SudokuScreen() }
+            composable(Routes.JEWELS) { JewelsBlastScreen() }
 
-                // WebView
-                composable(
-                    route = "webview/{url}/{title}",
-                    arguments = listOf(
-                        navArgument("url") { type = NavType.StringType },
-                        navArgument("title") { type = NavType.StringType }
-                    )
-                ) { entry ->
-                    val url = entry.arguments?.getString("url") ?: ""
-                    val title = entry.arguments?.getString("title") ?: ""
-                    if (isOnline) {
-                        WebViewScreen(url, title, navController)
-                    } else {
-                        NoInternetScreen { navController.popBackStack() }
-                    }
+            // WebView
+            composable(
+                route = "webview/{url}/{title}",
+                arguments = listOf(
+                    navArgument("url") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType }
+                )
+            ) { entry ->
+                val url = entry.arguments?.getString("url") ?: ""
+                val title = entry.arguments?.getString("title") ?: ""
+                if (isOnline) {
+                    WebViewScreen(url, title, navController)
+                } else {
+                    NoInternetScreen { navController.popBackStack() }
                 }
             }
         }
     }
 }
 
+/**
+ * Встраивает нативный фрагмент списка чатов Delta Chat в Compose.
+ */
 @Composable
 fun DeltaChatView(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         factory = { ctx ->
-            // Возвращаем существующий контейнер, чтобы не пересоздавать фрагмент при смене вкладок
-            globalChatContainer?.let { 
-                (it.parent as? ViewGroup)?.removeView(it)
-                return@AndroidView it 
-            }
-
-            val rootView = FrameLayout(ctx).apply {
+            // Создаем контейнер с уникальным ID для фрагмента
+            FrameLayout(ctx).apply {
+                id = View.generateViewId()
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
-
-            val pkg = ctx.packageName
-            val layoutId = ctx.resources.getIdentifier("conversation_list_activity", "layout", pkg)
-            if (layoutId == 0) return@AndroidView rootView
-
-            val inflater = LayoutInflater.from(ctx)
-            val deltaLayout = inflater.inflate(layoutId, rootView, false)
-            rootView.addView(deltaLayout)
-
-            // Настройка Toolbar
-            val toolbarId = ctx.resources.getIdentifier("toolbar", "id", pkg)
-            if (toolbarId != 0) {
-                val toolbar = deltaLayout.findViewById<Toolbar>(toolbarId)
-                if (ctx is AppCompatActivity && ctx.supportActionBar == null) {
-                    ctx.setSupportActionBar(toolbar)
-                }
-            }
-
-            // Инициализация Фрагмента списка чатов
-            val fragContainerId = ctx.resources.getIdentifier("fragment_container", "id", pkg)
-            if (fragContainerId != 0 && ctx is FragmentActivity) {
-                val fragmentManager = ctx.supportFragmentManager
-                if (fragmentManager.findFragmentById(fragContainerId) == null) {
+        },
+        update = { frameLayout ->
+            val activity = frameLayout.context as? FragmentActivity
+            activity?.supportFragmentManager?.let { fragmentManager ->
+                // Проверяем, не добавлен ли фрагмент уже, чтобы не пересоздавать его при каждой рекомпозиции
+                if (fragmentManager.findFragmentById(frameLayout.id) == null) {
                     val fragment = ConversationListFragment().apply {
                         arguments = Bundle().apply {
                             putBoolean(ConversationListFragment.ARCHIVE, false)
                         }
                     }
                     fragmentManager.beginTransaction()
-                        .replace(fragContainerId, fragment)
-                        .commit()
+                        .replace(frameLayout.id, fragment)
+                        .commitNowAllowingStateLoss()
                 }
             }
-
-            // Логика поиска
-            val searchActionId = ctx.resources.getIdentifier("search_action", "id", pkg)
-            val searchToolbarId = ctx.resources.getIdentifier("search_toolbar", "id", pkg)
-            if (searchActionId != 0 && searchToolbarId != 0) {
-                val searchAction = deltaLayout.findViewById<android.view.View>(searchActionId)
-                val searchToolbar = deltaLayout.findViewById<org.thoughtcrime.securesms.components.SearchToolbar>(searchToolbarId)
-                searchAction?.setOnClickListener { view ->
-                    searchToolbar?.display(view.x, view.y)
-                }
-            }
-
-            // Логика клика по аватару (выбор аккаунта)
-            val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
-            if (selfAvatarId != 0 && ctx is FragmentActivity) {
-                val selfAvatar = deltaLayout.findViewById<android.view.View>(selfAvatarId)
-                selfAvatar?.setOnClickListener {
-                    AccountSelectionListFragment.newInstance(false)
-                        .show(ctx.supportFragmentManager, null)
-                }
-            }
-
-            // Динамическое обновление UI (Заголовок и Статус)
-            updateDeltaChatUi(ctx, deltaLayout, pkg)
-
-            globalChatContainer = rootView
-            rootView
-        },
-        update = { /* Здесь можно обновлять View при изменении стейта Compose */ }
+        }
     )
-}
-
-/**
- * Вспомогательная функция для обновления данных в нативном слое
- */
-private fun updateDeltaChatUi(ctx: Context, layout: android.view.View, pkg: String) {
-    val toolbarTitleId = ctx.resources.getIdentifier("toolbar_title", "id", pkg)
-    val selfAvatarId = ctx.resources.getIdentifier("self_avatar", "id", pkg)
-
-    try {
-        val dcContext = DcHelper.getContext(ctx)
-        
-        if (toolbarTitleId != 0) {
-            val toolbarTitle = layout.findViewById<android.widget.TextView>(toolbarTitleId)
-            val name = dcContext.getConfig("displayname") ?: "Как дела?"
-            toolbarTitle?.text = DcHelper.getConnectivitySummary(ctx, name)
-        }
-
-        if (selfAvatarId != 0) {
-            val selfAvatar = layout.findViewById<org.thoughtcrime.securesms.components.AvatarView>(selfAvatarId)
-            selfAvatar?.setConnectivity(dcContext.getConnectivity())
-            val glideRequests = GlideApp.with(ctx)
-            val recipient = Recipient.from(ctx, Address.fromChat(DcContact.DC_CONTACT_ID_SELF))
-            selfAvatar?.setAvatar(glideRequests, recipient, false)
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
 }
 
 @Composable
@@ -330,10 +233,7 @@ fun rememberIsOnline(): State<Boolean> {
             .build()
         
         cm.registerNetworkCallback(request, callback)
-        
-        onDispose {
-            cm.unregisterNetworkCallback(callback)
-        }
+        onDispose { cm.unregisterNetworkCallback(callback) }
     }
     return state
 }
@@ -344,10 +244,7 @@ fun NoInternetScreen(onBack: () -> Unit) {
         modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 Icons.Default.CloudOff,
                 contentDescription = null,
@@ -355,12 +252,7 @@ fun NoInternetScreen(onBack: () -> Unit) {
                 modifier = Modifier.size(80.dp)
             )
             Spacer(Modifier.height(24.dp))
-            Text(
-                "Нет соединения", 
-                color = Color.White, 
-                fontSize = 22.sp, 
-                fontWeight = FontWeight.Bold
-            )
+            Text("Нет соединения", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(32.dp))
             OutlinedButton(
                 onClick = onBack,
