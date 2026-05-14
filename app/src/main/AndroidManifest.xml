@@ -110,10 +110,8 @@
             <meta-data android:name="android.service.chooser.chooser_target_service" android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
         </activity>
 
-        <!-- ConversationListActivity больше не запускается из MainActivity -->
-        <activity android:name="org.thoughtcrime.securesms.ConversationListActivity" android:exported="false" />
+        <activity android:name="org.thoughtcrime.securesms.ConversationListActivity" android:exported="false" tools:replace="android:exported" />
 
-        <!-- ConversationActivity с parentActivityName для правильного возврата -->
         <activity 
             android:name="org.thoughtcrime.securesms.ConversationActivity" 
             android:exported="false"
@@ -121,10 +119,11 @@
             android:windowSoftInputMode="adjustResize" 
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" 
             android:theme="@style/Theme.DeltaChat" 
-            tools:replace="android:theme,android:exported,android:windowSoftInputMode">
+            tools:replace="android:theme,android:exported,android:windowSoftInputMode,android:parentActivityName">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.launcher.multiapp.MainActivity" />
+                android:value="com.launcher.multiapp.MainActivity"
+                tools:replace="android:value" />
         </activity>
 
         <activity android:name="org.thoughtcrime.securesms.ProfileActivity" android:exported="false" android:theme="@style/Theme.DeltaChat" tools:replace="android:theme,android:exported" />
