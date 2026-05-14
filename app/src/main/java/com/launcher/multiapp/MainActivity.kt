@@ -1,4 +1,3 @@
-```kotlin
 package com.launcher.multiapp
 
 import android.content.Intent
@@ -1070,4 +1069,3 @@ fun MainScreen(
         }
     }
 }
-```
