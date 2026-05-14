@@ -1069,29 +1069,3 @@ fun MainScreen(
         }
     }
 }
-
-и 
-
-// Внутри setContent вашего MainActivity:
-
-NavGraph(
-    navController = navController,
-    startDestination = Routes.CHATS,
-    chatLayer = {
-        if (isRegistered.value) {
-            AndroidView(
-                factory = {
-                    if (chatContainer == null) {
-                        initChatLayer()
-                    }
-                    chatContainer!!
-                },
-                modifier = Modifier.fillMaxSize(),
-                update = { view ->
-                    // Принудительно ставим видимость, если нужно
-                    view.visibility = View.VISIBLE
-                }
-            )
-        }
-    }
-)
