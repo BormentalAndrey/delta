@@ -18,23 +18,41 @@
 }
 
 # ================================================================================
-# AI & JNI INTEGRATION (Критически важно для работы LlamaBridge)
+# ИСПРАВЛЕНИЯ ДЛЯ МОДУЛЕЙ TYR И DELTA (Критично для текущей ошибки сборки)
+# ================================================================================
+
+# Сохраняем всё из пакетов, на которые ругался R8
+-keep class com.jbselfcompany.tyr.** { *; }
+-keep interface com.jbselfcompany.tyr.** { *; }
+
+-keep class org.thoughtcrime.securesms.** { *; }
+-keep interface org.thoughtcrime.securesms.** { *; }
+
+# Сохраняем Companion объекты, так как к ним обращаются через рефлексию/синглтоны
+-keepclassmembers class **$Companion { *; }
+
+# Специальное правило для внедрения зависимостей и репозиториев в Tyr
+-keep class com.jbselfcompany.tyr.data.** { *; }
+-keep class com.jbselfcompany.tyr.service.** { *; }
+-keep class com.jbselfcompany.tyr.utils.AutoconfigServer { *; }
+-keep class com.jbselfcompany.tyr.utils.LocaleHelper { *; }
+
+# ================================================================================
+# AI & JNI INTEGRATION (LlamaBridge)
 # ================================================================================
 
 # Запрещаем переименовывать модели данных
 -keep class com.kakdela.p2p.model.** { *; }
 
 # ЗАПРЕЩАЕМ обфускацию моста JNI.
-# Библиотека libllama.so ожидает строгое имя: Java_com_kakdela_p2p_ai_LlamaBridge_init
 -keep class com.kakdela.p2p.ai.LlamaBridge {
     native <methods>;
     <fields>;
     public *;
 }
 
-# Защищаем ViewModel и их конструкторы. 
-# Ошибка "Cannot create an instance" лечится сохранением конструкторов.
--keep class com.kakdela.p2p.viewmodel.AiChatViewModel { *; }
+# Защищаем ViewModel и их конструкторы
+-keep class com.kakdela.p2p.viewmodel.** { *; }
 -keepclassmembers class * extends androidx.lifecycle.ViewModel {
     public <init>(...);
 }
@@ -57,13 +75,6 @@
 -keep class com.termux.** { *; }
 -keep interface com.termux.** { *; }
 
--keep class com.termux.terminal.TermuxSessionClient { *; }
--keep class com.termux.view.TerminalViewClient { *; }
--keep class com.termux.shared.termux.shell.TermuxShellManager { *; }
--keep class com.termux.app.TermuxService { *; }
--keep class com.termux.app.terminal.TermuxTerminalSessionActivityClient { *; }
--keep class com.termux.app.terminal.TermuxTerminalSessionServiceClient { *; }
-
 # ================================================================================
 # PDFBOX & APACHE POI (Работа с документами)
 # ================================================================================
@@ -74,34 +85,22 @@
 -dontwarn org.apache.poi.**
 -dontwarn javax.xml.stream.**
 -dontwarn org.apache.xmlbeans.**
--dontwarn net.sf.saxon.**
 -keep class org.apache.poi.** { *; }
--keep class org.apache.xmlbeans.** { *; }
--keep class net.sf.saxon.** { *; }
-
-# Batik & Log4j
--dontwarn org.apache.batik.**
--keep class org.apache.batik.** { *; }
--dontwarn org.apache.logging.log4j.**
--keep class org.apache.logging.log4j.** { *; }
 
 # ================================================================================
-# БИБЛИОТЕКИ БЕЗОПАСНОСТИ И БД
+# БИБЛИОТЕКИ БЕЗОПАСНОСТИ, КРИПТО И БД
 # ================================================================================
-# Tink (Crypto)
 -dontwarn com.google.crypto.tink.**
 -keep class com.google.crypto.tink.** { *; }
-
-# SQLCipher
 -dontwarn net.sqlcipher.**
 -keep class net.sqlcipher.** { *; }
 
 # ================================================================================
-# ГРАФИКА И ДВИЖКИ
+# ГРАФИКА (libGDX)
 # ================================================================================
-# libGDX
 -dontwarn com.badlogicgames.gdx.**
 -keep class com.badlogicgames.gdx.** { *; }
+-keep class com.badlogic.gdx.backends.android.** { *; }
 
 # ================================================================================
 # ANDROIDX, COMPOSE & KOTLIN
@@ -109,24 +108,19 @@
 -keep class androidx.** { *; }
 -keep interface androidx.** { *; }
 -keep class com.google.android.material.** { *; }
-
 -keep class kotlinx.coroutines.** { *; }
 -keep class kotlin.** { *; }
 
-# OkHttp (необходимо для работы ModelDownloadManager)
+# OkHttp
 -keep class okhttp3.** { *; }
 -dontwarn okhttp3.**
 -dontwarn org.conscrypt.**
 
 # ================================================================================
-# ИСКЛЮЧЕНИЯ ДЛЯ ПРЕДОТВРАЩЕНИЯ ОШИБОК СБОРКИ (DON'T WARN)
+# ИСКЛЮЧЕНИЯ (DON'T WARN)
 # ================================================================================
 -dontwarn java.awt.**
--dontwarn java.awt.color.**
--dontwarn java.awt.geom.**
--dontwarn java.awt.image.**
--dontwarn com.gemalto.jp2.**
--dontwarn net.sf.saxon.sxpath.**
--dontwarn org.osgi.framework.**
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn edu.umd.cs.findbugs.annotations.**
+-dontwarn org.osgi.framework.**
+-dontwarn net.sf.saxon.**
