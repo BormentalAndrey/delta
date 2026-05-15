@@ -39,8 +39,6 @@ jobs:
             git submodule update --init --recursive
           fi
           cd ..
-          echo "=== Git submodules status ==="
-          git submodule status
           
           echo "=== Verifying submodule ==="
           if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
@@ -50,25 +48,12 @@ jobs:
             exit 1
           fi
 
-      - name: Commit submodule if added
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Changes detected, committing..."
-            git add delta/.gitmodules delta/jni/deltachat-core-rust
-            git commit -m "Add deltachat-core-rust submodule (auto)"
-            git push
-          else
-            echo "No changes to commit"
-          fi
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -82,30 +67,32 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: |
-            aarch64-linux-android
-            x86_64-linux-android
+          targets: aarch64-linux-android, x86_64-linux-android
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: delta/jni/deltachat-core-rust
 
-      - name: Get deltachat-core-rust submodule hash
+      # ШАГ ДЕКОДИРОВАНИЯ КЛЮЧА (ОБЯЗАТЕЛЬНО)
+      - name: Decode Keystore
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
+        run: |
+          if [ -z "$ENCODED_KEYSTORE" ]; then
+            echo "Warning: BASE64_KEYSTORE is empty. Skipping decode."
+          else
+            echo "$ENCODED_KEYSTORE" | base64 --decode > app/my-release-key.jks
+            echo "Keystore decoded to app/my-release-key.jks"
+          fi
+
+      - name: Get core hash for cache
         id: core-hash
         run: |
-          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
-            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null)
-            if [ -z "$HASH" ]; then
-              HASH="nosubmodule"
-            fi
-          else
-            HASH="nosubmodule"
-          fi
-          echo "Core hash: $HASH"
+          HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null || echo "nosubmodule")
           echo "hash=$HASH" >> $GITHUB_OUTPUT
 
-      - name: Cache compiled core
+      - name: Cache compiled native core
         id: cache-core
         uses: actions/cache@v4
         with:
@@ -123,84 +110,39 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          echo "=== Verifying submodule ==="
-          if [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
-            echo "ERROR: Submodule not found!"
-            exit 1
-          fi
-          
-          echo "=== Building native libraries ==="
           chmod +x scripts/ndk-make.sh
           echo "stable" > scripts/rust-toolchain
           ./scripts/ndk-make.sh
-          
-          echo "=== Build output ==="
-          find jni -name "*.so" -type f | sort
 
       - name: Copy .so files to libs
         working-directory: delta
         run: |
           mkdir -p libs
           for ABI in arm64-v8a x86_64; do
-            if [ -d "jni/$ABI" ] && [ "$(ls -A jni/$ABI/*.so 2>/dev/null)" ]; then
+            if [ -d "jni/$ABI" ]; then
               mkdir -p "libs/$ABI"
-              cp -v "jni/$ABI"/*.so "libs/$ABI/"
-              echo "Copied $ABI: $(ls jni/$ABI/*.so | wc -l) files"
-            else
-              echo "WARNING: No .so files found for $ABI"
+              cp -v jni/$ABI/*.so libs/$ABI/ 2>/dev/null || true
             fi
           done
-          echo "=== Final libs structure ==="
-          find libs -type f | sort
 
-      - name: Make Gradlew executable
-        run: chmod +x gradlew
-
-      - name: Remove conflicting launcher icons from Tyr and DeltaChat
+      - name: Remove conflicting icons
         run: |
-          echo "=== Removing old icons ==="
-          find tyr -name "ic_launcher*" -type f -delete -print
-          find delta -name "ic_launcher*" -type f -delete -print
-          echo "=== Remaining icons (should be only in app/) ==="
-          find . -name "ic_launcher*" -type f
+          find tyr -name "ic_launcher*" -delete
+          find delta -name "ic_launcher*" -delete
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build APK
+      - name: Build Release APK
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: ./gradlew :app:assembleFossRelease --stacktrace
-
-      - name: Find APK location
+          # Имена исправлены для соответствия вашим секретам и build.gradle.kts
+          STORE_PASSWORD: "${{ secrets.STORE_PASSWORD }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          GEMINI_API_KEY: "${{ secrets.GEMINI_API_KEY }}"
         run: |
-          echo "=== Searching for APK files ==="
-          find app/build/outputs -name "*.apk" -type f 2>/dev/null || echo "No APK found"
-          echo "=== APK directory structure ==="
-          ls -laR app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
+          chmod +x gradlew
+          ./gradlew :app:assembleFossRelease --stacktrace
 
-      - name: Check APK contents
-        run: |
-          echo "=== .so files in APK ==="
-          APK=$(find app/build/outputs -name "*.apk" -type f 2>/dev/null | head -1)
-          if [ -f "$APK" ]; then
-            echo "Found APK: $APK"
-            unzip -l "$APK" | grep "\.so$" || echo "NO .so FILES FOUND!"
-            echo "=== Icons in APK ==="
-            unzip -l "$APK" | grep ic_launcher
-            echo "=== APK size ==="
-            ls -lh "$APK"
-          else
-            echo "APK not found!"
-            echo "Listing all files in build outputs:"
-            find app/build -type f -name "*.apk" 2>/dev/null || echo "No APK files anywhere"
-          fi
-
-      - name: Upload Signed Release APK
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: signed-release-apk
-          path: app/build/outputs/apk/**/*.apk
+          name: delta-release-apk
+          path: app/build/outputs/apk/foss/release/*.apk
