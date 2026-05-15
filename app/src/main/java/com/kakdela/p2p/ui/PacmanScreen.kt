@@ -28,12 +28,33 @@ fun PacmanScreen(
     navController: NavHostController? = null,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var webView by remember { mutableStateOf<WebView?>(null) }
 
+    // Функция для корректного выхода из игры
+    fun exitGame() {
+        // Останавливаем WebView
+        webView?.apply {
+            stopLoading()
+            loadUrl("about:blank")
+            removeAllViews()
+            destroy()
+        }
+        webView = null
+
+        // Возвращаемся назад
+        if (navController != null) {
+            navController.popBackStack()
+        }
+    }
+
+    // Обработка системной кнопки "Назад"
+    BackHandler(enabled = true) {
+        exitGame()
+    }
+
+    // Уничтожаем WebView при уходе с экрана
     DisposableEffect(Unit) {
         onDispose {
-            // Уничтожаем WebView при выходе
             webView?.apply {
                 stopLoading()
                 loadUrl("about:blank")
@@ -52,8 +73,8 @@ fun PacmanScreen(
         // WebView на весь экран
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = {
-                WebView(context).apply {
+            factory = { ctx ->
+                WebView(ctx).apply {
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
@@ -78,22 +99,9 @@ fun PacmanScreen(
             update = { }
         )
 
-        // Кнопка выхода поверх WebView, но не перекрывает игру
+        // Кнопка "Выйти" — только возвращает назад
         TextButton(
-            onClick = {
-                webView?.apply {
-                    stopLoading()
-                    loadUrl("about:blank")
-                    removeAllViews()
-                    destroy()
-                }
-                webView = null
-                if (navController != null) {
-                    navController.popBackStack()
-                } else {
-                    (context as? android.app.Activity)?.finish()
-                }
-            },
+            onClick = { exitGame() },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(8.dp)
@@ -105,13 +113,13 @@ fun PacmanScreen(
         ) {
             Icon(
                 Icons.Filled.ArrowBack,
-                contentDescription = "Выйти",
+                contentDescription = "Назад",
                 modifier = Modifier.size(16.dp),
                 tint = Color(0xFF00FFFF)
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                "Выйти",
+                "Назад",
                 color = Color(0xFF00FFFF),
                 fontSize = 13.sp
             )
