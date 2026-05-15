@@ -156,6 +156,14 @@ jobs:
       - name: Make Gradlew executable
         run: chmod +x gradlew
 
+      - name: Remove conflicting launcher icons from Tyr and DeltaChat
+        run: |
+          echo "=== Removing old icons ==="
+          find tyr -name "ic_launcher*" -type f -delete -print
+          find delta -name "ic_launcher*" -type f -delete -print
+          echo "=== Remaining icons (should be only in app/) ==="
+          find . -name "ic_launcher*" -type f
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -165,7 +173,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: ./gradlew :app:assembleFossDebug --stacktrace
+        run: ./gradlew :app:assembleFossRelease --stacktrace
 
       - name: Find APK location
         run: |
@@ -181,6 +189,8 @@ jobs:
           if [ -f "$APK" ]; then
             echo "Found APK: $APK"
             unzip -l "$APK" | grep "\.so$" || echo "NO .so FILES FOUND!"
+            echo "=== Icons in APK ==="
+            unzip -l "$APK" | grep ic_launcher
             echo "=== APK size ==="
             ls -lh "$APK"
           else
@@ -189,8 +199,8 @@ jobs:
             find app/build -type f -name "*.apk" 2>/dev/null || echo "No APK files anywhere"
           fi
 
-      - name: Upload Debug APK
+      - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: signed-release-apk
           path: app/build/outputs/apk/**/*.apk
