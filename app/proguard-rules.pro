@@ -2,10 +2,7 @@
 # ОСНОВНЫЕ ПРАВИЛА СОХРАНЕНИЯ (CORE)
 # ================================================================================
 
-# Сохранять атрибуты для отладки, работы библиотек и рефлексии
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod, SourceFile, LineNumberTable
-
-# Сохранять перечисления и методы сериализации
 -keepclassmembers enum * { *; }
 
 -keepclassmembers class * implements java.io.Serializable {
@@ -18,28 +15,31 @@
 }
 
 # ================================================================================
-# ИСПРАВЛЕНИЯ ДЛЯ МОДУЛЕЙ MULTIAPP, TYR И SECURESMS (Финальное решение)
+# ИСПРАВЛЕНИЯ "MISSING CLASSES"
 # ================================================================================
 
-# Игнорируем отсутствующие аннотации сборщика (aQute/BND), на которые ругается R8
+# Игнорируем предупреждения о недостающих классах (R8 перестанет падать)
+-dontwarn com.jbselfcompany.tyr.**
+-dontwarn org.thoughtcrime.securesms.**
 -dontwarn aQute.bnd.annotation.spi.**
--keep class aQute.bnd.annotation.spi.** { *; }
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn com.google.j2objc.annotations.**
 
-# КРИТИЧНО: Защищаем пакет лаунчера, откуда идут вызовы к Tyr и SecureSMS!
+# КРИТИЧНО: Защищаем пакет лаунчера
 -keep class com.launcher.multiapp.** { *; }
 
-# Сохраняем ВСЁ из проблемных пакетов, включая внутренние классы ($)
+# Сохраняем модули целиком
 -keep class com.jbselfcompany.tyr.** { *; }
 -keep interface com.jbselfcompany.tyr.** { *; }
 -keep class org.thoughtcrime.securesms.** { *; }
 -keep interface org.thoughtcrime.securesms.** { *; }
 
-# Явное сохранение Companion-объектов (Kotlin) и их членов
+# Явное сохранение Companion-объектов
 -keepclassmembers class **$Companion { *; }
--keep class com.jbselfcompany.tyr.TyrApplication$Companion { *; }
--keep class com.jbselfcompany.tyr.service.YggmailService$Companion { *; }
 
-# Сохраняем конкретные классы, которые R8 пометил как Missing
+# Сохраняем конкретные классы из логов ошибок
 -keep class com.jbselfcompany.tyr.data.ConfigRepository { *; }
 -keep class com.jbselfcompany.tyr.utils.AutoconfigServer { *; }
 -keep class com.jbselfcompany.tyr.utils.LocaleHelper { *; }
@@ -50,17 +50,13 @@
 # AI & JNI INTEGRATION (LlamaBridge)
 # ================================================================================
 
-# Запрещаем переименовывать модели данных
 -keep class com.kakdela.p2p.model.** { *; }
-
-# ЗАПРЕЩАЕМ обфускацию моста JNI.
 -keep class com.kakdela.p2p.ai.LlamaBridge {
     native <methods>;
     <fields>;
     public *;
 }
 
-# Защищаем ViewModel и их конструкторы
 -keep class com.kakdela.p2p.viewmodel.** { *; }
 -keepclassmembers class * extends androidx.lifecycle.ViewModel {
     public <init>(...);
@@ -114,12 +110,8 @@
 -dontwarn okhttp3.**
 -dontwarn org.conscrypt.**
 
-# ================================================================================
-# СУПРЕССИЯ ПРЕДУПРЕЖДЕНИЙ ДЛЯ НЕ-ANDROID КЛАССОВ
-# ================================================================================
+# СУПРЕССИЯ ПРЕДУПРЕЖДЕНИЙ
 -dontwarn java.awt.**
 -dontwarn javax.xml.stream.**
 -dontwarn org.osgi.framework.**
 -dontwarn net.sf.saxon.**
--dontwarn com.google.errorprone.annotations.**
--dontwarn edu.umd.cs.findbugs.annotations.**
