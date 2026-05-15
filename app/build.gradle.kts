@@ -31,7 +31,6 @@ val navigationComposeVersion = "2.8.5"
 val lifecycleVersion = "2.8.7"
 
 /* ------------------------- GDX Native Copy Task ------------------------- */
-// Эта задача извлекает нативные библиотеки (.so) из JAR-файлов libGDX
 val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
     val platforms = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
     into(layout.projectDirectory.dir("src/main/jniLibs"))
@@ -58,7 +57,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Стратегия для правильного подключения :deltachat и :tyr
         missingDimensionStrategy("none", "foss")
         multiDexEnabled = true
 
@@ -77,7 +75,6 @@ android {
         )
     }
 
-    // Совпадает с измерениями в :deltachat и :tyr
     flavorDimensions += "none"
     productFlavors {
         create("foss") {
@@ -103,6 +100,7 @@ android {
         }
         release {
             isMinifyEnabled = true
+            isCrunchPngs = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -132,7 +130,6 @@ android {
 
     sourceSets {
         getByName("main") {
-            // Подключаем библиотеки DeltaChat И распакованные библиотеки GDX
             jniLibs.srcDirs("delta/libs", "src/main/jniLibs")
         }
     }
@@ -158,7 +155,6 @@ android {
 }
 
 /* ------------------------- Hook natives ------------------------- */
-// Принудительно запускаем копирование библиотек перед сборкой
 tasks.whenTaskAdded {
     if (name.contains("merge", true) && name.contains("JniLibFolders", true)) {
         dependsOn(copyAndroidNatives)
@@ -181,7 +177,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose — исправленный BOM и зависимости
+    // Compose
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
