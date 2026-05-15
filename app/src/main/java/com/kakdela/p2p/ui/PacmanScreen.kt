@@ -29,49 +29,27 @@ fun PacmanScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var webView by remember { mutableStateOf<WebView?>(null) }
 
-    Column(
+    DisposableEffect(Unit) {
+        onDispose {
+            // Уничтожаем WebView при выходе
+            webView?.apply {
+                stopLoading()
+                loadUrl("about:blank")
+                removeAllViews()
+                destroy()
+            }
+            webView = null
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Кнопка выхода (компактная)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            TextButton(
-                onClick = {
-                    if (navController != null) {
-                        navController.popBackStack()
-                    } else {
-                        (context as? android.app.Activity)?.finish()
-                    }
-                },
-                modifier = Modifier.height(36.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color(0xFF00FFFF)
-                )
-            ) {
-                Icon(
-                    Icons.Filled.ArrowBack,
-                    contentDescription = "Выйти",
-                    modifier = Modifier.size(18.dp),
-                    tint = Color(0xFF00FFFF)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    "Выйти",
-                    color = Color(0xFF00FFFF),
-                    fontSize = 14.sp
-                )
-            }
-        }
-
-        // WebView с игрой
+        // WebView на весь экран
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = {
@@ -94,13 +72,49 @@ fun PacmanScreen(
                     webChromeClient = WebChromeClient()
 
                     loadUrl("file:///android_asset/pacman/index.html")
+                    webView = this
                 }
             },
             update = { }
         )
-    }
 
-    DisposableEffect(Unit) {
-        onDispose { }
+        // Кнопка выхода поверх WebView, но не перекрывает игру
+        TextButton(
+            onClick = {
+                webView?.apply {
+                    stopLoading()
+                    loadUrl("about:blank")
+                    removeAllViews()
+                    destroy()
+                }
+                webView = null
+                if (navController != null) {
+                    navController.popBackStack()
+                } else {
+                    (context as? android.app.Activity)?.finish()
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+                .height(32.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.textButtonColors(
+                contentColor = Color(0xFF00FFFF)
+            )
+        ) {
+            Icon(
+                Icons.Filled.ArrowBack,
+                contentDescription = "Выйти",
+                modifier = Modifier.size(16.dp),
+                tint = Color(0xFF00FFFF)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                "Выйти",
+                color = Color(0xFF00FFFF),
+                fontSize = 13.sp
+            )
+        }
     }
 }
