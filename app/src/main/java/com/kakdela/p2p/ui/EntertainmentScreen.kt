@@ -181,23 +181,27 @@ fun EntertainmentNeonItem(
         border = BorderStroke(1.dp, neonColor.copy(alpha = 0.8f)),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
         onClick = {
-            when (item.type) {
-                EntertainmentType.WEB -> {
-                    item.url?.let { url ->
-                        navController.navigate(
-                            "webview/${Uri.encode(url)}/${Uri.encode(item.title)}"
-                        )
-                    }
+            val route = item.route
+            val url = item.url
+
+            when {
+                // Случай 1: Видео плеер (внешняя Activity)
+                item.type == EntertainmentType.VIDEO -> {
+                    context.startActivity(Intent(context, VideoPlayerActivity::class.java))
                 }
 
-                EntertainmentType.VIDEO -> {
-                    context.startActivity(
-                        Intent(context, VideoPlayerActivity::class.java)
-                    )
+                // Случай 2: Явный URL или route, содержащий ссылку (исправление вашего краша)
+                !url.isNullOrBlank() -> {
+                    navController.navigate("webview/${Uri.encode(url)}/${Uri.encode(item.title)}")
                 }
 
-                else -> {
-                    item.route?.let { navController.navigate(it) }
+                !route.isNullOrBlank() && (route.startsWith("http://") || route.startsWith("https://")) -> {
+                    navController.navigate("webview/${Uri.encode(route)}/${Uri.encode(item.title)}")
+                }
+
+                // Случай 3: Внутренний экран приложения
+                !route.isNullOrBlank() -> {
+                    navController.navigate(route)
                 }
             }
         }
