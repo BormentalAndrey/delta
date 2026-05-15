@@ -48,7 +48,7 @@ val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
 
 android {
     namespace = "com.launcher.multiapp"
-    compileSdk = 36
+    compileSdk = 36 // Примечание: Убедитесь, что используете последние версии build-tools для SDK 36
 
     defaultConfig {
         applicationId = "com.launcher.multiapp"
@@ -87,10 +87,18 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("my-release-key.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
-            keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS", "")
-            keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
+            // Исправлено: STORE_PASSWORD вместо KEYSTORE_PASSWORD для соответствия GitHub Secrets
+            val sPassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
+            val kAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
+            val kPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
+
+            // Применяем подпись только если найдены пароли, иначе билд упадет с понятной ошибкой
+            if (sPassword != null && kAlias != null) {
+                storeFile = file("my-release-key.jks")
+                storePassword = sPassword
+                keyAlias = kAlias
+                keyPassword = kPassword ?: sPassword // Если пароль ключа не задан, используем пароль стора
+            }
         }
     }
 
@@ -99,7 +107,7 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = true // ВКЛЮЧЕНО ТОЛЬКО ЗДЕСЬ
+            isMinifyEnabled = true
             isCrunchPngs = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
@@ -130,7 +138,8 @@ android {
 
     sourceSets {
         getByName("main") {
-            jniLibs.srcDirs("delta/libs", "src/main/jniLibs")
+            // Исправлен путь к delta/libs для корректной работы в многомодульной структуре
+            jniLibs.srcDirs(file("../delta/libs"), "src/main/jniLibs")
         }
     }
 
@@ -148,7 +157,9 @@ android {
                 "META-INF/LICENSE*",
                 "META-INF/kotlinx-coroutines-core.kotlin_module",
                 "META-INF/tink/**",
-                "META-INF/library_release.kotlin_module"
+                "META-INF/library_release.kotlin_module",
+                // Добавлены исключения для Apache POI
+                "META-INF/services/javax.xml.stream.*"
             )
         }
     }
