@@ -99,7 +99,7 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = true // ВКЛЮЧЕНО ТОЛЬКО ЗДЕСЬ
             isCrunchPngs = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
@@ -154,21 +154,16 @@ android {
     }
 }
 
-/* ------------------------- Hook natives ------------------------- */
-// Используем configureEach вместо whenTaskAdded (стандарт Gradle для избежания Deprecation)
 tasks.configureEach {
     if (name.contains("merge", ignoreCase = true) && name.contains("JniLibFolders", ignoreCase = true)) {
         dependsOn(copyAndroidNatives)
     }
 }
 
-/* ------------------------- Dependencies ------------------------- */
 dependencies {
-    // Основные модули
     implementation(project(":deltachat"))
     implementation(project(":tyr"))
 
-    // Android Core
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
@@ -178,7 +173,6 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -188,56 +182,40 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
 
-    // Material
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.transition:transition:1.5.1")
 
-    // Coil
     implementation("io.coil-kt:coil-compose:$coilVersion")
-
-    // Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
-    // Room
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
-    // Network
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
 
-    // Security
     implementation("com.google.crypto.tink:tink-android:$tinkVersion")
 
-    // Media
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")
 
-    // Graphics
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
-    // Utils
     implementation("org.json:json:20231013")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // Docs
     implementation("org.apache.poi:poi-ooxml:$poiVersion")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
-    // Core desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
-
-    // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
-
-    // Tests
     testImplementation("junit:junit:4.13.2")
 }
