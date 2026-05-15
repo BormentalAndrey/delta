@@ -1,7 +1,10 @@
 package com.kakdela.p2p.ui.player
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PictureInPictureParams
 import android.content.BroadcastReceiver
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -35,9 +38,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.launcher.multiapp.R
-import android.Manifest
-import android.app.PictureInPictureParams
-import android.content.ContentUris
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -555,6 +555,7 @@ class VideoPlayerActivity : ComponentActivity() {
         override fun onBindViewHolder(holder: VH, pos: Int) {
             val item = list[pos]
             holder.title.text = item.title
+            
             if (pos == currentPos) {
                 holder.title.setTextColor(neonPink)
                 holder.title.setShadowLayer(15f, 0f, 0f, neonPink)
@@ -562,15 +563,24 @@ class VideoPlayerActivity : ComponentActivity() {
             } else {
                 holder.title.setTextColor(Color.WHITE)
                 holder.title.setShadowLayer(5f, 0f, 0f, neonCyan)
+                holder.title.setTypeface(null, Typeface.NORMAL) // Сбрасываем жирность у остальных
             }
 
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                contentResolver.loadThumbnail(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id), Size(320, 180), null)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaStore.Video.Thumbnails.getThumbnail(contentResolver, item.id, MediaStore.Video.Thumbnails.MINI_KIND, null)
+            // ИСПРАВЛЕНИЕ ЗДЕСЬ: Обернули загрузку в try-catch
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentResolver.loadThumbnail(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id), Size(320, 180), null)
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Video.Thumbnails.getThumbnail(contentResolver, item.id, MediaStore.Video.Thumbnails.MINI_KIND, null)
+                }
+                holder.thumb.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Если превью не найдено, ставим стандартную иконку из ресурсов Android
+                holder.thumb.setImageResource(android.R.drawable.ic_media_video)
+                holder.thumb.setBackgroundColor(Color.DKGRAY)
             }
-            holder.thumb.setImageBitmap(bitmap)
 
             holder.itemView.setOnClickListener { onClick(pos) }
         }
