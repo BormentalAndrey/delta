@@ -4,9 +4,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Здесь ваш логотип. Пример простого неонового текста "КД" -->
+
     <path
-        android:fillColor="#00FFF0"
-        android:pathData="M30,20 L78,20 L78,88 L30,88 Z M40,40 L68,40 L68,68 L40,68 Z"/>
+        android:fillColor="#00E5FF"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M35,40 L35,55 M35,47 L45,47 M45,40 L45,55 M52,55 L57,40 L62,55 M54,50 L60,50 M68,40 L68,55 M68,47 L75,40 M68,47 L75,55" />
+
+    <path
+        android:fillColor="#F0F0F0"
+        android:strokeColor="#F0F0F0"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M30,65 L30,80 L40,80 M45,65 L55,65 M45,72 L52,72 M45,80 L55,80 M60,65 L60,80 L70,80 M75,80 L80,65 L85,80 M77,75 L83,75 M90,65 C90,65 95,65 95,70 C95,75 90,75 90,75 L90,78 M90,82 L90,83" />
+
 </vector>
