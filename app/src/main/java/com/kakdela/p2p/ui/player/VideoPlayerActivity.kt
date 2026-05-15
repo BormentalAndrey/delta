@@ -84,7 +84,7 @@ class VideoPlayerActivity : ComponentActivity() {
     private var isUserSeeking = false
 
     // Неоновые цвета
-    private val neonCyan = Color.parseColor("#00FFFF")
+    private val neonCyan = Color.parseColor("#00E5FF")
     private val neonPink = Color.parseColor("#FF00FF")
     private val neonPurple = Color.parseColor("#B026FF")
     private val neonGreen = Color.parseColor("#39FF14")
@@ -187,6 +187,7 @@ class VideoPlayerActivity : ComponentActivity() {
     private fun setupGestures() {
         playerView.setOnTouchListener { _, event ->
             if (isLocked) {
+                if (event.action == MotionEvent.ACTION_DOWN) showControlsTemporarily()
                 false
             } else {
                 when (event.actionMasked) {
@@ -199,7 +200,6 @@ class VideoPlayerActivity : ComponentActivity() {
                         val lp = window.attributes
                         initialBrightness = if (lp.screenBrightness > 0) lp.screenBrightness else 0.5f
                         
-                        // При нажатии показываем контроллы
                         if (controlsRoot.visibility == View.GONE) showControls()
                     }
                     MotionEvent.ACTION_MOVE -> {
@@ -252,24 +252,39 @@ class VideoPlayerActivity : ComponentActivity() {
     }
 
     private fun showCenterIndicator(text: String, color: Int) {
-        handler.removeCallbacks(hideIndicatorRunnable) // Важно: очищаем очередь при каждом движении
+        handler.removeCallbacks(hideIndicatorRunnable)
         centerIndicator.text = text
         centerIndicator.setTextColor(color)
-        centerIndicator.setShadowLayer(30f, 0f, 0f, color) // Тень в цвет текста
+        centerIndicator.setShadowLayer(30f, 0f, 0f, color)
         centerIndicator.visibility = View.VISIBLE
     }
 
     private fun hideCenterIndicatorDelayed() {
         handler.removeCallbacks(hideIndicatorRunnable)
-        handler.postDelayed(hideIndicatorRunnable, 1000) // Исчезнет через 1 сек после ACTION_UP
+        handler.postDelayed(hideIndicatorRunnable, 1000)
     }
 
     private fun setupControls() {
-        btnPlayPause.setOnClickListener { player.playWhenReady = !player.playWhenReady; showControlsTemporarily() }
-        btnNext.setOnClickListener { if (player.hasNextMediaItem()) player.seekToNextMediaItem(); showControlsTemporarily() }
-        btnPrev.setOnClickListener { if (player.hasPreviousMediaItem()) player.seekToPreviousMediaItem(); showControlsTemporarily() }
-        btnFullscreen.setOnClickListener { toggleFullscreen(); showControlsTemporarily() }
-        btnPlaylist.setOnClickListener { showPlaylist(); showControlsTemporarily() }
+        btnPlayPause.setOnClickListener { 
+            player.playWhenReady = !player.playWhenReady
+            showControlsTemporarily() 
+        }
+        btnNext.setOnClickListener { 
+            if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+            showControlsTemporarily() 
+        }
+        btnPrev.setOnClickListener { 
+            if (player.hasPreviousMediaItem()) player.seekToPreviousMediaItem()
+            showControlsTemporarily() 
+        }
+        btnFullscreen.setOnClickListener { 
+            toggleFullscreen()
+            showControlsTemporarily() 
+        }
+        btnPlaylist.setOnClickListener { 
+            showPlaylist()
+            showControlsTemporarily() 
+        }
 
         btnSpeed.setOnClickListener {
             currentSpeedIndex = (currentSpeedIndex + 1) % speeds.size
@@ -310,17 +325,29 @@ class VideoPlayerActivity : ComponentActivity() {
         }
     }
 
+    // ИСПРАВЛЕНИЕ: Проверка поддержки PIP
     private fun enterPictureInPicture() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val supportsPip = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+            if (!supportsPip) {
+                Toast.makeText(this, "PIP не поддерживается", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             val ratio = if (player.videoSize.width > 0 && player.videoSize.height > 0) {
                 Rational(player.videoSize.width, player.videoSize.height)
             } else {
                 Rational(16, 9)
             }
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(ratio)
-                .build()
-            enterPictureInPictureMode(params)
+            
+            try {
+                val params = PictureInPictureParams.Builder()
+                    .setAspectRatio(ratio)
+                    .build()
+                enterPictureInPictureMode(params)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -361,26 +388,26 @@ class VideoPlayerActivity : ComponentActivity() {
         seekBar.progressTintList = android.content.res.ColorStateList.valueOf(neonCyan)
         seekBar.thumbTintList = android.content.res.ColorStateList.valueOf(neonPink)
 
-        val tintCyan = android.content.res.ColorStateList.valueOf(neonCyan)
-        val tintPink = android.content.res.ColorStateList.valueOf(neonPink)
-        val tintPurple = android.content.res.ColorStateList.valueOf(neonPurple)
-        val tintGreen = android.content.res.ColorStateList.valueOf(neonGreen)
-
-        btnPlayPause.imageTintList = tintGreen
-        btnPrev.imageTintList = tintCyan
-        btnNext.imageTintList = tintCyan
-        btnFullscreen.imageTintList = tintPurple
-        btnPlaylist.imageTintList = tintPurple
-        btnSpeed.imageTintList = tintPink
-        btnLock.imageTintList = tintPurple
-        btnPip.imageTintList = tintCyan
+        btnPlayPause.imageTintList = android.content.res.ColorStateList.valueOf(neonGreen)
+        btnPrev.imageTintList = android.content.res.ColorStateList.valueOf(neonCyan)
+        btnNext.imageTintList = android.content.res.ColorStateList.valueOf(neonCyan)
+        btnFullscreen.imageTintList = android.content.res.ColorStateList.valueOf(neonPurple)
+        btnPlaylist.imageTintList = android.content.res.ColorStateList.valueOf(neonPurple)
+        btnSpeed.imageTintList = android.content.res.ColorStateList.valueOf(neonPink)
+        btnLock.imageTintList = android.content.res.ColorStateList.valueOf(neonPurple)
+        btnPip.imageTintList = android.content.res.ColorStateList.valueOf(neonCyan)
 
         controlsRoot.background = ColorDrawable(Color.parseColor("#B3000000"))
         topControls.background = ColorDrawable(Color.parseColor("#80000000"))
     }
 
     private fun showControls() {
-        if (isLocked) return
+        if (isLocked) {
+            lockIcon.visibility = View.VISIBLE
+            handler.removeCallbacks(hideLockRunnable)
+            handler.postDelayed(hideLockRunnable, 3000)
+            return
+        }
         controlsRoot.visibility = View.VISIBLE
         topControls.visibility = View.VISIBLE
         AlphaAnimation(0f, 1f).apply { duration = 300 }.also { 
@@ -389,6 +416,8 @@ class VideoPlayerActivity : ComponentActivity() {
         }
         startHideTimer()
     }
+
+    private val hideLockRunnable = Runnable { lockIcon.visibility = View.GONE }
 
     private fun hideControls() {
         if (controlsRoot.visibility == View.GONE) return
@@ -413,18 +442,17 @@ class VideoPlayerActivity : ComponentActivity() {
         startHideTimer()
     }
 
+    private val hideControlsRunnable = Runnable { hideControls() }
+
     private fun startHideTimer() {
-        cancelHideTimer()
+        handler.removeCallbacks(hideControlsRunnable)
         if (player.isPlaying) {
-            handler.postDelayed({ hideControls() }, 4000)
+            handler.postDelayed(hideControlsRunnable, 4000)
         }
     }
 
     private fun cancelHideTimer() {
-        // Очищаем только задачи на скрытие контроллов, не трогая часы и прогресс
-        handler.removeCallbacksAndMessages(null)
-        startProgressUpdater()
-        updateClock()
+        handler.removeCallbacks(hideControlsRunnable)
     }
 
     private fun startProgressUpdater() {
@@ -578,10 +606,16 @@ class VideoPlayerActivity : ComponentActivity() {
             }
 
             holder.thumb.setImageBitmap(null)
+            holder.thumb.setBackgroundColor(Color.DKGRAY)
 
+            // ИСПРАВЛЕНИЕ: Безопасная загрузка превью с обработкой ошибок
             try {
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    contentResolver.loadThumbnail(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id), Size(320, 180), null)
+                    contentResolver.loadThumbnail(
+                        ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id), 
+                        Size(320, 180), 
+                        null
+                    )
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Video.Thumbnails.getThumbnail(contentResolver, item.id, MediaStore.Video.Thumbnails.MINI_KIND, null)
@@ -591,11 +625,10 @@ class VideoPlayerActivity : ComponentActivity() {
                     holder.thumb.setImageBitmap(bitmap)
                 } else {
                     holder.thumb.setImageResource(android.R.drawable.ic_media_play)
-                    holder.thumb.setBackgroundColor(Color.DKGRAY)
                 }
             } catch (e: Exception) {
+                // Если файл не найден или ошибка — ставим заглушку, а не крашимся
                 holder.thumb.setImageResource(android.R.drawable.ic_media_play)
-                holder.thumb.setBackgroundColor(Color.DKGRAY)
             }
 
             holder.itemView.setOnClickListener { onClick(pos) }
