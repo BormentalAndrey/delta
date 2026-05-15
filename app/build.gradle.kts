@@ -155,8 +155,9 @@ android {
 }
 
 /* ------------------------- Hook natives ------------------------- */
-tasks.whenTaskAdded {
-    if (name.contains("merge", true) && name.contains("JniLibFolders", true)) {
+// Используем configureEach вместо whenTaskAdded (стандарт Gradle для избежания Deprecation)
+tasks.configureEach {
+    if (name.contains("merge", ignoreCase = true) && name.contains("JniLibFolders", ignoreCase = true)) {
         dependsOn(copyAndroidNatives)
     }
 }
