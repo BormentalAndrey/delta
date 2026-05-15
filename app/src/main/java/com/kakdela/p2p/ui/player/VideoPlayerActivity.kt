@@ -106,6 +106,10 @@ class VideoPlayerActivity : ComponentActivity() {
     private lateinit var audioManager: AudioManager
     private var batteryReceiver: BroadcastReceiver? = null
 
+    private val hideIndicatorRunnable = Runnable {
+        centerIndicator.visibility = View.GONE
+    }
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) loadVideos()
@@ -179,6 +183,7 @@ class VideoPlayerActivity : ComponentActivity() {
         })
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupGestures() {
         playerView.setOnTouchListener { _, event ->
             if (isLocked) {
@@ -193,21 +198,24 @@ class VideoPlayerActivity : ComponentActivity() {
                         initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         val lp = window.attributes
                         initialBrightness = if (lp.screenBrightness > 0) lp.screenBrightness else 0.5f
+                        
+                        // При нажатии показываем контроллы
+                        if (controlsRoot.visibility == View.GONE) showControls()
                     }
                     MotionEvent.ACTION_MOVE -> {
+                        val deltaX = event.x - touchStartX
+                        val deltaY = event.y - touchStartY
+
                         if (touchAction == 0) {
-                            val deltaX = event.x - touchStartX
-                            val deltaY = event.y - touchStartY
                             if (kotlin.math.abs(deltaX) > 60 && kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY)) {
                                 touchAction = 1 // seek
                             } else if (kotlin.math.abs(deltaY) > 60 && kotlin.math.abs(deltaY) > kotlin.math.abs(deltaX)) {
-                                touchAction = if (touchStartX < playerView.width / 2f) 2 else 3
+                                touchAction = if (touchStartX < playerView.width / 2f) 2 else 3 // 2: bright, 3: vol
                             }
                         }
 
                         when (touchAction) {
                             1 -> {
-                                val deltaX = event.x - touchStartX
                                 val seekAmount = (deltaX / playerView.width * SEEK_FULL_SWIPE_SECONDS * 1000).toLong()
                                 val newPos = (initialSeekPos + seekAmount).coerceIn(0L, player.duration)
                                 player.seekTo(newPos)
@@ -215,15 +223,13 @@ class VideoPlayerActivity : ComponentActivity() {
                                 showCenterIndicator("$sign${formatTime(kotlin.math.abs(seekAmount))}", neonGreen)
                             }
                             2 -> {
-                                val deltaY = touchStartY - event.y
-                                val delta = deltaY / playerView.height
+                                val delta = (touchStartY - event.y) / playerView.height
                                 val newBright = (initialBrightness + delta).coerceIn(0.1f, 1.0f)
                                 window.attributes = window.attributes.apply { screenBrightness = newBright }
                                 showCenterIndicator("Яркость ${(newBright * 100).toInt()}%", neonCyan)
                             }
                             3 -> {
-                                val deltaY = touchStartY - event.y
-                                val delta = deltaY / playerView.height
+                                val delta = (touchStartY - event.y) / playerView.height
                                 val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                                 val newVol = (initialVolume + (delta * maxVol)).toInt().coerceIn(0, maxVol)
                                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
@@ -234,8 +240,8 @@ class VideoPlayerActivity : ComponentActivity() {
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         if (touchAction != 0) {
                             hideCenterIndicatorDelayed()
-                            showControlsTemporarily()
                         }
+                        showControlsTemporarily()
                         touchAction = 0
                     }
                 }
@@ -245,22 +251,17 @@ class VideoPlayerActivity : ComponentActivity() {
         lockIcon.setOnClickListener { toggleLock() }
     }
 
-    private fun showCenterIndicator(text: String, color: Int = Color.WHITE) {
+    private fun showCenterIndicator(text: String, color: Int) {
+        handler.removeCallbacks(hideIndicatorRunnable) // Важно: очищаем очередь при каждом движении
         centerIndicator.text = text
         centerIndicator.setTextColor(color)
-        centerIndicator.setShadowLayer(30f, 0f, 0f, neonPink)
+        centerIndicator.setShadowLayer(30f, 0f, 0f, color) // Тень в цвет текста
         centerIndicator.visibility = View.VISIBLE
-        handler.removeCallbacks(hideIndicatorRunnable)
-        handler.postDelayed(hideIndicatorRunnable, 1500)
-    }
-
-    private val hideIndicatorRunnable = Runnable {
-        centerIndicator.visibility = View.GONE
     }
 
     private fun hideCenterIndicatorDelayed() {
         handler.removeCallbacks(hideIndicatorRunnable)
-        handler.postDelayed(hideIndicatorRunnable, 800)
+        handler.postDelayed(hideIndicatorRunnable, 1000) // Исчезнет через 1 сек после ACTION_UP
     }
 
     private fun setupControls() {
@@ -382,11 +383,15 @@ class VideoPlayerActivity : ComponentActivity() {
         if (isLocked) return
         controlsRoot.visibility = View.VISIBLE
         topControls.visibility = View.VISIBLE
-        AlphaAnimation(0f, 1f).apply { duration = 300 }.also { controlsRoot.startAnimation(it); topControls.startAnimation(it) }
+        AlphaAnimation(0f, 1f).apply { duration = 300 }.also { 
+            controlsRoot.startAnimation(it)
+            topControls.startAnimation(it)
+        }
         startHideTimer()
     }
 
     private fun hideControls() {
+        if (controlsRoot.visibility == View.GONE) return
         AlphaAnimation(1f, 0f).apply { duration = 300 }.also {
             it.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
                 override fun onAnimationStart(animation: android.view.animation.Animation?) {}
@@ -410,24 +415,32 @@ class VideoPlayerActivity : ComponentActivity() {
 
     private fun startHideTimer() {
         cancelHideTimer()
-        if (player.isPlaying) handler.postDelayed({ hideControls() }, 4000)
+        if (player.isPlaying) {
+            handler.postDelayed({ hideControls() }, 4000)
+        }
     }
 
     private fun cancelHideTimer() {
+        // Очищаем только задачи на скрытие контроллов, не трогая часы и прогресс
         handler.removeCallbacksAndMessages(null)
+        startProgressUpdater()
+        updateClock()
     }
 
     private fun startProgressUpdater() {
-        handler.post(object : Runnable {
-            override fun run() {
-                if (player.isPlaying && !isUserSeeking) {
-                    val pos = player.currentPosition
-                    seekBar.progress = pos.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-                    currentTime.text = formatTime(pos)
-                }
-                handler.postDelayed(this, 500)
+        handler.removeCallbacks(progressRunnable)
+        handler.post(progressRunnable)
+    }
+
+    private val progressRunnable = object : Runnable {
+        override fun run() {
+            if (player.isPlaying && !isUserSeeking) {
+                val pos = player.currentPosition
+                seekBar.progress = pos.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                currentTime.text = formatTime(pos)
             }
-        })
+            handler.postDelayed(this, 500)
+        }
     }
 
     private fun setupBatteryAndClock() {
@@ -438,8 +451,11 @@ class VideoPlayerActivity : ComponentActivity() {
     private fun updateClock() {
         val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
         clockText.text = time
-        handler.postDelayed(this::updateClock, 60000)
+        handler.removeCallbacks(clockRunnable)
+        handler.postDelayed(clockRunnable, 60000)
     }
+    
+    private val clockRunnable = Runnable { updateClock() }
 
     private fun setupBatteryReceiver() {
         batteryReceiver = object : BroadcastReceiver() {
@@ -561,7 +577,6 @@ class VideoPlayerActivity : ComponentActivity() {
                 holder.title.setTypeface(null, Typeface.NORMAL)
             }
 
-            // Сбрасываем картинку перед загрузкой новой, чтобы не было дублей при скролле
             holder.thumb.setImageBitmap(null)
 
             try {
@@ -575,13 +590,10 @@ class VideoPlayerActivity : ComponentActivity() {
                 if (bitmap != null) {
                     holder.thumb.setImageBitmap(bitmap)
                 } else {
-                    // Используем гарантированно доступный системный ресурс
                     holder.thumb.setImageResource(android.R.drawable.ic_media_play)
                     holder.thumb.setBackgroundColor(Color.DKGRAY)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                // Исправлено: замена ic_media_video на ic_media_play
                 holder.thumb.setImageResource(android.R.drawable.ic_media_play)
                 holder.thumb.setBackgroundColor(Color.DKGRAY)
             }
