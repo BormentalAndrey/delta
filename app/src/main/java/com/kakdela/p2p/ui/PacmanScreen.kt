@@ -6,6 +6,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -30,9 +30,7 @@ fun PacmanScreen(
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
-    // Функция для корректного выхода из игры
     fun exitGame() {
-        // Останавливаем WebView
         webView?.apply {
             stopLoading()
             loadUrl("about:blank")
@@ -41,18 +39,15 @@ fun PacmanScreen(
         }
         webView = null
 
-        // Возвращаемся назад
         if (navController != null) {
             navController.popBackStack()
         }
     }
 
-    // Обработка системной кнопки "Назад"
     BackHandler(enabled = true) {
         exitGame()
     }
 
-    // Уничтожаем WebView при уходе с экрана
     DisposableEffect(Unit) {
         onDispose {
             webView?.apply {
@@ -70,7 +65,6 @@ fun PacmanScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // WebView на весь экран
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
@@ -79,7 +73,6 @@ fun PacmanScreen(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
-
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.allowFileAccess = true
@@ -99,7 +92,6 @@ fun PacmanScreen(
             update = { }
         )
 
-        // Кнопка "Выйти" — только возвращает назад
         TextButton(
             onClick = { exitGame() },
             modifier = Modifier
@@ -107,9 +99,7 @@ fun PacmanScreen(
                 .padding(8.dp)
                 .height(32.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.textButtonColors(
-                contentColor = Color(0xFF00FFFF)
-            )
+            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF00FFFF))
         ) {
             Icon(
                 Icons.Filled.ArrowBack,
@@ -118,11 +108,7 @@ fun PacmanScreen(
                 tint = Color(0xFF00FFFF)
             )
             Spacer(Modifier.width(4.dp))
-            Text(
-                "Назад",
-                color = Color(0xFF00FFFF),
-                fontSize = 13.sp
-            )
+            Text("Назад", color = Color(0xFF00FFFF), fontSize = 13.sp)
         }
     }
 }
