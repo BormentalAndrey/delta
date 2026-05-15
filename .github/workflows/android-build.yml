@@ -74,18 +74,6 @@ jobs:
         with:
           workspaces: delta/jni/deltachat-core-rust
 
-      # ШАГ ДЕКОДИРОВАНИЯ КЛЮЧА (ОБЯЗАТЕЛЬНО)
-      - name: Decode Keystore
-        env:
-          ENCODED_KEYSTORE: ${{ secrets.BASE64_KEYSTORE }}
-        run: |
-          if [ -z "$ENCODED_KEYSTORE" ]; then
-            echo "Warning: BASE64_KEYSTORE is empty. Skipping decode."
-          else
-            echo "$ENCODED_KEYSTORE" | base64 --decode > app/my-release-key.jks
-            echo "Keystore decoded to app/my-release-key.jks"
-          fi
-
       - name: Get core hash for cache
         id: core-hash
         run: |
@@ -125,14 +113,14 @@ jobs:
             fi
           done
 
-      - name: Remove conflicting icons
+      - name: Remove conflicting launcher icons
         run: |
-          find tyr -name "ic_launcher*" -delete
-          find delta -name "ic_launcher*" -delete
+          find tyr -name "ic_launcher*" -type f -delete
+          find delta -name "ic_launcher*" -type f -delete
 
-      - name: Build Release APK
+      - name: Build APK
         env:
-          # Имена исправлены для соответствия вашим секретам и build.gradle.kts
+          # ВАЖНО: Эти имена должны совпадать с System.getenv() в build.gradle.kts
           STORE_PASSWORD: "${{ secrets.STORE_PASSWORD }}"
           KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
           KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
@@ -141,8 +129,19 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleFossRelease --stacktrace
 
-      - name: Upload Artifact
+      - name: Check APK contents
+        run: |
+          APK=$(find app/build/outputs/apk/foss/release -name "*.apk" -type f | head -1)
+          if [ -f "$APK" ]; then
+            echo "Found APK: $APK"
+            unzip -l "$APK" | grep "\.so$" || echo "NO .so FILES FOUND!"
+          else
+            echo "APK NOT FOUND!"
+            exit 1
+          fi
+
+      - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: delta-release-apk
+          name: delta-foss-release
           path: app/build/outputs/apk/foss/release/*.apk
