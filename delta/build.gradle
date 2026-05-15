@@ -15,7 +15,6 @@ android {
         minSdkVersion 21
         vectorDrawables.useSupportLibrary = true
         
-        // APPLICATION_ID для библиотечного модуля
         buildConfigField "String", "APPLICATION_ID", "\"com.b44t.messenger\""
         buildConfigField "boolean", "DEV_BUILD", "false"
 
@@ -52,6 +51,7 @@ android {
         }
         release {
             minifyEnabled true
+            isCrunchPngs = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             testProguardFiles 'test-proguard-rules.pro'
         }
