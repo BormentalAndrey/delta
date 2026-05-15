@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ========== Тема лаунчера (наследует DeltaChat) ========== -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/background_black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Kakdela</item>
+    </style>
+
     <style name="Theme.AppLauncher" parent="TextSecure.LightNoActionBar">
-        <!-- Переопределяем только то, что нужно для нашего UI -->
         <item name="android:statusBarColor">@color/background_black</item>
         <item name="android:navigationBarColor">@color/background_black</item>
         <item name="android:windowLightStatusBar">false</item>
@@ -17,7 +21,6 @@
         <item name="colorOnBackground">@android:color/white</item>
     </style>
 
-    <!-- ========== Тема Kakdela ========== -->
     <style name="Theme.Kakdela" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:statusBarColor">@color/background_black</item>
         <item name="android:navigationBarColor">@color/background_black</item>
@@ -41,7 +44,6 @@
         <item name="colorOutline">#757575</item>
     </style>
 
-    <!-- ========== Тема Kakdela Translucent ========== -->
     <style name="Theme.Kakdela.Translucent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
