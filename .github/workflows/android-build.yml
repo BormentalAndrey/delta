@@ -1,23 +1,196 @@
-#!/bin/bash
-echo "=== Очистка всех кэшей ==="
+name: Android CI Build
 
-# 1. Остановить Gradle daemon
-./gradlew --stop
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
-# 2. Удалить папки сборки
-rm -rf app/build
-rm -rf delta/build
-rm -rf tyr/build
-rm -rf build
+permissions:
+  contents: write
 
-# 3. Удалить кэш Gradle
-rm -rf .gradle
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
 
-# 4. Удалить глобальный кэш Gradle (осторожно!)
-rm -rf ~/.gradle/caches
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-# 5. Удалить кэш Android Studio (если есть)
-rm -rf .idea
+      - name: Initialize and verify submodules
+        run: |
+          echo "=== Setting up submodules ==="
+          cd delta
+          if [ -d "jni/deltachat-core-rust" ] && [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Removing empty submodule directory..."
+            rm -rf jni/deltachat-core-rust
+          fi
+          if [ -f ".gitmodules" ]; then
+            git submodule update --init --recursive
+          fi
+          if [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Adding submodule..."
+            git submodule add https://github.com/deltachat/deltachat-core-rust.git jni/deltachat-core-rust 2>/dev/null || true
+            git submodule update --init --recursive
+          fi
+          cd ..
+          echo "=== Git submodules status ==="
+          git submodule status
+          
+          echo "=== Verifying submodule ==="
+          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "Submodule OK"
+          else
+            echo "ERROR: Failed to initialize submodule"
+            exit 1
+          fi
 
-echo "=== Готово! Кэш очищен ==="
-echo "Запустите: ./gradlew clean assembleFossDebug"
+      - name: Commit submodule if added
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected, committing..."
+            git add delta/.gitmodules delta/jni/deltachat-core-rust
+            git commit -m "Add deltachat-core-rust submodule (auto)"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: |
+            aarch64-linux-android
+            x86_64-linux-android
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: delta/jni/deltachat-core-rust
+
+      - name: Get deltachat-core-rust submodule hash
+        id: core-hash
+        run: |
+          if [ -f "delta/jni/deltachat-core-rust/Cargo.toml" ]; then
+            HASH=$(git rev-parse HEAD:delta/jni/deltachat-core-rust 2>/dev/null)
+            if [ -z "$HASH" ]; then
+              HASH="nosubmodule"
+            fi
+          else
+            HASH="nosubmodule"
+          fi
+          echo "Core hash: $HASH"
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+
+      - name: Cache compiled core
+        id: cache-core
+        uses: actions/cache@v4
+        with:
+          path: |
+            delta/jni/arm64-v8a
+            delta/jni/x86_64
+            delta/libs/arm64-v8a
+            delta/libs/x86_64
+          key: core-${{ steps.core-hash.outputs.hash }}-ndk-r27
+
+      - name: Compile DeltaChat native libraries
+        if: steps.cache-core.outputs.cache-hit != 'true'
+        working-directory: delta
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          echo "=== Verifying submodule ==="
+          if [ ! -f "jni/deltachat-core-rust/Cargo.toml" ]; then
+            echo "ERROR: Submodule not found!"
+            exit 1
+          fi
+          
+          echo "=== Building native libraries ==="
+          chmod +x scripts/ndk-make.sh
+          echo "stable" > scripts/rust-toolchain
+          ./scripts/ndk-make.sh
+          
+          echo "=== Build output ==="
+          find jni -name "*.so" -type f | sort
+
+      - name: Copy .so files to libs
+        working-directory: delta
+        run: |
+          mkdir -p libs
+          for ABI in arm64-v8a x86_64; do
+            if [ -d "jni/$ABI" ] && [ "$(ls -A jni/$ABI/*.so 2>/dev/null)" ]; then
+              mkdir -p "libs/$ABI"
+              cp -v "jni/$ABI"/*.so "libs/$ABI/"
+              echo "Copied $ABI: $(ls jni/$ABI/*.so | wc -l) files"
+            else
+              echo "WARNING: No .so files found for $ABI"
+            fi
+          done
+          echo "=== Final libs structure ==="
+          find libs -type f | sort
+
+      - name: Make Gradlew executable
+        run: chmod +x gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: ./gradlew :app:assembleFossDebug --stacktrace
+
+      - name: Find APK location
+        run: |
+          echo "=== Searching for APK files ==="
+          find app/build/outputs -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+          echo "=== APK directory structure ==="
+          ls -laR app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
+
+      - name: Check APK contents
+        run: |
+          echo "=== .so files in APK ==="
+          APK=$(find app/build/outputs -name "*.apk" -type f 2>/dev/null | head -1)
+          if [ -f "$APK" ]; then
+            echo "Found APK: $APK"
+            unzip -l "$APK" | grep "\.so$" || echo "NO .so FILES FOUND!"
+            echo "=== APK size ==="
+            ls -lh "$APK"
+          else
+            echo "APK not found!"
+            echo "Listing all files in build outputs:"
+            find app/build -type f -name "*.apk" 2>/dev/null || echo "No APK files anywhere"
+          fi
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/**/*.apk
