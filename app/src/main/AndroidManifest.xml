@@ -73,8 +73,10 @@
         android:hardwareAccelerated="true"
         android:extractNativeLibs="true"
         android:requestLegacyExternalStorage="true"
-        tools:replace="android:name,android:label,android:theme,android:allowBackup"
+        tools:replace="android:name,android:label,android:theme,android:allowBackup,android:icon,android:roundIcon"
         tools:targetApi="34">
+
+        <!-- ===== LAUNCHER (только один) ===== -->
         <activity
             android:name="com.launcher.multiapp.MainActivity"
             android:exported="true"
@@ -88,6 +90,7 @@
             </intent-filter>
         </activity>
 
+        <!-- ===== DELTACHAT ===== -->
         <activity 
             android:name="org.thoughtcrime.securesms.ConversationListActivity" 
             android:exported="false"
@@ -135,6 +138,7 @@
         <service android:name="org.thoughtcrime.securesms.service.MvboxService" android:exported="false" android:foregroundServiceType="dataSync" />
         <service android:name="org.thoughtcrime.securesms.service.FetchService" android:exported="false" android:foregroundServiceType="dataSync" />
 
+        <!-- ===== TYR ===== -->
         <activity android:name="com.jbselfcompany.tyr.ui.MainActivity" android:exported="false" android:launchMode="singleTask" android:theme="@style/Theme.Tyr" tools:replace="android:exported,android:theme,android:launchMode" />
         <activity android:name="com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity" android:exported="false" android:theme="@style/Theme.Tyr.Onboarding" tools:replace="android:exported,android:theme" />
         <activity android:name="com.jbselfcompany.tyr.ui.AboutActivity" android:exported="false" tools:replace="android:exported" />
@@ -153,6 +157,7 @@
         </receiver>
         <receiver android:name="com.jbselfcompany.tyr.receiver.MaintenanceReceiver" android:exported="false" android:enabled="true" tools:replace="android:exported" />
 
+        <!-- ===== KAKDELA P2P ===== -->
         <activity android:name="com.kakdela.p2p.MainActivity" android:exported="false" android:theme="@style/Theme.Kakdela" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" android:windowSoftInputMode="adjustResize" />
         <activity android:name="com.kakdela.p2p.ui.call.CallActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:launchMode="singleInstance" android:screenOrientation="portrait" android:windowSoftInputMode="adjustNothing" />
         <activity android:name="com.kakdela.p2p.game.JewelsBlastActivity" android:exported="false" android:screenOrientation="portrait" android:configChanges="orientation|screenSize|keyboardHidden">
@@ -169,6 +174,7 @@
             </intent-filter>
         </receiver>
 
+        <!-- ===== FILE PROVIDERS ===== -->
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true" tools:replace="android:authorities">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" tools:replace="android:resource" />
         </provider>
