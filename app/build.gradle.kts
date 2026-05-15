@@ -49,16 +49,17 @@ val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
 
 android {
     namespace = "com.launcher.multiapp"
-    compileSdk = 35 // Рекомендуется 35 для стабильности, если нет нужды в 36
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.launcher.multiapp"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
-        missingDimensionStrategy("version", "foss")
+        // Стратегия для правильного подключения :deltachat и :tyr
+        missingDimensionStrategy("none", "foss")
         multiDexEnabled = true
 
         ndk {
@@ -76,14 +77,14 @@ android {
         )
     }
 
-    // Изменено с "none" на "version", чтобы избежать ошибок Task Not Found
-    flavorDimensions += "version"
+    // Совпадает с измерениями в :deltachat и :tyr
+    flavorDimensions += "none"
     productFlavors {
         create("foss") {
-            dimension = "version"
+            dimension = "none"
         }
         create("gplay") {
-            dimension = "version"
+            dimension = "none"
         }
     }
 
@@ -131,7 +132,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            // Указываем обе папки: для DeltaChat и для извлеченных либ libGDX
+            // Подключаем библиотеки DeltaChat И распакованные библиотеки GDX
             jniLibs.srcDirs("delta/libs", "src/main/jniLibs")
         }
     }
@@ -180,7 +181,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.guava:guava:$guavaVersion")
 
-    // Compose
+    // Compose — исправленный BOM и зависимости
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -190,11 +191,14 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
 
-    // Coil & Material
-    implementation("io.coil-kt:coil-compose:$coilVersion")
+    // Material
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.transition:transition:1.5.1")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:$coilVersion")
 
     // Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
@@ -213,12 +217,12 @@ dependencies {
     // Security
     implementation("com.google.crypto.tink:tink-android:$tinkVersion")
 
-    // Media — ТУТ ДОБАВЛЕНА media3-session
+    // Media
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
-    implementation("androidx.media3:media3-session:$media3Version") 
+    implementation("androidx.media3:media3-session:$media3Version")
 
-    // Graphics (libGDX)
+    // Graphics
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
@@ -234,6 +238,9 @@ dependencies {
     // Core desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 
+    // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // Tests
     testImplementation("junit:junit:4.13.2")
 }
