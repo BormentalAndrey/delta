@@ -21,21 +21,27 @@
 # ИСПРАВЛЕНИЯ ДЛЯ МОДУЛЕЙ TYR И DELTA (Критично для текущей ошибки сборки)
 # ================================================================================
 
-# Сохраняем всё из пакетов, на которые ругался R8
+# Игнорируем отсутствующие аннотации сборщика (aQute/BND), на которые ругается R8
+-dontwarn aQute.bnd.annotation.spi.**
+-keep class aQute.bnd.annotation.spi.** { *; }
+
+# Сохраняем ВСЁ из проблемных пакетов, включая внутренние классы ($)
 -keep class com.jbselfcompany.tyr.** { *; }
 -keep interface com.jbselfcompany.tyr.** { *; }
-
 -keep class org.thoughtcrime.securesms.** { *; }
 -keep interface org.thoughtcrime.securesms.** { *; }
 
-# Сохраняем Companion объекты, так как к ним обращаются через рефлексию/синглтоны
+# Явное сохранение Companion-объектов (Kotlin) и их членов
 -keepclassmembers class **$Companion { *; }
+-keep class com.jbselfcompany.tyr.TyrApplication$Companion { *; }
+-keep class com.jbselfcompany.tyr.service.YggmailService$Companion { *; }
 
-# Специальное правило для внедрения зависимостей и репозиториев в Tyr
--keep class com.jbselfcompany.tyr.data.** { *; }
--keep class com.jbselfcompany.tyr.service.** { *; }
+# Сохраняем конкретные классы, которые R8 пометил как Missing
+-keep class com.jbselfcompany.tyr.data.ConfigRepository { *; }
 -keep class com.jbselfcompany.tyr.utils.AutoconfigServer { *; }
 -keep class com.jbselfcompany.tyr.utils.LocaleHelper { *; }
+-keep class org.thoughtcrime.securesms.BaseConversationListFragment$ConversationSelectedListener { *; }
+-keep class org.thoughtcrime.securesms.ConversationListFragment { *; }
 
 # ================================================================================
 # AI & JNI INTEGRATION (LlamaBridge)
@@ -58,52 +64,41 @@
 }
 
 # ================================================================================
-# GUAVA (Исправляет Missing class com.google.common.io.MoreFiles)
+# БИБЛИОТЕКИ (Guava, Termux, Apache, Log4j)
 # ================================================================================
--dontwarn com.google.common.io.**
--dontwarn com.google.common.collect.**
--dontwarn com.google.common.util.concurrent.**
--dontwarn com.google.common.cache.**
--keep class com.google.common.io.** { *; }
--keep class com.google.common.collect.** { *; }
--keep class com.google.common.base.** { *; }
+-dontwarn com.google.common.**
+-keep class com.google.common.** { *; }
 
-# ================================================================================
-# TERMUX / TERMINAL
-# ================================================================================
 -dontwarn com.termux.**
 -keep class com.termux.** { *; }
--keep interface com.termux.** { *; }
 
-# ================================================================================
-# PDFBOX & APACHE POI (Работа с документами)
-# ================================================================================
--dontwarn org.apache.pdfbox.**
+-dontwarn org.apache.logging.log4j.**
+-keep class org.apache.logging.log4j.** { *; }
+
 -dontwarn com.tom_roush.pdfbox.**
 -keep class com.tom_roush.pdfbox.** { *; }
 
 -dontwarn org.apache.poi.**
--dontwarn javax.xml.stream.**
--dontwarn org.apache.xmlbeans.**
 -keep class org.apache.poi.** { *; }
 
 # ================================================================================
-# БИБЛИОТЕКИ БЕЗОПАСНОСТИ, КРИПТО И БД
+# КРИПТОГРАФИЯ И БД
 # ================================================================================
 -dontwarn com.google.crypto.tink.**
 -keep class com.google.crypto.tink.** { *; }
+
 -dontwarn net.sqlcipher.**
 -keep class net.sqlcipher.** { *; }
 
 # ================================================================================
-# ГРАФИКА (libGDX)
+# ГРАФИКА И ДВИЖКИ (libGDX)
 # ================================================================================
 -dontwarn com.badlogicgames.gdx.**
 -keep class com.badlogicgames.gdx.** { *; }
 -keep class com.badlogic.gdx.backends.android.** { *; }
 
 # ================================================================================
-# ANDROIDX, COMPOSE & KOTLIN
+# ANDROIDX & KOTLIN
 # ================================================================================
 -keep class androidx.** { *; }
 -keep interface androidx.** { *; }
@@ -117,10 +112,11 @@
 -dontwarn org.conscrypt.**
 
 # ================================================================================
-# ИСКЛЮЧЕНИЯ (DON'T WARN)
+# СУПРЕССИЯ ПРЕДУПРЕЖДЕНИЙ ДЛЯ НЕ-ANDROID КЛАССОВ
 # ================================================================================
 -dontwarn java.awt.**
--dontwarn com.google.errorprone.annotations.**
--dontwarn edu.umd.cs.findbugs.annotations.**
+-dontwarn javax.xml.stream.**
 -dontwarn org.osgi.framework.**
 -dontwarn net.sf.saxon.**
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn edu.umd.cs.findbugs.annotations.**
