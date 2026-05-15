@@ -53,7 +53,7 @@ class BrowserActivity : Activity() {
     private val colorPink = Color.parseColor("#FF00FF") // Яркий маджента
     private val colorHint = Color.parseColor("#66FFFFFF")
 
-    private val homeUrl = "https://www.google.com"
+    private val homeUrl = "https://ya.ru/"
 
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var networkCallback: ConnectivityManager.NetworkCallback
@@ -344,7 +344,7 @@ class BrowserActivity : Activity() {
         loadUrl(
             if (Patterns.WEB_URL.matcher(input).matches() || input.contains("."))
                 input
-            else "https://www.google.com/search?q=$input"
+            else "https://ya.ru/"
         )
     }
 
