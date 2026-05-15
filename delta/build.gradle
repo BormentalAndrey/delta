@@ -27,6 +27,9 @@ android {
         buildConfigField("String", "TEST_ADDR", buildConfigProperty("TEST_ADDR"))
         buildConfigField("String", "TEST_MAIL_PW", buildConfigProperty("TEST_MAIL_PW"))
         buildConfigField("String", "NDK_ARCH", getNdkArch())
+
+        // ПРАВИЛА ДЛЯ ПОТРЕБИТЕЛЯ
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     compileOptions {
@@ -50,7 +53,7 @@ android {
             testProguardFiles 'test-proguard-rules.pro'
         }
         release {
-            minifyEnabled true
+            minifyEnabled false // ВЫКЛЮЧЕНО для библиотек
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             testProguardFiles 'test-proguard-rules.pro'
         }
