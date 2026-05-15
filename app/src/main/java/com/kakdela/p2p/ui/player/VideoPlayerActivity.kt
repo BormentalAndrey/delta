@@ -104,7 +104,6 @@ class VideoPlayerActivity : ComponentActivity() {
     private val SEEK_FULL_SWIPE_SECONDS = 60L
 
     private lateinit var audioManager: AudioManager
-
     private var batteryReceiver: BroadcastReceiver? = null
 
     private val permissionLauncher =
@@ -117,7 +116,6 @@ class VideoPlayerActivity : ComponentActivity() {
         setContentView(R.layout.activity_video_player)
 
         window.setBackgroundDrawable(ColorDrawable(Color.BLACK))
-
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
 
         bindViews()
@@ -184,7 +182,6 @@ class VideoPlayerActivity : ComponentActivity() {
     private fun setupGestures() {
         playerView.setOnTouchListener { _, event ->
             if (isLocked) {
-                // При locked тачи идут только на разблокировку (lockIcon clickable)
                 false
             } else {
                 when (event.actionMasked) {
@@ -245,8 +242,6 @@ class VideoPlayerActivity : ComponentActivity() {
                 true
             }
         }
-
-        // Разблокировка по тапу на lockIcon
         lockIcon.setOnClickListener { toggleLock() }
     }
 
@@ -335,8 +330,8 @@ class VideoPlayerActivity : ComponentActivity() {
         }
     }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (isInPictureInPictureMode) {
             hideControls()
             topControls.visibility = View.GONE
@@ -360,7 +355,7 @@ class VideoPlayerActivity : ComponentActivity() {
         batteryText.setTextColor(neonGreen)
         batteryText.setShadowLayer(10f, 0f, 0f, neonGreen)
 
-        centerIndicator.setTextSize(48f)
+        centerIndicator.textSize = 48f
 
         seekBar.progressTintList = android.content.res.ColorStateList.valueOf(neonCyan)
         seekBar.thumbTintList = android.content.res.ColorStateList.valueOf(neonPink)
@@ -563,10 +558,12 @@ class VideoPlayerActivity : ComponentActivity() {
             } else {
                 holder.title.setTextColor(Color.WHITE)
                 holder.title.setShadowLayer(5f, 0f, 0f, neonCyan)
-                holder.title.setTypeface(null, Typeface.NORMAL) // Сбрасываем жирность у остальных
+                holder.title.setTypeface(null, Typeface.NORMAL)
             }
 
-            // ИСПРАВЛЕНИЕ ЗДЕСЬ: Обернули загрузку в try-catch
+            // Сбрасываем картинку перед загрузкой новой, чтобы не было дублей при скролле
+            holder.thumb.setImageBitmap(null)
+
             try {
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentResolver.loadThumbnail(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, item.id), Size(320, 180), null)
@@ -574,11 +571,18 @@ class VideoPlayerActivity : ComponentActivity() {
                     @Suppress("DEPRECATION")
                     MediaStore.Video.Thumbnails.getThumbnail(contentResolver, item.id, MediaStore.Video.Thumbnails.MINI_KIND, null)
                 }
-                holder.thumb.setImageBitmap(bitmap)
+                
+                if (bitmap != null) {
+                    holder.thumb.setImageBitmap(bitmap)
+                } else {
+                    // Используем гарантированно доступный системный ресурс
+                    holder.thumb.setImageResource(android.R.drawable.ic_media_play)
+                    holder.thumb.setBackgroundColor(Color.DKGRAY)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Если превью не найдено, ставим стандартную иконку из ресурсов Android
-                holder.thumb.setImageResource(android.R.drawable.ic_media_video)
+                // Исправлено: замена ic_media_video на ic_media_play
+                holder.thumb.setImageResource(android.R.drawable.ic_media_play)
                 holder.thumb.setBackgroundColor(Color.DKGRAY)
             }
 
