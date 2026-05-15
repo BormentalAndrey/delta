@@ -192,7 +192,6 @@ fun rememberIsOnline(): State<Boolean> {
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    // Инициализируем текущим состоянием, чтобы не было ложного "оффлайна" при старте
     val initialState = remember {
         val activeNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(activeNetwork)
