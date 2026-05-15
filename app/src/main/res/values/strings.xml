@@ -6,7 +6,8 @@
     <string name="launch_tyr">Tyr</string>
     <string name="choose_app">Выберите приложение</string>
 
-    <!-- ========== Уведомления ========== -->
+    <string name="quota_usage_format" formatted="false">%1$s / %2$s</string>
+
     <string name="notification_channel_service">Service Notifications</string>
     <string name="notification_channel_service_desc">Background service status</string>
     <string name="notification_channel_mail">Mail Notifications</string>
@@ -14,11 +15,9 @@
     <string name="notification_channel_chat">Chat Notifications</string>
     <string name="notification_channel_chat_desc">Chat message notifications</string>
 
-    <!-- ========== Локация ========== -->
     <string name="location_streaming_channel_desc">Location streaming service</string>
     <string name="location_streaming_notification_title">Location streaming</string>
 
-    <!-- ========== Основные ========== -->
     <string name="send">Отправить</string>
     <string name="enter_message">Введите сообщение...</string>
     <string name="chats">Чаты</string>
@@ -27,14 +26,12 @@
     <string name="verify">Подтвердить</string>
     <string name="global_chat">Глобальный чат</string>
 
-    <!-- ========== Файлы ========== -->
     <string name="title_file_received">Файл получен</string>
     <string name="action_file_received_edit">Редактировать</string>
     <string name="action_file_received_open_directory">Открыть папку</string>
     <string name="error_file_received_title">Ошибка получения файла</string>
     <string name="file_received_title">File received</string>
 
-    <!-- ========== Termux ========== -->
     <string name="termux_preferences_title">Настройки Termux</string>
     <string name="termux_preferences_summary">Управление терминалом</string>
     <string name="termux_api_preferences_title">Termux:API</string>
