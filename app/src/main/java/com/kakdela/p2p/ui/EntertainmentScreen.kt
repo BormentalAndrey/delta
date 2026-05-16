@@ -121,6 +121,13 @@ private val entertainmentItems = listOf(
         type = EntertainmentType.WEB,
         url = "https://pikabu.ru"
     ),
+    EntertainmentItem(
+        id = " VK",
+        title = "ВКонтакте",
+        description = "Соц.сеть",
+        type = EntertainmentType.WEB,
+        url = "https://vk.com"
+    ),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
