@@ -110,8 +110,45 @@
 -dontwarn okhttp3.**
 -dontwarn org.conscrypt.**
 
+# ================================================================================
+# KTOR SERVER (Фикс для java.lang.management.ManagementFactory)
+# ================================================================================
+-dontwarn io.ktor.**
+-keep class io.ktor.** { *; }
+-keep interface io.ktor.** { *; }
+
+-dontwarn javax.management.**
+-dontwarn java.lang.management.**
+-dontwarn org.slf4j.**
+-dontwarn io.netty.**
+
+# Явное сохранение классов Ktor, используемых в рантайме
+-keep class io.ktor.server.cio.** { *; }
+-keep class io.ktor.server.engine.** { *; }
+-keep class io.ktor.server.routing.** { *; }
+-keep class io.ktor.server.response.** { *; }
+-keep class io.ktor.server.application.** { *; }
+-keep class io.ktor.http.** { *; }
+-keep class io.ktor.utils.io.** { *; }
+-keep class io.ktor.util.** { *; }
+
+# ================================================================================
+# ZXING (QR codes)
+# ================================================================================
+-dontwarn com.google.zxing.**
+-keep class com.google.zxing.** { *; }
+
+# ================================================================================
 # СУПРЕССИЯ ПРЕДУПРЕЖДЕНИЙ
+# ================================================================================
 -dontwarn java.awt.**
 -dontwarn javax.xml.stream.**
 -dontwarn org.osgi.framework.**
 -dontwarn net.sf.saxon.**
+
+# ================================================================================
+# СОХРАНЕНИЕ P2P СЕРВИСОВ (свои классы)
+# ================================================================================
+-keep class com.kakdela.p2p.ui.server.** { *; }
+-keep class com.kakdela.p2p.services.** { *; }
+-keep class com.kakdela.p2p.ui.TransferActivity { *; }
