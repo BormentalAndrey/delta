@@ -31,6 +31,8 @@ import com.launcher.multiapp.R
 import com.kakdela.p2p.ui.navigation.Routes
 import com.kakdela.p2p.ui.player.MusicManager
 import com.kakdela.p2p.ui.player.VideoPlayerActivity
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 enum class EntertainmentType {
     WEB,
@@ -164,6 +166,7 @@ fun EntertainmentScreen(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntertainmentNeonItem(
     item: EntertainmentItem,
@@ -197,13 +200,17 @@ fun EntertainmentNeonItem(
                     context.startActivity(Intent(context, VideoPlayerActivity::class.java))
                 }
 
-                // Случай 2: Явный URL или route, содержащий ссылку (исправление вашего краша)
+                // Случай 2: Явный URL или route, содержащий ссылку (исправлено на Query параметры)
                 !url.isNullOrBlank() -> {
-                    navController.navigate("webview/${Uri.encode(url)}/${Uri.encode(item.title)}")
+                    val encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
+                    val encodedTitle = URLEncoder.encode(item.title, StandardCharsets.UTF_8.toString())
+                    navController.navigate("webview?url=$encodedUrl&title=$encodedTitle")
                 }
 
                 !route.isNullOrBlank() && (route.startsWith("http://") || route.startsWith("https://")) -> {
-                    navController.navigate("webview/${Uri.encode(route)}/${Uri.encode(item.title)}")
+                    val encodedUrl = URLEncoder.encode(route, StandardCharsets.UTF_8.toString())
+                    val encodedTitle = URLEncoder.encode(item.title, StandardCharsets.UTF_8.toString())
+                    navController.navigate("webview?url=$encodedUrl&title=$encodedTitle")
                 }
 
                 // Случай 3: Внутренний экран приложения
