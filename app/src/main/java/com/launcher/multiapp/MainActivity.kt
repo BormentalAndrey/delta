@@ -57,6 +57,7 @@ import org.thoughtcrime.securesms.ConversationActivity
 import org.thoughtcrime.securesms.ConversationListFragment
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val NeonCyan = Color(0xFF00FFFF)
 private val NeonPurple = Color(0xFFB042FF)
@@ -74,6 +75,9 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
     private var isRegistered = mutableStateOf(false)
+
+    // Атомарный флаг для защиты от мульти-запуска сервера из разных потоков
+    private val isStartingServer = AtomicBoolean(false)
 
     private var chatContainer: FrameLayout? = null
 
@@ -95,9 +99,42 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                 }
 
                 LaunchedEffect(currentRoute, isRegistered.value) {
+                    val isChatsTab = isRegistered.value && currentRoute == Routes.CHATS
+                    
                     chatContainer?.let { 
-                        it.visibility = if (isRegistered.value && currentRoute == Routes.CHATS) 
-                            View.VISIBLE else View.GONE
+                        it.visibility = if (isChatsTab) View.VISIBLE else View.GONE
+                    }
+
+                    // Атомарно проверяем: если вкладка чатов И сервер прямо сейчас НЕ запускается
+                    if (isChatsTab && isStartingServer.compareAndSet(false, true)) {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                val serverResponding = isImapReady()
+                                
+                                if (!YggmailService.isRunning || !serverResponding) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(this@MainActivity, "Подключение к P2P сети...", Toast.LENGTH_SHORT).show()
+                                    }
+                                    
+                                    if (!YggmailService.isRunning) {
+                                        YggmailService.start(this@MainActivity)
+                                    }
+                                    
+                                    waitForServiceReady(timeoutMs = 10000L)
+                                    
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(this@MainActivity, "P2P Сервер подключен!", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@MainActivity, "Не удалось запустить сервер: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            } finally {
+                                // Гарантированно сбрасываем флаг при любом исходе
+                                isStartingServer.set(false)
+                            }
+                        }
                     }
                 }
 
@@ -131,7 +168,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                             },
                             onOpenDialog = { showAnonymousDialog.value = true },
                             onLaunchTyr = { launchTyr() },
-                            onRestartServer = { restartYggmailService() } // Добавлен проброс метода
+                            onRestartServer = { restartYggmailService() }
                         )
 
                         if (showAnonymousDialog.value) {
@@ -150,19 +187,21 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
     }
 
     private fun restartYggmailService() {
+        // Защита от дребезга и повторных кликов по кнопке ручного перезапуска
+        if (!isStartingServer.compareAndSet(false, true)) {
+            Toast.makeText(this, "Сервер уже выполняет операцию запуска/перезагрузки", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. Остановить сервер если запущен
                 if (YggmailService.isRunning) {
                     YggmailService.stop(this@MainActivity)
-                    // Ждём остановки
                     delay(1000)
                 }
 
-                // 2. Запустить заново
                 YggmailService.start(this@MainActivity)
 
-                // 3. Подождать готовности
                 withContext(Dispatchers.Main) {
                     isLoading.value = true
                     loadingMessage.value = "Перезапуск сервера..."
@@ -178,6 +217,8 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                     isLoading.value = false
                     Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
                 }
+            } finally {
+                isStartingServer.set(false)
             }
         }
     }
@@ -294,7 +335,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
             }
         } catch (e: Exception) {
             isLoading.value = false
-            Toast.makeText(this, "Ошибка инициализации", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Ошибка initialization", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -431,19 +472,16 @@ fun MainScreen(
     onLaunchEmail: () -> Unit,
     onOpenDialog: () -> Unit,
     onLaunchTyr: () -> Unit,
-    onRestartServer: () -> Unit // Добавлен колбек для кнопки
+    onRestartServer: () -> Unit
 ) {
-    // Анимационные эффекты
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     
-    // Пульсация логотипа
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.05f,
         animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutCubic), RepeatMode.Reverse),
         label = "scale"
     )
 
-    // "Дыхание" текста (пульсация прозрачности)
     val textAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
@@ -463,7 +501,6 @@ fun MainScreen(
         ) {
             Spacer(modifier = Modifier.weight(0.3f))
             
-            // Логотип с пульсацией
             Image(
                 painter = painterResource(id = R.drawable.intro1),
                 contentDescription = "Logo",
@@ -477,7 +514,6 @@ fun MainScreen(
                     CircularProgressIndicator(color = NeonPurple)
                     Spacer(Modifier.height(16.dp))
                     
-                    // Пульсирующий текст загрузки
                     Text(
                         text = loadingMessage,
                         color = NeonCyan,
@@ -506,7 +542,6 @@ fun MainScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Новая кнопка перезапуска сервера, добавленная на главный экран
                 Button(
                     onClick = onRestartServer,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
