@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,6 +34,8 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun NavGraph(
@@ -109,15 +112,25 @@ fun NavGraph(
                 composable(Routes.JEWELS) { JewelsBlastScreen() }
 
                 // ================= WEBVIEW =================
+                // Использование Query параметров предотвращает краши из-за слэшей в URL
                 composable(
-                    route = "webview/{url}/{title}",
+                    route = "webview?url={url}&title={title}",
                     arguments = listOf(
-                        navArgument("url") { type = NavType.StringType },
-                        navArgument("title") { type = NavType.StringType }
+                        navArgument("url") { 
+                            type = NavType.StringType
+                            defaultValue = ""
+                        },
+                        navArgument("title") { 
+                            type = NavType.StringType
+                            defaultValue = ""
+                        }
                     )
                 ) { entry ->
-                    val url = entry.arguments?.getString("url") ?: ""
-                    val title = entry.arguments?.getString("title") ?: ""
+                    val encodedUrl = entry.arguments?.getString("url") ?: ""
+                    val encodedTitle = entry.arguments?.getString("title") ?: ""
+                    
+                    val url = try { URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.name()) } catch (e: Exception) { encodedUrl }
+                    val title = try { URLDecoder.decode(encodedTitle, StandardCharsets.UTF_8.name()) } catch (e: Exception) { encodedTitle }
 
                     if (isOnline) {
                         WebViewScreen(url, title, navController)
@@ -155,7 +168,8 @@ private fun AppBottomBar(
                 onClick = {
                     if (!selected) {
                         navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            // Правильный метод для нахождения стартового экрана графа
+                            popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                             launchSingleTop = true
@@ -192,18 +206,24 @@ fun rememberIsOnline(): State<Boolean> {
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    val initialState = remember {
-        val activeNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(activeNetwork)
-        caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: false
+    val state = remember { 
+        mutableStateOf(
+            connectivityManager.activeNetwork?.let { network ->
+                connectivityManager.getNetworkCapabilities(network)
+                    ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            } ?: false
+        ) 
     }
-    
-    val state = remember { mutableStateOf(initialState) }
 
     DisposableEffect(connectivityManager) {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
                 state.value = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            }
+
+            override fun onAvailable(network: Network) {
+                val caps = connectivityManager.getNetworkCapabilities(network)
+                state.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: false
             }
 
             override fun onLost(network: Network) {
@@ -230,7 +250,9 @@ fun rememberIsOnline(): State<Boolean> {
 @Composable
 fun NoInternetScreen(onBack: () -> Unit) {
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         Column(
