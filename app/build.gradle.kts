@@ -157,7 +157,9 @@ android {
                 "META-INF/kotlinx-coroutines-core.kotlin_module",
                 "META-INF/tink/**",
                 "META-INF/library_release.kotlin_module",
-                "META-INF/services/javax.xml.stream.*"
+                "META-INF/services/javax.xml.stream.*",
+                "META-INF/versions/9/module-info.class",
+                "META-INF/io.netty.versions.properties"
             )
         }
     }
@@ -245,4 +247,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
     implementation("com.google.zxing:core:$zxingVersion")
+    
+    // SLF4J Android binding для Ktor
+    implementation("org.slf4j:slf4j-api:2.0.9")
 }
