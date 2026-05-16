@@ -117,13 +117,13 @@ private val dealItems = listOf(
         type = DealType.WEB,
         url = "https://www.avito.ru/"
     ),
-     DealItem(
+    DealItem(
         id = "RT",
         title = "Russia Today",
         description = "Новости",
         type = DealType.WEB,
         url = "https://russian.rt.com/"
-    ),
+    )
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,12 +155,13 @@ fun DealsScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(dealItems) { item ->
-                DealNeonItem(item, navController)
+                DealNeonItem(item = item, navController = navController)
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DealNeonItem(item: DealItem, navController: NavHostController) {
     val neonColor = Color.Magenta
@@ -177,23 +178,24 @@ fun DealNeonItem(item: DealItem, navController: NavHostController) {
         onClick = {
             when (item.type) {
                 DealType.ACTIVITY -> {
-                    when (item.id) {
-                        "browser" -> context.startActivity(Intent(context, BrowserActivity::class.java))
+                    if (item.id == "browser") {
+                        context.startActivity(Intent(context, BrowserActivity::class.java))
                     }
                 }
-
-                DealType.CALCULATOR ->
+                DealType.CALCULATOR -> {
                     navController.navigate(Routes.CALCULATOR)
-
-                DealType.TOOL ->
+                }
+                DealType.TOOL -> {
                     when (item.id) {
                         "text_editor" -> navController.navigate(Routes.TEXT_EDITOR)
                         "file_manager" -> navController.navigate(Routes.FILE_MANAGER)
                     }
-
-                DealType.WEB -> item.url?.let {
-                    val encoded = URLEncoder.encode(it, StandardCharsets.UTF_8.toString())
-                    navController.navigate("webview/$encoded/${item.title}")
+                }
+                DealType.WEB -> {
+                    item.url?.let {
+                        val encoded = URLEncoder.encode(it, StandardCharsets.UTF_8.toString())
+                        navController.navigate("webview/$encoded/${item.title}")
+                    }
                 }
             }
         }
@@ -212,9 +214,13 @@ fun DealNeonItem(item: DealItem, navController: NavHostController) {
             )
             Spacer(Modifier.width(20.dp))
             Column(Modifier.weight(1f)) {
-                Text(item.title, color = Color.White, fontWeight = FontWeight.Bold)
                 Text(
-                    item.description,
+                    text = item.title, 
+                    color = Color.White, 
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = item.description,
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
