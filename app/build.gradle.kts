@@ -29,6 +29,8 @@ val composeCompilerVersion = "1.5.15"
 val activityComposeVersion = "1.9.3"
 val navigationComposeVersion = "2.8.5"
 val lifecycleVersion = "2.8.7"
+val ktorVersion = "2.3.12"
+val zxingVersion = "3.5.3"
 
 /* ------------------------- GDX Native Copy Task ------------------------- */
 val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
@@ -182,7 +184,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:$activityComposeVersion")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("com.google.guava:guava:$guavaVersion")
+    choose("com.google.guava:guava:$guavaVersion")
 
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
@@ -219,6 +221,7 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
+    // Изменение: Убран дублирующий вызов реализации org.json
     implementation("org.json:json:20231013")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
@@ -229,4 +232,9 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+
+    // Зависимости для встроенного локального HTTP-сервера и генерации QR-кодов
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("com.google.zxing:core:$zxingVersion")
 }
