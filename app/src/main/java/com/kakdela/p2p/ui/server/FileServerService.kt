@@ -8,6 +8,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.response.*
@@ -61,14 +62,14 @@ class FileServerService : Service() {
                 server = embeddedServer(CIO, port = PORT, host = ip) {
                     routing {
                         get("/download") {
-                            call.response.header(
+                            this.call.response.header(
                                 HttpHeaders.ContentDisposition,
                                 ContentDisposition.Attachment.withParameter(
                                     ContentDisposition.Parameters.FileName,
                                     file.name
                                 ).toString()
                             )
-                            call.respondFile(file)
+                            this.call.respondFile(file)
                         }
                     }
                 }.start(wait = false)
