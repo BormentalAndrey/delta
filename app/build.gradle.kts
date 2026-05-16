@@ -50,7 +50,7 @@ val copyAndroidNatives = tasks.register<Copy>("copyAndroidNatives") {
 
 android {
     namespace = "com.launcher.multiapp"
-    compileSdk = 36 // Примечание: Убедитесь, что используете последние версии build-tools для SDK 36
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.launcher.multiapp"
@@ -89,17 +89,15 @@ android {
 
     signingConfigs {
         create("release") {
-            // Исправлено: STORE_PASSWORD вместо KEYSTORE_PASSWORD для соответствия GitHub Secrets
             val sPassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
             val kAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
             val kPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
 
-            // Применяем подпись только если найдены пароли, иначе билд упадет с понятной ошибкой
             if (sPassword != null && kAlias != null) {
                 storeFile = file("my-release-key.jks")
                 storePassword = sPassword
                 keyAlias = kAlias
-                keyPassword = kPassword ?: sPassword // Если пароль ключа не задан, используем пароль стора
+                keyPassword = kPassword ?: sPassword
             }
         }
     }
@@ -140,7 +138,6 @@ android {
 
     sourceSets {
         getByName("main") {
-            // Исправлен путь к delta/libs для корректной работы в многомодульной структуре
             jniLibs.srcDirs(file("../delta/libs"), "src/main/jniLibs")
         }
     }
@@ -160,10 +157,17 @@ android {
                 "META-INF/kotlinx-coroutines-core.kotlin_module",
                 "META-INF/tink/**",
                 "META-INF/library_release.kotlin_module",
-                // Добавлены исключения для Apache POI
                 "META-INF/services/javax.xml.stream.*"
             )
         }
+    }
+}
+
+// Разрешение конфликтов для Guava
+configurations.all {
+    resolutionStrategy {
+        force("com.google.guava:guava:$guavaVersion")
+        force("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
     }
 }
 
@@ -184,7 +188,12 @@ dependencies {
     implementation("androidx.activity:activity-compose:$activityComposeVersion")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
-    choose("com.google.guava:guava:$guavaVersion")
+    
+    // Guava - правильное объявление с исключением конфликтующих модулей
+    implementation("com.google.guava:guava:$guavaVersion") {
+        exclude(group = "com.google.guava", module = "listenablefuture")
+    }
+    implementation("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
 
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
@@ -221,7 +230,6 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
-    // Изменение: Убран дублирующий вызов реализации org.json
     implementation("org.json:json:20231013")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
