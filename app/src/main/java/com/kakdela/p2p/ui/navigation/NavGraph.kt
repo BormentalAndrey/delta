@@ -1,6 +1,7 @@
 package com.kakdela.p2p.ui.navigation
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -34,6 +35,7 @@ import com.kakdela.p2p.ui.*
 import com.kakdela.p2p.ui.chat.AiChatScreen
 import com.kakdela.p2p.ui.player.MusicPlayerScreen
 import com.kakdela.p2p.ui.screens.FileManagerScreen
+import com.kakdela.p2p.ui.TransferActivity
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -102,6 +104,13 @@ fun NavGraph(
                 composable(Routes.AI_CHAT) { AiChatScreen() }
                 composable(Routes.FILE_MANAGER) {
                     FileManagerScreen(onExit = { navController.popBackStack() })
+                }
+                composable(Routes.TRANSFER) {
+                    val context = LocalContext.current
+                    LaunchedEffect(Unit) {
+                        context.startActivity(Intent(context, TransferActivity::class.java))
+                        navController.popBackStack()
+                    }
                 }
 
                 // ================= GAMES =================
