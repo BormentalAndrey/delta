@@ -130,7 +130,8 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                                 isRegistered.value = true
                             },
                             onOpenDialog = { showAnonymousDialog.value = true },
-                            onLaunchTyr = { launchTyr() }
+                            onLaunchTyr = { launchTyr() },
+                            onRestartServer = { restartYggmailService() } // Добавлен проброс метода
                         )
 
                         if (showAnonymousDialog.value) {
@@ -143,6 +144,39 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun restartYggmailService() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Остановить сервер если запущен
+                if (YggmailService.isRunning) {
+                    YggmailService.stop(this@MainActivity)
+                    // Ждём остановки
+                    delay(1000)
+                }
+
+                // 2. Запустить заново
+                YggmailService.start(this@MainActivity)
+
+                // 3. Подождать готовности
+                withContext(Dispatchers.Main) {
+                    isLoading.value = true
+                    loadingMessage.value = "Перезапуск сервера..."
+                }
+                waitForServiceReady()
+
+                withContext(Dispatchers.Main) {
+                    isLoading.value = false
+                    Toast.makeText(this@MainActivity, "Сервер перезапущен!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    isLoading.value = false
+                    Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -396,7 +430,8 @@ fun MainScreen(
     loadingMessage: String,
     onLaunchEmail: () -> Unit,
     onOpenDialog: () -> Unit,
-    onLaunchTyr: () -> Unit
+    onLaunchTyr: () -> Unit,
+    onRestartServer: () -> Unit // Добавлен колбек для кнопки
 ) {
     // Анимационные эффекты
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -468,6 +503,18 @@ fun MainScreen(
                     shape = RoundedCornerShape(20.dp),
                     border = BorderStroke(2.dp, NeonPurple.copy(0.5f))
                 ) { Text("Анонимный аккаунт", color = NeonPurple, fontWeight = FontWeight.Bold) }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Новая кнопка перезапуска сервера, добавленная на главный экран
+                Button(
+                    onClick = onRestartServer,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF).copy(alpha = 0.2f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("🔄 Перезапустить сервер", color = Color(0xFF00FFFF), fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.weight(0.4f))
