@@ -7,7 +7,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -22,9 +21,7 @@ fun PacmanScreen(
     AndroidView(
         modifier = modifier,
         factory = {
-
             WebView(context).apply {
-
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -45,13 +42,24 @@ fun PacmanScreen(
                 loadUrl("file:///android_asset/pacman/index.html")
             }
         },
-        update = { }
-    )
-
-    // ---------- КОРРЕКТНОЕ УНИЧТОЖЕНИЕ ----------
-    DisposableEffect(Unit) {
-        onDispose {
-            // ничего не нужно
+        update = { },
+        // ---------- КОРРЕКТНОЕ УНИЧТОЖЕНИЕ ----------
+        onRelease = { webView ->
+            webView.apply {
+                // Останавливаем выполнение JavaScript и медиа (важно для звука)
+                onPause()
+                pauseTimers()
+                
+                // Загружаем пустую страницу, чтобы очистить текущий контекст
+                loadUrl("about:blank")
+                clearHistory()
+                
+                // Удаляем WebView из родительского ViewGroup
+                removeAllViews()
+                
+                // Полностью уничтожаем компонент
+                destroy()
+            }
         }
-    }
+    )
 }
