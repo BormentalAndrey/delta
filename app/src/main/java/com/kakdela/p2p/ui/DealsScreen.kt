@@ -116,14 +116,14 @@ private val dealItems = listOf(
         description = "Доска объявлений",
         type = DealType.WEB,
         url = "https://www.avito.ru/"
-    )
+    ),
      DealItem(
         id = "RT",
         title = "Russia Today",
         description = "Новости",
         type = DealType.WEB,
         url = "https://russian.rt.com/"
-    )
+    ),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
