@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.kakdela.p2p.ui.browser.BrowserActivity
+import com.kakdela.p2p.ui.TransferActivity
 import com.kakdela.p2p.ui.navigation.Routes
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -50,6 +52,7 @@ data class DealItem(
             DealType.ACTIVITY -> {
                 when (id) {
                     "browser" -> Icons.Filled.Public
+                    "transfer" -> Icons.Filled.Share
                     else -> Icons.Filled.ShoppingBag
                 }
             }
@@ -62,6 +65,12 @@ private val dealItems = listOf(
         id = "browser",
         title = "P2P Браузер",
         description = "Анонимный сёрфинг",
+        type = DealType.ACTIVITY
+    ),
+    DealItem(
+        id = "transfer",
+        title = "P2P Обмен файлов",
+        description = "Передача без интернета и приложения",
         type = DealType.ACTIVITY
     ),
     DealItem(
@@ -178,8 +187,13 @@ fun DealNeonItem(item: DealItem, navController: NavHostController) {
         onClick = {
             when (item.type) {
                 DealType.ACTIVITY -> {
-                    if (item.id == "browser") {
-                        context.startActivity(Intent(context, BrowserActivity::class.java))
+                    when (item.id) {
+                        "browser" -> {
+                            context.startActivity(Intent(context, BrowserActivity::class.java))
+                        }
+                        "transfer" -> {
+                            context.startActivity(Intent(context, TransferActivity::class.java))
+                        }
                     }
                 }
                 DealType.CALCULATOR -> {
