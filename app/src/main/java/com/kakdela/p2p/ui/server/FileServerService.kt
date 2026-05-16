@@ -19,7 +19,7 @@ import java.util.*
 
 class FileServerService : Service() {
 
-    private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null
+    private var server: ApplicationEngine? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -61,10 +61,12 @@ class FileServerService : Service() {
                 server = embeddedServer(CIO, port = PORT, host = ip) {
                     routing {
                         get("/download") {
-                            // Продакшен-настройка: передаем имя файла в заголовках, чтобы браузер корректно его сохранил
                             call.response.header(
                                 HttpHeaders.ContentDisposition,
-                                ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name).toString()
+                                ContentDisposition.Attachment.withParameter(
+                                    ContentDisposition.Parameters.FileName,
+                                    file.name
+                                ).toString()
                             )
                             call.respondFile(file)
                         }
@@ -73,7 +75,9 @@ class FileServerService : Service() {
 
                 // Обновляем уведомление и отправляем Broadcast в UI
                 updateNotification("Сервер запущен. Скачайте файл по QR-коду.")
-                sendBroadcast(Intent(ACTION_SERVER_STARTED).putExtra(EXTRA_SERVER_URL, serverUrl))
+                sendBroadcast(
+                    Intent(ACTION_SERVER_STARTED).putExtra(EXTRA_SERVER_URL, serverUrl)
+                )
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -89,7 +93,7 @@ class FileServerService : Service() {
                 val addrs = Collections.list(intf.inetAddresses)
                 for (addr in addrs) {
                     if (!addr.isLoopbackAddress) {
-                        val sAddr = addr.hostAddress
+                        val sAddr = addr.hostAddress ?: continue
                         val isIPv4 = sAddr.indexOf(':') < 0
                         if (isIPv4 && (sAddr.startsWith("192.168.") || sAddr.startsWith("10.") || sAddr.startsWith("172."))) {
                             return sAddr
@@ -120,8 +124,12 @@ class FileServerService : Service() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES = Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "P2P Sharing", NotificationManager.IMPORTANCE_LOW)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "P2P Sharing",
+                NotificationManager.IMPORTANCE_LOW
+            )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
