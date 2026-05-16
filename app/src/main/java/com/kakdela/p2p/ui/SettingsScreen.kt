@@ -1,4 +1,3 @@
-```kotlin
 package com.kakdela.p2p.ui
 
 import android.widget.Toast
@@ -72,20 +71,22 @@ fun SettingsScreen(navController: NavController? = null) {
                 }
             }
 
-            // Кнопка перезапуска
+            // Кнопка перезапуска (обновленный дизайн и логика)
             Button(
                 onClick = {
                     isRestarting = true
                     scope.launch(Dispatchers.IO) {
                         try {
-                            // Остановить
+                            // 1. Остановить сервер если запущен
                             if (YggmailService.isRunning) {
                                 YggmailService.stop(context)
                                 delay(1000)
                             }
-                            // Запустить
+                            
+                            // 2. Запустить заново
                             YggmailService.start(context)
-                            // Подождать готовности
+                            
+                            // 3. Подождать готовности
                             var ready = false
                             repeat(30) {
                                 delay(1000)
@@ -97,6 +98,7 @@ fun SettingsScreen(navController: NavController? = null) {
                                 } catch (_: Exception) {}
                                 if (ready) return@repeat
                             }
+                            
                             withContext(Dispatchers.Main) {
                                 isRestarting = false
                                 Toast.makeText(context, if (ready) "✅ Сервер перезапущен!" else "⚠️ Сервер запущен, но не отвечает", Toast.LENGTH_SHORT).show()
@@ -110,25 +112,25 @@ fun SettingsScreen(navController: NavController? = null) {
                     }
                 },
                 enabled = !isRestarting,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFFF).copy(alpha = 0.2f)),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FFFF).copy(alpha = 0.2f),
+                    disabledContainerColor = Color(0xFF00FFFF).copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (isRestarting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                         color = Color(0xFF00FFFF),
                         strokeWidth = 2.dp
                     )
                     Spacer(Modifier.width(12.dp))
                     Text("Перезапуск...", color = Color(0xFF00FFFF), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 } else {
-                    Icon(Icons.Filled.Refresh, "Перезапустить", tint = Color(0xFF00FFFF))
-                    Spacer(Modifier.width(8.dp))
                     Text("🔄 Перезапустить сервер", color = Color(0xFF00FFFF), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
     }
 }
-```
