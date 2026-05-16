@@ -193,8 +193,9 @@ fun DealNeonItem(item: DealItem, navController: NavHostController) {
                 }
                 DealType.WEB -> {
                     item.url?.let {
-                        val encoded = URLEncoder.encode(it, StandardCharsets.UTF_8.toString())
-                        navController.navigate("webview/$encoded/${item.title}")
+                        val encodedUrl = URLEncoder.encode(it, StandardCharsets.UTF_8.toString())
+                        val encodedTitle = URLEncoder.encode(item.title, StandardCharsets.UTF_8.toString())
+                        navController.navigate("webview?url=$encodedUrl&title=$encodedTitle")
                     }
                 }
             }
