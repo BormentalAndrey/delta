@@ -176,5 +176,20 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/dc_file_paths" />
         </provider>
 
+        <activity
+            android:name="com.kakdela.p2p.ui.TransferActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Kakdela"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:windowSoftInputMode="adjustResize" />
+
+        <service
+            android:name="com.kakdela.p2p.ui.server.FileServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            tools:targetApi="34" />
+
     </application>
 </manifest>
