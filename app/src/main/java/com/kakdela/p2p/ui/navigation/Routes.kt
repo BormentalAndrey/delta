@@ -13,6 +13,7 @@ object Routes {
     const val TEXT_EDITOR = "text_editor"
     const val AI_CHAT = "ai_chat"
     const val FILE_MANAGER = "file_manager"
+    const val TRANSFER = "transfer"
 
     // --- ДОСУГ И МЕДИА (ENTERTAINMENT) ---
     const val MUSIC = "music"
