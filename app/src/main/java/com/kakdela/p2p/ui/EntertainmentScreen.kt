@@ -1,9 +1,9 @@
 package com.kakdela.p2p.ui
 
-import androidx.compose.foundation.border
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -43,9 +43,6 @@ private val NeonPurple = Color(0xFFBA00FF)
 private val NeonPink = Color(0xFFFF1493)
 private val NeonOrange = Color(0xFFFF6600)
 private val NeonBlue = Color(0xFF0088FF)
-private val NeonRed = Color(0xFFFF0040)
-private val NeonLime = Color(0xFFCCFF00)
-private val NeonTeal = Color(0xFF00FFCC)
 private val NeonGold = Color(0xFFFFAA00)
 
 enum class EntertainmentType {
@@ -87,10 +84,10 @@ private val entertainmentItems = listOf(
     ),
     EntertainmentItem(
         id = "ai_chat",
-        title = "AI Чат",
+        title = "DeepSeek AI",
         description = "Умный помощник",
-        type = EntertainmentType.INTERNAL_CHAT,
-        route = Routes.AI_CHAT,
+        type = EntertainmentType.WEB,
+        url = "https://chat.deepseek.com",
         accentColor = NeonCyan,
         iconVector = Icons.Filled.Chat
     ),
@@ -165,15 +162,6 @@ private val entertainmentItems = listOf(
         url = "https://vk.com",
         accentColor = NeonBlue,
         iconVector = Icons.Filled.People
-    ),
-    EntertainmentItem(
-        id = "crazygames",
-        title = "CrazyGames",
-        description = "Игры онлайн",
-        type = EntertainmentType.WEB,
-        url = "https://www.crazygames.com",
-        accentColor = NeonLime,
-        iconVector = Icons.Filled.VideogameAsset
     )
 )
 
@@ -269,7 +257,6 @@ fun EntertainmentNeonItem(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Иконка с неоновой подложкой
             if (item.type == EntertainmentType.MUSIC && MusicManager.currentTrack != null) {
                 AsyncImage(
                     model = MusicManager.currentTrack!!.albumArt,
