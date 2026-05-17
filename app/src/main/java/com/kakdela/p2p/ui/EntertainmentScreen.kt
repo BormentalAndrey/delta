@@ -1,5 +1,6 @@
 package com.kakdela.p2p.ui
 
+import androidx.compose.foundation.border
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
