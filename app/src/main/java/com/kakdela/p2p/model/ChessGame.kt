@@ -3,10 +3,15 @@ package com.kakdela.p2p.model
 
 class ChessGame {
     private val board = Array(8) { Array<Piece?>(8) { null } }
+    
     var currentPlayer: Color = Color.WHITE
         private set
     
-    private val moveHistory = mutableListOf<Move>()
+    private val _moveHistory = mutableListOf<Move>()
+    val moveHistory: List<Move> get() = _moveHistory.toList()
+    val moveCount: Int get() = _moveHistory.size
+    val lastMove: Move? get() = _moveHistory.lastOrNull()
+    
     private var enPassantTarget: Position? = null
     private var whiteKingSideCastling = true
     private var whiteQueenSideCastling = true
@@ -18,8 +23,7 @@ class ChessGame {
     }
     
     private fun setupInitialPosition() {
-        // Расстановка фигур на начальные позиции
-        // Белые фигуры
+        // Белые фигуры (ряд 0)
         board[0][0] = Piece(PieceType.ROOK, Color.WHITE)
         board[1][0] = Piece(PieceType.KNIGHT, Color.WHITE)
         board[2][0] = Piece(PieceType.BISHOP, Color.WHITE)
@@ -29,11 +33,12 @@ class ChessGame {
         board[6][0] = Piece(PieceType.KNIGHT, Color.WHITE)
         board[7][0] = Piece(PieceType.ROOK, Color.WHITE)
         
+        // Белые пешки (ряд 1)
         for (col in 0..7) {
             board[col][1] = Piece(PieceType.PAWN, Color.WHITE)
         }
         
-        // Черные фигуры
+        // Черные фигуры (ряд 7)
         board[0][7] = Piece(PieceType.ROOK, Color.BLACK)
         board[1][7] = Piece(PieceType.KNIGHT, Color.BLACK)
         board[2][7] = Piece(PieceType.BISHOP, Color.BLACK)
@@ -43,13 +48,23 @@ class ChessGame {
         board[6][7] = Piece(PieceType.KNIGHT, Color.BLACK)
         board[7][7] = Piece(PieceType.ROOK, Color.BLACK)
         
+        // Черные пешки (ряд 6)
         for (col in 0..7) {
             board[col][6] = Piece(PieceType.PAWN, Color.BLACK)
         }
     }
     
     fun getPieceAt(position: Position): Piece? {
+        if (!isInBounds(position)) return null
         return board[position.col][position.row]
+    }
+    
+    fun getBoardState(): Array<Array<Piece?>> {
+        return Array(8) { row ->
+            Array(8) { col ->
+                board[col][row]
+            }
+        }
     }
     
     fun makeMove(from: Position, to: Position): Boolean {
@@ -60,15 +75,13 @@ class ChessGame {
         val legalMoves = getLegalMoves(from)
         if (to !in legalMoves) return false
         
-        // Создаем запись хода
         val capturedPiece = getPieceAt(to)
         val move = Move(from, to, piece, capturedPiece)
         
-        // Выполняем ход на доске
+        // Выполняем ход
         board[to.col][to.row] = piece
         board[from.col][from.row] = null
         
-        // Обработка специальных ходов
         // Взятие на проходе
         if (piece.type == PieceType.PAWN && to == enPassantTarget) {
             val captureRow = if (piece.color == Color.WHITE) to.row - 1 else to.row + 1
@@ -85,44 +98,51 @@ class ChessGame {
         
         // Рокировка
         if (piece.type == PieceType.KING && kotlin.math.abs(to.col - from.col) == 2) {
-            if (to.col == 6) { // Короткая рокировка
+            if (to.col == 6) {
+                // Короткая рокировка
                 board[5][to.row] = board[7][to.row]
                 board[7][to.row] = null
-            } else { // Длинная рокировка
+            } else if (to.col == 2) {
+                // Длинная рокировка
                 board[3][to.row] = board[0][to.row]
                 board[0][to.row] = null
             }
         }
         
         // Обновление прав на рокировку
-        if (piece.type == PieceType.KING) {
-            if (piece.color == Color.WHITE) {
-                whiteKingSideCastling = false
-                whiteQueenSideCastling = false
-            } else {
-                blackKingSideCastling = false
-                blackQueenSideCastling = false
-            }
-        }
-        
-        if (piece.type == PieceType.ROOK) {
-            when {
-                from.col == 0 && from.row == 0 -> whiteQueenSideCastling = false
-                from.col == 7 && from.row == 0 -> whiteKingSideCastling = false
-                from.col == 0 && from.row == 7 -> blackQueenSideCastling = false
-                from.col == 7 && from.row == 7 -> blackKingSideCastling = false
-            }
-        }
+        updateCastlingRights(piece, from)
         
         // Превращение пешки
         if (piece.type == PieceType.PAWN && (to.row == 7 || to.row == 0)) {
-            // По умолчанию превращаем в ферзя
             board[to.col][to.row] = Piece(PieceType.QUEEN, piece.color)
         }
         
-        moveHistory.add(move)
+        _moveHistory.add(move)
         currentPlayer = currentPlayer.opposite()
         return true
+    }
+    
+    private fun updateCastlingRights(piece: Piece, from: Position) {
+        when (piece.type) {
+            PieceType.KING -> {
+                if (piece.color == Color.WHITE) {
+                    whiteKingSideCastling = false
+                    whiteQueenSideCastling = false
+                } else {
+                    blackKingSideCastling = false
+                    blackQueenSideCastling = false
+                }
+            }
+            PieceType.ROOK -> {
+                when {
+                    from.col == 0 && from.row == 0 -> whiteQueenSideCastling = false
+                    from.col == 7 && from.row == 0 -> whiteKingSideCastling = false
+                    from.col == 0 && from.row == 7 -> blackQueenSideCastling = false
+                    from.col == 7 && from.row == 7 -> blackKingSideCastling = false
+                }
+            }
+            else -> {}
+        }
     }
     
     fun getLegalMoves(from: Position): List<Position> {
@@ -130,23 +150,21 @@ class ChessGame {
         val moves = mutableListOf<Position>()
         
         when (piece.type) {
-            PieceType.PAWN -> getPawnMoves(from, piece.color, moves)
-            PieceType.KNIGHT -> getKnightMoves(from, piece.color, moves)
-            PieceType.BISHOP -> getBishopMoves(from, piece.color, moves)
-            PieceType.ROOK -> getRookMoves(from, piece.color, moves)
-            PieceType.QUEEN -> getQueenMoves(from, piece.color, moves)
-            PieceType.KING -> getKingMoves(from, piece.color, moves)
+            PieceType.PAWN -> addPawnMoves(from, piece.color, moves)
+            PieceType.KNIGHT -> addKnightMoves(from, piece.color, moves)
+            PieceType.BISHOP -> addBishopMoves(from, piece.color, moves)
+            PieceType.ROOK -> addRookMoves(from, piece.color, moves)
+            PieceType.QUEEN -> addQueenMoves(from, piece.color, moves)
+            PieceType.KING -> addKingMoves(from, piece.color, moves)
         }
         
-        // Фильтруем ходы, которые оставляют короля под шахом
-        return moves.filter { move ->
-            !wouldBeInCheck(from, move, piece.color)
-        }
+        return moves.filter { move -> !wouldBeInCheck(from, move, piece.color) }
     }
     
-    private fun getPawnMoves(from: Position, color: Color, moves: MutableList<Position>) {
+    private fun addPawnMoves(from: Position, color: Color, moves: MutableList<Position>) {
         val direction = if (color == Color.WHITE) 1 else -1
         val startRow = if (color == Color.WHITE) 1 else 6
+        val promotionRow = if (color == Color.WHITE) 7 else 0
         
         // Ход вперед на 1 клетку
         val oneForward = Position(from.col, from.row + direction)
@@ -163,7 +181,7 @@ class ChessGame {
         }
         
         // Взятие по диагонали
-        for (dx in -1..1 step 2) {
+        for (dx in listOf(-1, 1)) {
             val capturePos = Position(from.col + dx, from.row + direction)
             if (isInBounds(capturePos)) {
                 val targetPiece = getPieceAt(capturePos)
@@ -178,7 +196,7 @@ class ChessGame {
         }
     }
     
-    private fun getKnightMoves(from: Position, color: Color, moves: MutableList<Position>) {
+    private fun addKnightMoves(from: Position, color: Color, moves: MutableList<Position>) {
         val knightMoves = listOf(
             -2 to -1, -2 to 1, -1 to -2, -1 to 2,
             1 to -2, 1 to 2, 2 to -1, 2 to 1
@@ -195,8 +213,28 @@ class ChessGame {
         }
     }
     
-    private fun getBishopMoves(from: Position, color: Color, moves: MutableList<Position>) {
-        for ((dx, dy) in listOf(-1 to -1, -1 to 1, 1 to -1, 1 to 1)) {
+    private fun addBishopMoves(from: Position, color: Color, moves: MutableList<Position>) {
+        val directions = listOf(-1 to -1, -1 to 1, 1 to -1, 1 to 1)
+        addSlidingMoves(from, color, directions, moves)
+    }
+    
+    private fun addRookMoves(from: Position, color: Color, moves: MutableList<Position>) {
+        val directions = listOf(0 to 1, 0 to -1, 1 to 0, -1 to 0)
+        addSlidingMoves(from, color, directions, moves)
+    }
+    
+    private fun addQueenMoves(from: Position, color: Color, moves: MutableList<Position>) {
+        addBishopMoves(from, color, moves)
+        addRookMoves(from, color, moves)
+    }
+    
+    private fun addSlidingMoves(
+        from: Position, 
+        color: Color, 
+        directions: List<Pair<Int, Int>>, 
+        moves: MutableList<Position>
+    ) {
+        for ((dx, dy) in directions) {
             var x = from.col + dx
             var y = from.row + dy
             while (x in 0..7 && y in 0..7) {
@@ -216,33 +254,8 @@ class ChessGame {
         }
     }
     
-    private fun getRookMoves(from: Position, color: Color, moves: MutableList<Position>) {
-        for ((dx, dy) in listOf(0 to 1, 0 to -1, 1 to 0, -1 to 0)) {
-            var x = from.col + dx
-            var y = from.row + dy
-            while (x in 0..7 && y in 0..7) {
-                val pos = Position(x, y)
-                val targetPiece = getPieceAt(pos)
-                if (targetPiece == null) {
-                    moves.add(pos)
-                } else {
-                    if (targetPiece.color != color) {
-                        moves.add(pos)
-                    }
-                    break
-                }
-                x += dx
-                y += dy
-            }
-        }
-    }
-    
-    private fun getQueenMoves(from: Position, color: Color, moves: MutableList<Position>) {
-        getBishopMoves(from, color, moves)
-        getRookMoves(from, color, moves)
-    }
-    
-    private fun getKingMoves(from: Position, color: Color, moves: MutableList<Position>) {
+    private fun addKingMoves(from: Position, color: Color, moves: MutableList<Position>) {
+        // Обычные ходы короля
         for (dx in -1..1) {
             for (dy in -1..1) {
                 if (dx == 0 && dy == 0) continue
@@ -257,14 +270,14 @@ class ChessGame {
         }
         
         // Рокировка
-        if (color == Color.WHITE) {
+        if (color == Color.WHITE && from.row == 0 && from.col == 4) {
             if (whiteKingSideCastling && canCastle(4, 7, 0)) {
                 moves.add(Position(6, 0))
             }
             if (whiteQueenSideCastling && canCastle(4, 0, 0)) {
                 moves.add(Position(2, 0))
             }
-        } else {
+        } else if (color == Color.BLACK && from.row == 7 && from.col == 4) {
             if (blackKingSideCastling && canCastle(4, 7, 7)) {
                 moves.add(Position(6, 7))
             }
@@ -276,12 +289,16 @@ class ChessGame {
     
     private fun canCastle(kingCol: Int, rookCol: Int, row: Int): Boolean {
         val step = if (rookCol > kingCol) 1 else -1
-        val between = if (step == 1) kingCol + 1..rookCol - 1 else rookCol + 1..kingCol - 1
+        val between = if (step == 1) (kingCol + 1) until rookCol else (rookCol + 1) until kingCol
         
         // Проверяем, что между королем и ладьей пусто
         for (col in between) {
             if (getPieceAt(Position(col, row)) != null) return false
         }
+        
+        // Проверяем, что ладья на месте
+        val rook = getPieceAt(Position(rookCol, row))
+        if (rook?.type != PieceType.ROOK) return false
         
         // Проверяем, что король не проходит через битое поле
         val color = getPieceAt(Position(kingCol, row))?.color ?: return false
@@ -297,40 +314,11 @@ class ChessGame {
         
         for (col in 0..7) {
             for (row in 0..7) {
-                val piece = getPieceAt(Position(col, row))
+                val piece = board[col][row]
                 if (piece != null && piece.color == attackerColor) {
                     val from = Position(col, row)
-                    when (piece.type) {
-                        PieceType.PAWN -> {
-                            val direction = if (attackerColor == Color.WHITE) 1 else -1
-                            for (dx in -1..1 step 2) {
-                                if (position == Position(from.col + dx, from.row + direction)) {
-                                    return true
-                                }
-                            }
-                        }
-                        PieceType.KNIGHT -> {
-                            val moves = listOf(-2 to -1, -2 to 1, -1 to -2, -1 to 2, 
-                                             1 to -2, 1 to 2, 2 to -1, 2 to 1)
-                            if (moves.any { (dx, dy) -> Position(from.col + dx, from.row + dy) == position }) {
-                                return true
-                            }
-                        }
-                        PieceType.BISHOP -> {
-                            if (isDiagonalAttack(from, position)) return true
-                        }
-                        PieceType.ROOK -> {
-                            if (isStraightAttack(from, position)) return true
-                        }
-                        PieceType.QUEEN -> {
-                            if (isDiagonalAttack(from, position) || isStraightAttack(from, position)) return true
-                        }
-                        PieceType.KING -> {
-                            if (kotlin.math.abs(position.col - from.col) <= 1 && 
-                                kotlin.math.abs(position.row - from.row) <= 1) {
-                                return true
-                            }
-                        }
+                    if (canPieceAttackSquare(piece.type, from, position, attackerColor)) {
+                        return true
                     }
                 }
             }
@@ -338,21 +326,48 @@ class ChessGame {
         return false
     }
     
-    private fun isDiagonalAttack(from: Position, to: Position): Boolean {
+    private fun canPieceAttackSquare(
+        type: PieceType, 
+        from: Position, 
+        target: Position, 
+        attackerColor: Color
+    ): Boolean {
+        return when (type) {
+            PieceType.PAWN -> {
+                val direction = if (attackerColor == Color.WHITE) 1 else -1
+                kotlin.math.abs(target.col - from.col) == 1 && 
+                target.row == from.row + direction
+            }
+            PieceType.KNIGHT -> {
+                val dx = kotlin.math.abs(target.col - from.col)
+                val dy = kotlin.math.abs(target.row - from.row)
+                (dx == 2 && dy == 1) || (dx == 1 && dy == 2)
+            }
+            PieceType.BISHOP -> isDiagonalPathClear(from, target)
+            PieceType.ROOK -> isStraightPathClear(from, target)
+            PieceType.QUEEN -> isDiagonalPathClear(from, target) || isStraightPathClear(from, target)
+            PieceType.KING -> {
+                kotlin.math.abs(target.col - from.col) <= 1 && 
+                kotlin.math.abs(target.row - from.row) <= 1
+            }
+        }
+    }
+    
+    private fun isDiagonalPathClear(from: Position, to: Position): Boolean {
         if (kotlin.math.abs(to.col - from.col) != kotlin.math.abs(to.row - from.row)) return false
         val dx = if (to.col > from.col) 1 else -1
         val dy = if (to.row > from.row) 1 else -1
         var x = from.col + dx
         var y = from.row + dy
         while (x != to.col && y != to.row) {
-            if (getPieceAt(Position(x, y)) != null) return false
+            if (board[x][y] != null) return false
             x += dx
             y += dy
         }
         return true
     }
     
-    private fun isStraightAttack(from: Position, to: Position): Boolean {
+    private fun isStraightPathClear(from: Position, to: Position): Boolean {
         if (from.col != to.col && from.row != to.row) return false
         val dx = when {
             to.col > from.col -> 1
@@ -367,7 +382,7 @@ class ChessGame {
         var x = from.col + dx
         var y = from.row + dy
         while (x != to.col || y != to.row) {
-            if (getPieceAt(Position(x, y)) != null) return false
+            if (board[x][y] != null) return false
             x += dx
             y += dy
         }
@@ -375,10 +390,10 @@ class ChessGame {
     }
     
     private fun wouldBeInCheck(from: Position, to: Position, color: Color): Boolean {
-        // Временно делаем ход и проверяем
-        val piece = getPieceAt(from) ?: return true
-        val capturedPiece = getPieceAt(to)
+        val piece = board[from.col][from.row] ?: return true
+        val capturedPiece = board[to.col][to.row]
         
+        // Временно делаем ход
         board[to.col][to.row] = piece
         board[from.col][from.row] = null
         
@@ -406,7 +421,29 @@ class ChessGame {
     }
     
     fun isGameOver(): Boolean {
-        return isCheckmate() || isStalemate()
+        return isCheckmate() || isStalemate() || isInsufficientMaterial()
+    }
+    
+    private fun isInsufficientMaterial(): Boolean {
+        val pieces = mutableListOf<Piece>()
+        for (col in 0..7) {
+            for (row in 0..7) {
+                board[col][row]?.let { pieces.add(it) }
+            }
+        }
+        
+        // Король против короля
+        if (pieces.size == 2) return true
+        
+        // Король и слон/конь против короля
+        if (pieces.size == 3) {
+            val nonKing = pieces.find { it.type != PieceType.KING }
+            if (nonKing?.type == PieceType.BISHOP || nonKing?.type == PieceType.KNIGHT) {
+                return true
+            }
+        }
+        
+        return false
     }
     
     private fun getAllLegalMoves(): List<Pair<Position, Position>> {
@@ -429,7 +466,7 @@ class ChessGame {
     private fun findKing(color: Color): Position? {
         for (col in 0..7) {
             for (row in 0..7) {
-                val piece = getPieceAt(Position(col, row))
+                val piece = board[col][row]
                 if (piece?.type == PieceType.KING && piece.color == color) {
                     return Position(col, row)
                 }
@@ -439,16 +476,38 @@ class ChessGame {
     }
     
     fun undoMove(): Boolean {
-        if (moveHistory.isEmpty()) return false
+        if (_moveHistory.isEmpty()) return false
         
-        val lastMove = moveHistory.removeAt(moveHistory.size - 1)
+        val lastMove = _moveHistory.removeAt(_moveHistory.size - 1)
         
-        // Возвращаем фигуру обратно
+        // Возвращаем фигуру
         board[lastMove.from.col][lastMove.from.row] = lastMove.piece
         board[lastMove.to.col][lastMove.to.row] = lastMove.capturedPiece
         
+        // Возвращаем права на рокировку (упрощенно)
         currentPlayer = currentPlayer.opposite()
         return true
+    }
+    
+    fun reset() {
+        // Очищаем доску
+        for (col in 0..7) {
+            for (row in 0..7) {
+                board[col][row] = null
+            }
+        }
+        
+        // Сбрасываем состояние
+        _moveHistory.clear()
+        currentPlayer = Color.WHITE
+        enPassantTarget = null
+        whiteKingSideCastling = true
+        whiteQueenSideCastling = true
+        blackKingSideCastling = true
+        blackQueenSideCastling = true
+        
+        // Устанавливаем начальную позицию
+        setupInitialPosition()
     }
     
     private fun isInBounds(position: Position): Boolean {
