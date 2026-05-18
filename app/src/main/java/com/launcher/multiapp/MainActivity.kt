@@ -13,7 +13,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,32 +57,56 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.atomic.AtomicBoolean
 
+// ПРИМЕЧАНИЕ: Убедитесь, что этот импорт соответствует вашему модулю, 
+// либо замените R.drawable ниже на прямую ссылку com.jbselfcompany.tyr.R.drawable.intro1
+import com.launcher.multiapp.R 
+
+private const val CHAT_CONTAINER_VIEW_ID = 46832
+
 private val NeonCyan = Color(0xFF00FFFF)
 private val NeonPurple = Color(0xFFB042FF)
 private val DarkBackground = Color(0xFF0A0A0A)
 private val SurfaceGray = Color(0xFF1E1E1E)
 private val DeepPurple = Color(0xFF1A0033)
 
-class MainActivity : FragmentActivity(), BaseConversationListFragment.ConversationSelectedListener {
+class MainActivity :
+    FragmentActivity(),
+    BaseConversationListFragment.ConversationSelectedListener {
 
-    private val configRepository by lazy { TyrApplication.instance.configRepository }
-    private val autoconfigServer by lazy { AutoconfigServer(this) }
-    private val appPrefs by lazy { getSharedPreferences("app_prefs", MODE_PRIVATE) }
+    private val configRepository by lazy {
+        TyrApplication.instance.configRepository
+    }
+
+    private val autoconfigServer by lazy {
+        AutoconfigServer(this)
+    }
+
+    private val appPrefs by lazy {
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+    }
 
     private var isLoading = mutableStateOf(false)
     private var loadingMessage = mutableStateOf("")
     private var showAnonymousDialog = mutableStateOf(false)
     private var isRegistered = mutableStateOf(false)
+    private var isServerReady = mutableStateOf(false)
 
-    // Атомарный флаг для защиты от мульти-запуска сервера из разных потоков
     private val isStartingServer = AtomicBoolean(false)
-
     private var chatContainer: FrameLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        isRegistered.value = appPrefs.getBoolean("registration_completed", false)
+        isRegistered.value =
+            appPrefs.getBoolean("registration_completed", false)
+
+        // Проверяем статус IMAP сервера при холодном старте асинхронно
+        lifecycleScope.launch(Dispatchers.IO) {
+            val ready = isImapReady()
+            withContext(Dispatchers.Main) {
+                isServerReady.value = ready
+            }
+        }
 
         setContent {
             AppTheme {
@@ -92,46 +114,67 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-                LaunchedEffect(isRegistered.value) {
-                    if (isRegistered.value) {
+                // Инициализация фрагмента чатов строго при готовности сервера и наличии аккаунта
+                LaunchedEffect(isRegistered.value, isServerReady.value) {
+                    if (isRegistered.value && isServerReady.value) {
                         initChatLayer()
                     }
                 }
 
-                LaunchedEffect(currentRoute, isRegistered.value) {
+                LaunchedEffect(currentRoute, isRegistered.value, isServerReady.value) {
                     val isChatsTab = isRegistered.value && currentRoute == Routes.CHATS
-                    
-                    chatContainer?.let { 
-                        it.visibility = if (isChatsTab) View.VISIBLE else View.GONE
-                    }
 
-                    // Атомарно проверяем: если вкладка чатов И сервер прямо сейчас НЕ запускается
-                    if (isChatsTab && isStartingServer.compareAndSet(false, true)) {
+                    chatContainer?.visibility =
+                        if (isChatsTab && isServerReady.value) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+
+                    // Если открыта вкладка чатов, но сокет упал или не запустился — поднимаем службу
+                    if (isChatsTab && !isServerReady.value && isStartingServer.compareAndSet(false, true)) {
                         lifecycleScope.launch(Dispatchers.IO) {
                             try {
                                 val serverResponding = isImapReady()
-                                
+
                                 if (!YggmailService.isRunning || !serverResponding) {
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(this@MainActivity, "Подключение к P2P сети...", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Подключение к P2P сети...",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
-                                    
+
                                     if (!YggmailService.isRunning) {
                                         YggmailService.start(this@MainActivity)
                                     }
-                                    
-                                    waitForServiceReady(timeoutMs = 10000L)
-                                    
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(this@MainActivity, "P2P Сервер подключен!", Toast.LENGTH_SHORT).show()
-                                    }
+
+                                    // Защита от вечного зависания: используем надежный дефолтный таймаут в 2 минуты
+                                    waitForServiceReady() 
                                 }
+
+                                withContext(Dispatchers.Main) {
+                                    isServerReady.value = true
+                                    if (chatContainer == null) {
+                                        initChatLayer()
+                                    }
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "P2P Сервер подключен!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(this@MainActivity, "Не удалось запустить сервер: ${e.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "Ошибка запуска: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
                                 }
                             } finally {
-                                // Гарантированно сбрасываем флаг при любом исходе
                                 isStartingServer.set(false)
                             }
                         }
@@ -148,13 +191,34 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                                 navController = navController,
                                 startDestination = Routes.CHATS,
                                 chatLayer = {
-                                    AndroidView(
-                                        factory = {
-                                            if (chatContainer == null) initChatLayer()
-                                            chatContainer!!
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                                    if (isServerReady.value) {
+                                        AndroidView(
+                                            factory = {
+                                                if (chatContainer == null) {
+                                                    initChatLayer()
+                                                }
+                                                // Гарантированно отвязываем View от старого Compose-снапшота во избежание IllegalStateException
+                                                (chatContainer?.parent as? ViewGroup)?.removeView(chatContainer)
+                                                chatContainer!!
+                                            },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(DarkBackground),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                CircularProgressIndicator(color = NeonPurple)
+                                                Spacer(Modifier.height(16.dp))
+                                                Text(
+                                                    "Синхронизация защищенных ключей...",
+                                                    color = NeonCyan,
+                                                    fontSize = 14.sp
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -163,8 +227,36 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                             isLoading = isLoading.value,
                             loadingMessage = loadingMessage.value,
                             onLaunchEmail = {
-                                markRegistrationCompleted()
-                                isRegistered.value = true
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    try {
+                                        withContext(Dispatchers.Main) {
+                                            isLoading.value = true
+                                            loadingMessage.value = "Подключение..."
+                                        }
+
+                                        if (!YggmailService.isRunning) {
+                                            YggmailService.start(this@MainActivity)
+                                        }
+
+                                        waitForServiceReady()
+
+                                        withContext(Dispatchers.Main) {
+                                            markRegistrationCompleted()
+                                            isServerReady.value = true
+                                            isRegistered.value = true
+                                            isLoading.value = false
+                                        }
+                                    } catch (e: Exception) {
+                                        withContext(Dispatchers.Main) {
+                                            isLoading.value = false
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "Ошибка: ${e.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    }
+                                }
                             },
                             onOpenDialog = { showAnonymousDialog.value = true },
                             onLaunchTyr = { launchTyr() },
@@ -187,29 +279,30 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
     }
 
     private fun restartYggmailService() {
-        // Защита от дребезга и повторных кликов по кнопке ручного перезапуска
         if (!isStartingServer.compareAndSet(false, true)) {
-            Toast.makeText(this, "Сервер уже выполняет операцию запуска/перезагрузки", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Сервер уже перезапускается", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                withContext(Dispatchers.Main) {
+                    isLoading.value = true
+                    loadingMessage.value = "Перезапуск сервера..."
+                    isServerReady.value = false
+                }
+
                 if (YggmailService.isRunning) {
                     YggmailService.stop(this@MainActivity)
                     delay(1000)
                 }
 
                 YggmailService.start(this@MainActivity)
-
-                withContext(Dispatchers.Main) {
-                    isLoading.value = true
-                    loadingMessage.value = "Перезапуск сервера..."
-                }
                 waitForServiceReady()
 
                 withContext(Dispatchers.Main) {
                     isLoading.value = false
+                    isServerReady.value = true
                     Toast.makeText(this@MainActivity, "Сервер перезапущен!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
@@ -227,7 +320,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
         if (chatContainer != null) return
 
         chatContainer = FrameLayout(this).apply {
-            id = View.generateViewId()
+            id = CHAT_CONTAINER_VIEW_ID
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -242,7 +335,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
             }
             fragmentManager.beginTransaction()
                 .replace(chatContainer!!.id, fragment, "DELTA_CHAT")
-                .commitAllowingStateLoss()
+                .commitNowAllowingStateLoss()
         }
     }
 
@@ -285,7 +378,7 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 startActivity(intent)
-            } catch (e2: Exception) {
+            } catch (_: Exception) {
                 Toast.makeText(this, "Tyr не найден", Toast.LENGTH_LONG).show()
             }
         }
@@ -300,7 +393,6 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
 
             configRepository.savePassword(password)
             configRepository.setOnboardingCompleted(true)
-
             isLoading.value = true
             loadingMessage.value = "Создание защищённого аккаунта..."
 
@@ -310,7 +402,9 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                         YggmailService.start(this@MainActivity)
                     }
 
-                    withContext(Dispatchers.IO) { waitForServiceReady() }
+                    withContext(Dispatchers.IO) {
+                        waitForServiceReady()
+                    }
 
                     val email = configRepository.getMailAddress()
                     if (email.isNullOrEmpty()) {
@@ -323,11 +417,14 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                     val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
                     openDeltaChatWithDclogin(dcloginUrl)
 
+                    delay(3000)
+
                     markRegistrationCompleted()
                     isLoading.value = false
+                    isServerReady.value = true
                     isRegistered.value = true
-                    Toast.makeText(this@MainActivity, "Аккаунт готов!", Toast.LENGTH_SHORT).show()
 
+                    Toast.makeText(this@MainActivity, "Аккаунт готов!", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     isLoading.value = false
                     Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
@@ -351,14 +448,20 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
                 if (!email.isNullOrEmpty() && imapReady) {
                     if (!imapWasReady) {
                         imapWasReady = true
-                        withContext(Dispatchers.Main) { loadingMessage.value = "Подключение..." }
+                        withContext(Dispatchers.Main) {
+                            loadingMessage.value = "Подключение..."
+                        }
                         delay(5000)
                     }
-                    withContext(Dispatchers.Main) { loadingMessage.value = "Всё готово!" }
+                    withContext(Dispatchers.Main) {
+                        loadingMessage.value = "Всё готово!"
+                    }
                     delay(1500)
                     return
                 } else {
-                    withContext(Dispatchers.Main) { loadingMessage.value = "Запуск сервера..." }
+                    withContext(Dispatchers.Main) {
+                        loadingMessage.value = "Запуск сервера..."
+                    }
                 }
             }
             delay(2000)
@@ -366,14 +469,17 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
         throw IllegalStateException("Таймаут")
     }
 
-    private suspend fun isImapReady(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            Socket().use { socket ->
-                socket.connect(InetSocketAddress("127.0.0.1", 1143), 2000)
-                true
+    private suspend fun isImapReady(): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                Socket().use { socket ->
+                    socket.connect(InetSocketAddress("127.0.0.1", 1143), 2000)
+                    true
+                }
+            } catch (_: Exception) {
+                false
             }
-        } catch (_: Exception) { false }
-    }
+        }
 
     private fun openDeltaChatWithDclogin(dcloginUrl: String) {
         try {
@@ -387,8 +493,6 @@ class MainActivity : FragmentActivity(), BaseConversationListFragment.Conversati
         }
     }
 }
-
-// ================= COMPOSABLES =================
 
 @Composable
 fun AnonymousRegistrationDialog(
@@ -411,17 +515,34 @@ fun AnonymousRegistrationDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
-                    modifier = Modifier.size(64.dp).clip(CircleShape)
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
                         .background(NeonPurple.copy(alpha = 0.2f))
                         .border(2.dp, NeonPurple, CircleShape),
                     contentAlignment = Alignment.Center
-                ) { Text("🛡️", fontSize = 28.sp) }
+                ) {
+                    Text("🛡️", fontSize = 28.sp)
+                }
 
                 Spacer(Modifier.height(16.dp))
-                Text("Анонимный аккаунт", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
-                Text("P2P почта без серверов", fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center)
+
+                Text(
+                    "Анонимный аккаунт",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NeonCyan
+                )
+
+                Text(
+                    "P2P почта без серверов",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
 
                 Spacer(Modifier.height(24.dp))
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -433,9 +554,13 @@ fun AnonymousRegistrationDialog(
                 )
 
                 Spacer(Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it; passwordError = null },
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
                     label = { Text("Пароль", color = NeonPurple) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -443,23 +568,32 @@ fun AnonymousRegistrationDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = PasswordVisualTransformation(),
                     isError = passwordError != null,
-                    supportingText = passwordError?.let { { Text(it, color = Color.Red) } },
+                    supportingText = passwordError?.let {
+                        { Text(it, color = Color.Red) }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = NeonPurple)
                 )
 
                 Spacer(Modifier.height(24.dp))
+
                 Button(
                     onClick = {
                         if (name.isBlank() || password.length < 6) {
                             passwordError = "Минимум 6 символов"
-                        } else onConfirm(name.trim(), password)
+                        } else {
+                            onConfirm(name.trim(), password)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
                     shape = RoundedCornerShape(16.dp)
-                ) { Text("Создать аккаунт", fontWeight = FontWeight.Bold, color = Color.White) }
+                ) {
+                    Text("Создать аккаунт", fontWeight = FontWeight.Bold, color = Color.White)
+                }
 
-                TextButton(onClick = onDismiss) { Text("Отмена", color = Color.Gray) }
+                TextButton(onClick = onDismiss) {
+                    Text("Отмена", color = Color.Gray)
+                }
             }
         }
     }
@@ -475,10 +609,13 @@ fun MainScreen(
     onRestartServer: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    
     val scale by infiniteTransition.animateFloat(
-        initialValue = 1f, targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOutCubic), RepeatMode.Reverse),
+        initialValue = 1f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            tween(2000, easing = EaseInOutCubic),
+            RepeatMode.Reverse
+        ),
         label = "scale"
     )
 
@@ -492,28 +629,40 @@ fun MainScreen(
         label = "text_alpha"
     )
 
-    Box(modifier = Modifier.fillMaxSize().background(
-        Brush.verticalGradient(listOf(DeepPurple, Color(0xFF0D0020).copy(0.9f), DarkBackground))
-    )) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        DeepPurple,
+                        Color(0xFF0D0020).copy(alpha = 0.9f),
+                        DarkBackground
+                    )
+                )
+            )
+    ) {
         Column(
-            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 32.dp, vertical = 24.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .padding(horizontal = 32.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.weight(0.3f))
-            
+
             Image(
                 painter = painterResource(id = R.drawable.intro1),
                 contentDescription = "Logo",
                 modifier = Modifier.size(200.dp).scale(scale)
             )
-            
+
             Spacer(modifier = Modifier.weight(0.5f))
 
             if (isLoading) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = NeonPurple)
                     Spacer(Modifier.height(16.dp))
-                    
                     Text(
                         text = loadingMessage,
                         color = NeonCyan,
@@ -525,20 +674,24 @@ fun MainScreen(
                 Button(
                     onClick = onLaunchEmail,
                     modifier = Modifier.fillMaxWidth().height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(0.15f)),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.15f)),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(2.dp, NeonCyan.copy(0.5f))
-                ) { Text("Войти по email", color = NeonCyan, fontWeight = FontWeight.Bold) }
+                    border = BorderStroke(2.dp, NeonCyan.copy(alpha = 0.5f))
+                ) {
+                    Text("Войти по email", color = NeonCyan, fontWeight = FontWeight.Bold)
+                }
 
                 Spacer(Modifier.height(16.dp))
 
                 Button(
                     onClick = onOpenDialog,
                     modifier = Modifier.fillMaxWidth().height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(0.15f)),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonPurple.copy(alpha = 0.15f)),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(2.dp, NeonPurple.copy(0.5f))
-                ) { Text("Анонимный аккаунт", color = NeonPurple, fontWeight = FontWeight.Bold) }
+                    border = BorderStroke(2.dp, NeonPurple.copy(alpha = 0.5f))
+                ) {
+                    Text("Анонимный аккаунт", color = NeonPurple, fontWeight = FontWeight.Bold)
+                }
 
                 Spacer(Modifier.height(16.dp))
 
@@ -553,8 +706,13 @@ fun MainScreen(
             }
 
             Spacer(modifier = Modifier.weight(0.4f))
+
             IconButton(onClick = onLaunchTyr) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Settings", tint = Color.Gray)
+                Icon(
+                    Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Settings",
+                    tint = Color.Gray
+                )
             }
         }
     }
