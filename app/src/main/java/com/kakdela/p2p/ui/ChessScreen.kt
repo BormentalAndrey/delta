@@ -5,7 +5,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,14 +16,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kakdela.p2p.model.*
-import com.kakdela.p2p.ui.theme.*
+import com.kakdela.p2p.ui.theme.NeonCyan
+import com.kakdela.p2p.ui.theme.NeonPink
+import com.kakdela.p2p.ui.theme.NeonPurple
+
+// Тип-алиас для избежания конфликта с android.graphics.Color
+import androidx.compose.ui.graphics.Color as ComposeColor
 
 @Composable
 fun ChessScreen(
@@ -40,7 +50,6 @@ fun ChessScreen(
     var gameEndMessage by remember { mutableStateOf("") }
     var moveCount by remember { mutableStateOf(0) }
 
-    // Проверка состояния игры
     LaunchedEffect(currentPlayer) {
         if (chessGame.isCheckmate()) {
             val winner = if (currentPlayer == Color.WHITE) "ЧЁРНЫЕ" else "БЕЛЫЕ"
@@ -61,13 +70,12 @@ fun ChessScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(ComposeColor.Black)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Верхняя панель
             ChessTopBar(
                 currentPlayer = currentPlayer,
                 gameStatus = gameStatus,
@@ -95,13 +103,11 @@ fun ChessScreen(
                 }
             )
 
-            // Захваченные фигуры противника
             CapturedPiecesBar(
                 pieces = capturedByBlack,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Шахматная доска
             ChessBoard(
                 pieces = boardPieces,
                 selectedPosition = selectedPosition,
@@ -117,7 +123,6 @@ fun ChessScreen(
                     } else {
                         val from = selectedPosition!!
                         if (chessGame.makeMove(from, position)) {
-                            // Обновляем состояние
                             val move = chessGame.lastMove
                             if (move?.capturedPiece != null) {
                                 if (currentPlayer == Color.WHITE) {
@@ -134,7 +139,6 @@ fun ChessScreen(
                             lastMove = from to position
                             moveCount = chessGame.moveCount
                         } else {
-                            // Проверяем, кликнули ли на другую свою фигуру
                             val piece = boardPieces[position.row][position.col]
                             if (piece != null && piece.color == currentPlayer) {
                                 selectedPosition = position
@@ -148,20 +152,17 @@ fun ChessScreen(
                 }
             )
 
-            // Захваченные фигуры игрока
             CapturedPiecesBar(
                 pieces = capturedByWhite,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Нижняя панель с информацией
             GameInfoBar(
                 moveCount = moveCount,
                 currentPlayer = currentPlayer
             )
         }
 
-        // Диалог конца игры
         if (showGameEndDialog) {
             GameEndDialog(
                 message = gameEndMessage,
@@ -195,7 +196,7 @@ private fun ChessTopBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF0A0A0A),
+        color = ComposeColor(0xFF0A0A0A.toInt()),
         shadowElevation = 8.dp
     ) {
         Column {
@@ -246,7 +247,7 @@ private fun ChessTopBar(
                         .fillMaxWidth()
                         .padding(bottom = 4.dp),
                     textAlign = TextAlign.Center,
-                    color = if (gameStatus == "ШАХ!") Color.Red else NeonCyan,
+                    color = if (gameStatus == "ШАХ!") ComposeColor.Red else NeonCyan,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -263,6 +264,7 @@ private fun ChessBoard(
     lastMove: Pair<Position, Position>?,
     onSquareClick: (Position) -> Unit
 ) {
+    val density = LocalDensity.current
     val boardSize = 380.dp
     
     Box(
@@ -276,49 +278,44 @@ private fun ChessBoard(
         Canvas(modifier = Modifier.size(boardSize)) {
             val squareSizePx = size.width / 8
             
-            // Рисуем клетки
             for (row in 0..7) {
                 for (col in 0..7) {
                     val isLight = (row + col) % 2 == 0
                     val squareColor = if (isLight) {
-                        Color(0xFF2A2A4A)
+                        ComposeColor(0xFF2A2A4A.toInt())
                     } else {
-                        Color(0xFF1A1A3A)
+                        ComposeColor(0xFF1A1A3A.toInt())
                     }
                     
                     drawRect(
                         color = squareColor,
                         topLeft = Offset(col * squareSizePx, row * squareSizePx),
-                        size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                        size = Size(squareSizePx, squareSizePx)
                     )
                     
-                    // Подсветка последнего хода
                     if (lastMove != null) {
                         if ((row == lastMove.first.row && col == lastMove.first.col) ||
                             (row == lastMove.second.row && col == lastMove.second.col)) {
                             drawRect(
                                 color = NeonCyan.copy(alpha = 0.3f),
                                 topLeft = Offset(col * squareSizePx, row * squareSizePx),
-                                size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                                size = Size(squareSizePx, squareSizePx)
                             )
                         }
                     }
                     
-                    // Подсветка выбранной клетки
                     if (selectedPosition?.row == row && selectedPosition?.col == col) {
                         drawRect(
                             color = NeonPurple.copy(alpha = 0.5f),
                             topLeft = Offset(col * squareSizePx, row * squareSizePx),
-                            size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                            size = Size(squareSizePx, squareSizePx)
                         )
                     }
                     
-                    // Подсветка возможных ходов
                     val pos = Position(col, row)
                     if (pos in legalMoves) {
                         val targetPiece = pieces[row][col]
                         if (targetPiece != null) {
-                            // Ход со взятием - кольцо
                             drawCircle(
                                 color = NeonPink.copy(alpha = 0.7f),
                                 radius = squareSizePx * 0.45f,
@@ -326,10 +323,9 @@ private fun ChessBoard(
                                     col * squareSizePx + squareSizePx / 2,
                                     row * squareSizePx + squareSizePx / 2
                                 ),
-                                style = Stroke(width = 3.dp.toPx())
+                                style = Stroke(width = with(density) { 3.dp.toPx() })
                             )
                         } else {
-                            // Обычный ход - точка
                             drawCircle(
                                 color = NeonCyan.copy(alpha = 0.5f),
                                 radius = squareSizePx * 0.15f,
@@ -344,15 +340,14 @@ private fun ChessBoard(
             }
         }
         
-        // Фигуры
         Box(modifier = Modifier.size(boardSize)) {
             for (row in 0..7) {
                 for (col in 0..7) {
                     val piece = pieces[row][col]
                     if (piece != null) {
-                        val squareSize = boardSize / 8
+                        val squareSize: Dp = boardSize / 8
                         val isWhite = piece.color == Color.WHITE
-                        val pieceColor = if (isWhite) Color.White else Color(0xFF1A1A1A)
+                        val pieceColor = if (isWhite) ComposeColor.White else ComposeColor(0xFF1A1A1A.toInt())
                         val glowColor = if (isWhite) NeonCyan else NeonPink
                         
                         Text(
@@ -367,12 +362,12 @@ private fun ChessBoard(
                                 .drawBehind {
                                     drawCircle(
                                         color = glowColor.copy(alpha = 0.3f),
-                                        radius = size.minDimension / 2 + 4.dp.toPx(),
+                                        radius = size.minDimension / 2 + with(density) { 4.dp.toPx() },
                                         center = center
                                     )
                                 },
                             color = pieceColor,
-                            fontSize = squareSize.value.sp * 0.6f,
+                            fontSize = (squareSize.value * 0.6f).sp,
                             textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Bold
                         )
@@ -398,9 +393,9 @@ private fun CapturedPiecesBar(
                 Text(
                     text = piece.symbol,
                     color = if (piece.color == Color.WHITE) 
-                        Color.White.copy(alpha = 0.6f) 
+                        ComposeColor.White.copy(alpha = 0.6f) 
                     else 
-                        Color(0xFF666666),
+                        ComposeColor(0xFF666666.toInt()),
                     fontSize = 16.sp
                 )
             }
@@ -419,9 +414,11 @@ private fun GameInfoBar(
     moveCount: Int,
     currentPlayer: Color
 ) {
+    val density = LocalDensity.current
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF0A0A0A),
+        color = ComposeColor(0xFF0A0A0A.toInt()),
         shadowElevation = 8.dp
     ) {
         Row(
@@ -445,16 +442,15 @@ private fun GameInfoBar(
                 )
             }
             
-            // Индикатор текущего игрока
             Canvas(modifier = Modifier.size(20.dp)) {
                 drawCircle(
-                    color = if (currentPlayer == Color.WHITE) Color.White else Color(0xFF333333),
+                    color = if (currentPlayer == Color.WHITE) ComposeColor.White else ComposeColor(0xFF333333.toInt()),
                     radius = size.minDimension / 2
                 )
                 drawCircle(
                     color = if (currentPlayer == Color.WHITE) NeonCyan else NeonPink,
                     radius = size.minDimension / 2,
-                    style = Stroke(width = 2.dp.toPx())
+                    style = Stroke(width = with(density) { 2.dp.toPx() })
                 )
             }
         }
@@ -469,7 +465,7 @@ private fun GameEndDialog(
 ) {
     AlertDialog(
         onDismissRequest = {},
-        containerColor = Color(0xFF1A1A2E),
+        containerColor = ComposeColor(0xFF1A1A2E.toInt()),
         title = {
             Text(
                 "Игра окончена",
@@ -494,7 +490,7 @@ private fun GameEndDialog(
                 onClick = onNewGame,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = NeonCyan,
-                    contentColor = Color.Black
+                    contentColor = ComposeColor.Black
                 )
             ) {
                 Text("НОВАЯ ИГРА")
