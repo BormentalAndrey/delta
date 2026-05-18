@@ -29,8 +29,6 @@ import com.kakdela.p2p.model.*
 import com.kakdela.p2p.ui.theme.NeonCyan
 import com.kakdela.p2p.ui.theme.NeonPink
 import com.kakdela.p2p.ui.theme.NeonPurple
-
-// Тип-алиас для избежания конфликта с android.graphics.Color
 import androidx.compose.ui.graphics.Color as ComposeColor
 
 @Composable
@@ -266,6 +264,9 @@ private fun ChessBoard(
 ) {
     val density = LocalDensity.current
     val boardSize = 380.dp
+    val boardSizePx = with(density) { boardSize.toPx() }
+    val squareSizeDp: Dp = boardSize / 8
+    val squareSizePx = boardSizePx / 8
     
     Box(
         modifier = Modifier
@@ -276,8 +277,6 @@ private fun ChessBoard(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.size(boardSize)) {
-            val squareSizePx = size.width / 8
-            
             for (row in 0..7) {
                 for (col in 0..7) {
                     val isLight = (row + col) % 2 == 0
@@ -345,7 +344,6 @@ private fun ChessBoard(
                 for (col in 0..7) {
                     val piece = pieces[row][col]
                     if (piece != null) {
-                        val squareSize: Dp = boardSize / 8
                         val isWhite = piece.color == Color.WHITE
                         val pieceColor = if (isWhite) ComposeColor.White else ComposeColor(0xFF1A1A1A.toInt())
                         val glowColor = if (isWhite) NeonCyan else NeonPink
@@ -354,10 +352,10 @@ private fun ChessBoard(
                             text = piece.symbol,
                             modifier = Modifier
                                 .offset(
-                                    x = col * squareSize,
-                                    y = row * squareSize
+                                    x = squareSizeDp * col,
+                                    y = squareSizeDp * row
                                 )
-                                .size(squareSize)
+                                .size(squareSizeDp)
                                 .clickable { onSquareClick(Position(col, row)) }
                                 .drawBehind {
                                     drawCircle(
@@ -367,7 +365,7 @@ private fun ChessBoard(
                                     )
                                 },
                             color = pieceColor,
-                            fontSize = (squareSize.value * 0.6f).sp,
+                            fontSize = with(density) { (squareSizeDp.toPx() * 0.6f).toSp() },
                             textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Bold
                         )
