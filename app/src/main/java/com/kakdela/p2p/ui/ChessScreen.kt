@@ -1,8 +1,6 @@
 // app/src/main/java/com/kakdela/p2p/ui/ChessScreen.kt
 package com.kakdela.p2p.ui
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,25 +10,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kakdela.p2p.model.*
 import com.kakdela.p2p.ui.theme.*
-import kotlinx.coroutines.delay
-
-// Временные заглушки (если нет в проекте)
-object Routes {
-    const val CHESS = "chess"
-    const val ENTERTAINMENT = "entertainment"
-}
 
 @Composable
 fun ChessScreen(
@@ -42,14 +33,14 @@ fun ChessScreen(
     var boardPieces by remember { mutableStateOf(chessGame.getBoardState()) }
     var currentPlayer by remember { mutableStateOf(chessGame.currentPlayer) }
     var gameStatus by remember { mutableStateOf("") }
-    var showPromotionDialog by remember { mutableStateOf(false) }
-    var pendingPromotion by remember { mutableStateOf<Pair<Position, Position>?>(null) }
     var capturedByWhite by remember { mutableStateOf<List<Piece>>(emptyList()) }
     var capturedByBlack by remember { mutableStateOf<List<Piece>>(emptyList()) }
     var lastMove by remember { mutableStateOf<Pair<Position, Position>?>(null) }
     var showGameEndDialog by remember { mutableStateOf(false) }
     var gameEndMessage by remember { mutableStateOf("") }
+    var moveCount by remember { mutableStateOf(0) }
 
+    // Проверка состояния игры
     LaunchedEffect(currentPlayer) {
         if (chessGame.isCheckmate()) {
             val winner = if (currentPlayer == Color.WHITE) "ЧЁРНЫЕ" else "БЕЛЫЕ"
@@ -87,6 +78,7 @@ fun ChessScreen(
                         legalMoves = emptyList()
                         boardPieces = chessGame.getBoardState()
                         currentPlayer = chessGame.currentPlayer
+                        moveCount = chessGame.moveCount
                     }
                 },
                 onReset = {
@@ -98,13 +90,15 @@ fun ChessScreen(
                     capturedByWhite = emptyList()
                     capturedByBlack = emptyList()
                     lastMove = null
+                    moveCount = 0
+                    gameStatus = ""
                 }
             )
 
             // Захваченные фигуры противника
             CapturedPiecesBar(
                 pieces = capturedByBlack,
-                alignment = Alignment.Start
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Шахматная доска
@@ -113,7 +107,6 @@ fun ChessScreen(
                 selectedPosition = selectedPosition,
                 legalMoves = legalMoves,
                 lastMove = lastMove,
-                currentPlayer = currentPlayer,
                 onSquareClick = { position ->
                     if (selectedPosition == null) {
                         val piece = boardPieces[position.row][position.col]
@@ -125,21 +118,21 @@ fun ChessScreen(
                         val from = selectedPosition!!
                         if (chessGame.makeMove(from, position)) {
                             // Обновляем состояние
-                            selectedPosition = null
-                            legalMoves = emptyList()
-                            boardPieces = chessGame.getBoardState()
-                            currentPlayer = chessGame.currentPlayer
-                            lastMove = from to position
-                            
-                            // Обновляем захваченные фигуры
                             val move = chessGame.lastMove
                             if (move?.capturedPiece != null) {
-                                if (currentPlayer == Color.BLACK) {
+                                if (currentPlayer == Color.WHITE) {
                                     capturedByWhite = capturedByWhite + move.capturedPiece
                                 } else {
                                     capturedByBlack = capturedByBlack + move.capturedPiece
                                 }
                             }
+                            
+                            selectedPosition = null
+                            legalMoves = emptyList()
+                            boardPieces = chessGame.getBoardState()
+                            currentPlayer = chessGame.currentPlayer
+                            lastMove = from to position
+                            moveCount = chessGame.moveCount
                         } else {
                             // Проверяем, кликнули ли на другую свою фигуру
                             val piece = boardPieces[position.row][position.col]
@@ -158,12 +151,12 @@ fun ChessScreen(
             // Захваченные фигуры игрока
             CapturedPiecesBar(
                 pieces = capturedByWhite,
-                alignment = Alignment.End
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Нижняя панель с информацией
             GameInfoBar(
-                moveCount = chessGame.moveCount,
+                moveCount = moveCount,
                 currentPlayer = currentPlayer
             )
         }
@@ -180,6 +173,8 @@ fun ChessScreen(
                     capturedByWhite = emptyList()
                     capturedByBlack = emptyList()
                     lastMove = null
+                    moveCount = 0
+                    gameStatus = ""
                 },
                 onBack = {
                     showGameEndDialog = false
@@ -266,11 +261,9 @@ private fun ChessBoard(
     selectedPosition: Position?,
     legalMoves: List<Position>,
     lastMove: Pair<Position, Position>?,
-    currentPlayer: Color,
     onSquareClick: (Position) -> Unit
 ) {
     val boardSize = 380.dp
-    val squareSize = boardSize / 8
     
     Box(
         modifier = Modifier
@@ -287,14 +280,14 @@ private fun ChessBoard(
             for (row in 0..7) {
                 for (col in 0..7) {
                     val isLight = (row + col) % 2 == 0
-                    val color = if (isLight) {
+                    val squareColor = if (isLight) {
                         Color(0xFF2A2A4A)
                     } else {
                         Color(0xFF1A1A3A)
                     }
                     
                     drawRect(
-                        color = color,
+                        color = squareColor,
                         topLeft = Offset(col * squareSizePx, row * squareSizePx),
                         size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
                     )
@@ -323,8 +316,8 @@ private fun ChessBoard(
                     // Подсветка возможных ходов
                     val pos = Position(col, row)
                     if (pos in legalMoves) {
-                        val piece = pieces[row][col]
-                        if (piece != null) {
+                        val targetPiece = pieces[row][col]
+                        if (targetPiece != null) {
                             // Ход со взятием - кольцо
                             drawCircle(
                                 color = NeonPink.copy(alpha = 0.7f),
@@ -352,15 +345,12 @@ private fun ChessBoard(
         }
         
         // Фигуры
-        Box(
-            modifier = Modifier
-                .size(boardSize)
-                .clickable { }
-        ) {
+        Box(modifier = Modifier.size(boardSize)) {
             for (row in 0..7) {
                 for (col in 0..7) {
                     val piece = pieces[row][col]
                     if (piece != null) {
+                        val squareSize = boardSize / 8
                         val isWhite = piece.color == Color.WHITE
                         val pieceColor = if (isWhite) Color.White else Color(0xFF1A1A1A)
                         val glowColor = if (isWhite) NeonCyan else NeonPink
@@ -369,13 +359,12 @@ private fun ChessBoard(
                             text = piece.symbol,
                             modifier = Modifier
                                 .offset(
-                                    x = (col * squareSize / 8),
-                                    y = (row * squareSize / 8)
+                                    x = col * squareSize,
+                                    y = row * squareSize
                                 )
-                                .size(squareSize / 8)
+                                .size(squareSize)
                                 .clickable { onSquareClick(Position(col, row)) }
                                 .drawBehind {
-                                    // Свечение фигуры
                                     drawCircle(
                                         color = glowColor.copy(alpha = 0.3f),
                                         radius = size.minDimension / 2 + 4.dp.toPx(),
@@ -383,7 +372,7 @@ private fun ChessBoard(
                                     )
                                 },
                             color = pieceColor,
-                            fontSize = (squareSize / 8).value.sp * 0.6f,
+                            fontSize = squareSize.value.sp * 0.6f,
                             textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Bold
                         )
@@ -397,31 +386,30 @@ private fun ChessBoard(
 @Composable
 private fun CapturedPiecesBar(
     pieces: List<Piece>,
-    alignment: Alignment.Horizontal
+    modifier: Modifier = Modifier
 ) {
     if (pieces.isNotEmpty()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = if (alignment == Alignment.Start) 
-                Arrangement.Start else Arrangement.End,
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                "×${pieces.size}",
-                color = NeonCyan.copy(alpha = 0.7f),
-                fontSize = 14.sp,
-                modifier = Modifier.padding(end = 8.dp)
-            )
             pieces.forEach { piece ->
                 Text(
                     text = piece.symbol,
-                    color = if (piece.color == Color.WHITE) Color.White.copy(alpha = 0.6f) 
-                           else Color(0xFF666666),
+                    color = if (piece.color == Color.WHITE) 
+                        Color.White.copy(alpha = 0.6f) 
+                    else 
+                        Color(0xFF666666),
                     fontSize = 16.sp
                 )
             }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "×${pieces.size}",
+                color = NeonCyan.copy(alpha = 0.7f),
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -521,28 +509,4 @@ private fun GameEndDialog(
             }
         }
     )
-}
-
-// Расширения для ChessGame
-private fun ChessGame.getBoardState(): Array<Array<Piece?>> {
-    val state = Array(8) { Array<Piece?>(8) { null } }
-    for (row in 0..7) {
-        for (col in 0..7) {
-            state[row][col] = getPieceAt(Position(col, row))
-        }
-    }
-    return state
-}
-
-val ChessGame.lastMove: Move?
-    get() = moveHistory.lastOrNull()
-
-val ChessGame.moveCount: Int
-    get() = moveHistory.size
-
-fun ChessGame.reset() {
-    // Пересоздаём игру
-    val newGame = ChessGame()
-    // Копируем состояние (костыль, но работает)
-    this.currentPlayer = newGame.currentPlayer
 }
