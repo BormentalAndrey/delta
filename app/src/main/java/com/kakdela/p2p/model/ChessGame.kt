@@ -85,13 +85,16 @@ class ChessGame {
         // Взятие на проходе
         if (piece.type == PieceType.PAWN && to == enPassantTarget) {
             val captureRow = if (piece.color == Color.WHITE) to.row - 1 else to.row + 1
-            board[to.col][captureRow] = null
+            if (captureRow in 0..7) {
+                board[to.col][captureRow] = null
+            }
         }
         
         // Обновление en passant цели
         enPassantTarget = if (piece.type == PieceType.PAWN && 
             kotlin.math.abs(to.row - from.row) == 2) {
-            Position(to.col, (from.row + to.row) / 2)
+            val midRow = (from.row + to.row) / 2
+            if (midRow in 0..7) Position(to.col, midRow) else null
         } else {
             null
         }
@@ -158,36 +161,48 @@ class ChessGame {
             PieceType.KING -> addKingMoves(from, piece.color, moves)
         }
         
-        return moves.filter { move -> !wouldBeInCheck(from, move, piece.color) }
+        return moves.filter { move -> 
+            isInBounds(move) && !wouldBeInCheck(from, move, piece.color) 
+        }
     }
     
     private fun addPawnMoves(from: Position, color: Color, moves: MutableList<Position>) {
         val direction = if (color == Color.WHITE) 1 else -1
         val startRow = if (color == Color.WHITE) 1 else 6
-        val promotionRow = if (color == Color.WHITE) 7 else 0
         
         // Ход вперед на 1 клетку
-        val oneForward = Position(from.col, from.row + direction)
-        if (isInBounds(oneForward) && getPieceAt(oneForward) == null) {
-            moves.add(oneForward)
-            
-            // Ход вперед на 2 клетки со стартовой позиции
-            if (from.row == startRow) {
-                val twoForward = Position(from.col, from.row + 2 * direction)
-                if (getPieceAt(twoForward) == null) {
-                    moves.add(twoForward)
+        val oneForwardRow = from.row + direction
+        if (oneForwardRow in 0..7) {
+            val oneForward = Position(from.col, oneForwardRow)
+            if (getPieceAt(oneForward) == null) {
+                moves.add(oneForward)
+                
+                // Ход вперед на 2 клетки со стартовой позиции
+                if (from.row == startRow) {
+                    val twoForwardRow = from.row + 2 * direction
+                    if (twoForwardRow in 0..7) {
+                        val twoForward = Position(from.col, twoForwardRow)
+                        if (getPieceAt(twoForward) == null) {
+                            moves.add(twoForward)
+                        }
+                    }
                 }
             }
         }
         
         // Взятие по диагонали
         for (dx in listOf(-1, 1)) {
-            val capturePos = Position(from.col + dx, from.row + direction)
-            if (isInBounds(capturePos)) {
+            val captureCol = from.col + dx
+            val captureRow = from.row + direction
+            
+            if (captureCol in 0..7 && captureRow in 0..7) {
+                val capturePos = Position(captureCol, captureRow)
                 val targetPiece = getPieceAt(capturePos)
+                
                 if (targetPiece != null && targetPiece.color != color) {
                     moves.add(capturePos)
                 }
+                
                 // Взятие на проходе
                 if (capturePos == enPassantTarget) {
                     moves.add(capturePos)
@@ -203,8 +218,11 @@ class ChessGame {
         )
         
         for ((dx, dy) in knightMoves) {
-            val pos = Position(from.col + dx, from.row + dy)
-            if (isInBounds(pos)) {
+            val newCol = from.col + dx
+            val newRow = from.row + dy
+            
+            if (newCol in 0..7 && newRow in 0..7) {
+                val pos = Position(newCol, newRow)
                 val targetPiece = getPieceAt(pos)
                 if (targetPiece == null || targetPiece.color != color) {
                     moves.add(pos)
@@ -259,8 +277,12 @@ class ChessGame {
         for (dx in -1..1) {
             for (dy in -1..1) {
                 if (dx == 0 && dy == 0) continue
-                val pos = Position(from.col + dx, from.row + dy)
-                if (isInBounds(pos)) {
+                
+                val newCol = from.col + dx
+                val newRow = from.row + dy
+                
+                if (newCol in 0..7 && newRow in 0..7) {
+                    val pos = Position(newCol, newRow)
                     val targetPiece = getPieceAt(pos)
                     if (targetPiece == null || targetPiece.color != color) {
                         moves.add(pos)
@@ -301,15 +323,21 @@ class ChessGame {
         if (rook?.type != PieceType.ROOK) return false
         
         // Проверяем, что король не проходит через битое поле
-        val color = getPieceAt(Position(kingCol, row))?.color ?: return false
-        for (col in kingCol..kingCol + 2 * step step step) {
-            if (isSquareAttacked(Position(col, row), color)) return false
+        val king = getPieceAt(Position(kingCol, row))
+        val color = king?.color ?: return false
+        
+        var currentCol = kingCol
+        for (i in 1..2) {
+            currentCol += step
+            if (isSquareAttacked(Position(currentCol, row), color)) return false
         }
         
         return true
     }
     
     private fun isSquareAttacked(position: Position, defenderColor: Color): Boolean {
+        if (!isInBounds(position)) return false
+        
         val attackerColor = defenderColor.opposite()
         
         for (col in 0..7) {
@@ -355,11 +383,15 @@ class ChessGame {
     
     private fun isDiagonalPathClear(from: Position, to: Position): Boolean {
         if (kotlin.math.abs(to.col - from.col) != kotlin.math.abs(to.row - from.row)) return false
+        if (!isInBounds(from) || !isInBounds(to)) return false
+        
         val dx = if (to.col > from.col) 1 else -1
         val dy = if (to.row > from.row) 1 else -1
         var x = from.col + dx
         var y = from.row + dy
+        
         while (x != to.col && y != to.row) {
+            if (x !in 0..7 || y !in 0..7) return false
             if (board[x][y] != null) return false
             x += dx
             y += dy
@@ -369,6 +401,8 @@ class ChessGame {
     
     private fun isStraightPathClear(from: Position, to: Position): Boolean {
         if (from.col != to.col && from.row != to.row) return false
+        if (!isInBounds(from) || !isInBounds(to)) return false
+        
         val dx = when {
             to.col > from.col -> 1
             to.col < from.col -> -1
@@ -379,9 +413,12 @@ class ChessGame {
             to.row < from.row -> -1
             else -> 0
         }
+        
         var x = from.col + dx
         var y = from.row + dy
+        
         while (x != to.col || y != to.row) {
+            if (x !in 0..7 || y !in 0..7) return false
             if (board[x][y] != null) return false
             x += dx
             y += dy
@@ -390,6 +427,8 @@ class ChessGame {
     }
     
     private fun wouldBeInCheck(from: Position, to: Position, color: Color): Boolean {
+        if (!isInBounds(from) || !isInBounds(to)) return true
+        
         val piece = board[from.col][from.row] ?: return true
         val capturedPiece = board[to.col][to.row]
         
@@ -484,7 +523,14 @@ class ChessGame {
         board[lastMove.from.col][lastMove.from.row] = lastMove.piece
         board[lastMove.to.col][lastMove.to.row] = lastMove.capturedPiece
         
-        // Возвращаем права на рокировку (упрощенно)
+        // Восстанавливаем en passant
+        if (lastMove.piece.type == PieceType.PAWN && 
+            kotlin.math.abs(lastMove.to.row - lastMove.from.row) == 2) {
+            enPassantTarget = Position(lastMove.to.col, (lastMove.from.row + lastMove.to.row) / 2)
+        } else {
+            enPassantTarget = null
+        }
+        
         currentPlayer = currentPlayer.opposite()
         return true
     }
