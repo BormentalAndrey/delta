@@ -1,238 +1,548 @@
 // app/src/main/java/com/kakdela/p2p/ui/ChessScreen.kt
 package com.kakdela.p2p.ui
 
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.ScreenAdapter
-import com.badlogic.gdx.graphics.*
-import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.InputEvent
-import com.badlogic.gdx.scenes.scene2d.ui.*
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
-import com.badlogic.gdx.utils.Align
-import com.badlogic.gdx.utils.viewport.FitViewport
-import com.kakdela.p2p.model.ChessGame
-import com.kakdela.p2p.model.Piece
-import com.kakdela.p2p.model.Position
-import com.kakdela.p2p.model.Color as ChessColor
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.kakdela.p2p.model.*
+import com.kakdela.p2p.ui.theme.*
+import kotlinx.coroutines.delay
 
-class ChessScreen(
-    private val game: MainGame,
-    private val gameMode: GameMode
-) : ScreenAdapter() {
-    
-    private val viewport = FitViewport(480f, 800f)
-    private val stage = Stage(viewport)
-    private val skin = createSkin()
-    private val chessGame = ChessGame() // Здесь будет логика шахмат
-    private var selectedSquare: Position? = null
-    private var board: Table? = null
-    private var statusLabel: Label? = null
-    private val squareButtons = mutableMapOf<Position, Button>()
-    
-    override fun show() {
-        Gdx.input.inputProcessor = stage
-        
-        val root = Table()
-        root.setFillParent(true)
-        
-        // Статус бар
-        statusLabel = Label("Ход белых", skin)
-        root.add(statusLabel).pad(10f).row()
-        
-        // Шахматная доска
-        board = createChessBoard()
-        root.add(board).size(440f).pad(10f).row()
-        
-        // Кнопки управления
-        val controls = Table()
-        
-        val undoButton = TextButton("Отменить ход", skin)
-        undoButton.addListener(object : ClickListener() {
-            override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                undoMove()
-            }
-        })
-        
-        val backButton = TextButton("Назад", skin)
-        backButton.addListener(object : ClickListener() {
-            override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                game.returnToMenu()
-            }
-        })
-        
-        controls.add(undoButton).pad(5f).width(210f)
-        controls.add(backButton).pad(5f).width(210f)
-        root.add(controls).pad(10f)
-        
-        stage.addActor(root)
-        updateBoard()
-    }
-    
-    private fun createChessBoard(): Table {
-        val boardTable = Table()
-        val squareSize = 55f
-        
-        for (row in 7 downTo 0) {
-            for (col in 0..7) {
-                val position = Position(col, row)
-                val button = Button(skin)
-                button.setSize(squareSize, squareSize)
-                
-                // Цвет клетки
-                val isLight = (row + col) % 2 == 0
-                val color = if (isLight) Color(0.93f, 0.93f, 0.82f, 1f) 
-                           else Color(0.47f, 0.59f, 0.34f, 1f)
-                
-                val style = Button.ButtonStyle()
-                style.up = createDrawable(color)
-                style.down = createDrawable(color.cpy().mul(0.8f))
-                button.style = style
-                
-                button.addListener(object : ClickListener() {
-                    override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                        onSquareClick(position)
-                    }
-                })
-                
-                squareButtons[position] = button
-                boardTable.add(button).size(squareSize)
-            }
-            boardTable.row()
-        }
-        
-        return boardTable
-    }
-    
-    private fun onSquareClick(position: Position) {
-        if (selectedSquare == null) {
-            // Выбор фигуры
-            val piece = chessGame.getPieceAt(position)
-            if (piece != null && piece.color == chessGame.currentPlayer) {
-                selectedSquare = position
-                highlightLegalMoves(position)
-            }
+// Временные заглушки (если нет в проекте)
+object Routes {
+    const val CHESS = "chess"
+    const val ENTERTAINMENT = "entertainment"
+}
+
+@Composable
+fun ChessScreen(
+    onBack: () -> Unit = {}
+) {
+    val chessGame = remember { ChessGame() }
+    var selectedPosition by remember { mutableStateOf<Position?>(null) }
+    var legalMoves by remember { mutableStateOf<List<Position>>(emptyList()) }
+    var boardPieces by remember { mutableStateOf(chessGame.getBoardState()) }
+    var currentPlayer by remember { mutableStateOf(chessGame.currentPlayer) }
+    var gameStatus by remember { mutableStateOf("") }
+    var showPromotionDialog by remember { mutableStateOf(false) }
+    var pendingPromotion by remember { mutableStateOf<Pair<Position, Position>?>(null) }
+    var capturedByWhite by remember { mutableStateOf<List<Piece>>(emptyList()) }
+    var capturedByBlack by remember { mutableStateOf<List<Piece>>(emptyList()) }
+    var lastMove by remember { mutableStateOf<Pair<Position, Position>?>(null) }
+    var showGameEndDialog by remember { mutableStateOf(false) }
+    var gameEndMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(currentPlayer) {
+        if (chessGame.isCheckmate()) {
+            val winner = if (currentPlayer == Color.WHITE) "ЧЁРНЫЕ" else "БЕЛЫЕ"
+            gameEndMessage = "МАТ! $winner ПОБЕДИЛИ!"
+            gameStatus = gameEndMessage
+            showGameEndDialog = true
+        } else if (chessGame.isStalemate()) {
+            gameEndMessage = "ПАТ! НИЧЬЯ!"
+            gameStatus = gameEndMessage
+            showGameEndDialog = true
+        } else if (chessGame.isCheck()) {
+            gameStatus = "ШАХ!"
         } else {
-            // Попытка сделать ход
-            val from = selectedSquare!!
-            if (chessGame.makeMove(from, position)) {
-                selectedSquare = null
-                updateBoard()
-                checkGameState()
-            } else {
-                // Если кликнули на другую свою фигуру
-                val piece = chessGame.getPieceAt(position)
-                if (piece != null && piece.color == chessGame.currentPlayer) {
-                    selectedSquare = position
-                    highlightLegalMoves(position)
-                } else {
-                    selectedSquare = null
+            gameStatus = ""
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Верхняя панель
+            ChessTopBar(
+                currentPlayer = currentPlayer,
+                gameStatus = gameStatus,
+                onBack = onBack,
+                onUndo = {
+                    if (chessGame.undoMove()) {
+                        selectedPosition = null
+                        legalMoves = emptyList()
+                        boardPieces = chessGame.getBoardState()
+                        currentPlayer = chessGame.currentPlayer
+                    }
+                },
+                onReset = {
+                    chessGame.reset()
+                    selectedPosition = null
+                    legalMoves = emptyList()
+                    boardPieces = chessGame.getBoardState()
+                    currentPlayer = chessGame.currentPlayer
+                    capturedByWhite = emptyList()
+                    capturedByBlack = emptyList()
+                    lastMove = null
+                }
+            )
+
+            // Захваченные фигуры противника
+            CapturedPiecesBar(
+                pieces = capturedByBlack,
+                alignment = Alignment.Start
+            )
+
+            // Шахматная доска
+            ChessBoard(
+                pieces = boardPieces,
+                selectedPosition = selectedPosition,
+                legalMoves = legalMoves,
+                lastMove = lastMove,
+                currentPlayer = currentPlayer,
+                onSquareClick = { position ->
+                    if (selectedPosition == null) {
+                        val piece = boardPieces[position.row][position.col]
+                        if (piece != null && piece.color == currentPlayer) {
+                            selectedPosition = position
+                            legalMoves = chessGame.getLegalMoves(position)
+                        }
+                    } else {
+                        val from = selectedPosition!!
+                        if (chessGame.makeMove(from, position)) {
+                            // Обновляем состояние
+                            selectedPosition = null
+                            legalMoves = emptyList()
+                            boardPieces = chessGame.getBoardState()
+                            currentPlayer = chessGame.currentPlayer
+                            lastMove = from to position
+                            
+                            // Обновляем захваченные фигуры
+                            val move = chessGame.lastMove
+                            if (move?.capturedPiece != null) {
+                                if (currentPlayer == Color.BLACK) {
+                                    capturedByWhite = capturedByWhite + move.capturedPiece
+                                } else {
+                                    capturedByBlack = capturedByBlack + move.capturedPiece
+                                }
+                            }
+                        } else {
+                            // Проверяем, кликнули ли на другую свою фигуру
+                            val piece = boardPieces[position.row][position.col]
+                            if (piece != null && piece.color == currentPlayer) {
+                                selectedPosition = position
+                                legalMoves = chessGame.getLegalMoves(position)
+                            } else {
+                                selectedPosition = null
+                                legalMoves = emptyList()
+                            }
+                        }
+                    }
+                }
+            )
+
+            // Захваченные фигуры игрока
+            CapturedPiecesBar(
+                pieces = capturedByWhite,
+                alignment = Alignment.End
+            )
+
+            // Нижняя панель с информацией
+            GameInfoBar(
+                moveCount = chessGame.moveCount,
+                currentPlayer = currentPlayer
+            )
+        }
+
+        // Диалог конца игры
+        if (showGameEndDialog) {
+            GameEndDialog(
+                message = gameEndMessage,
+                onNewGame = {
+                    showGameEndDialog = false
+                    chessGame.reset()
+                    boardPieces = chessGame.getBoardState()
+                    currentPlayer = chessGame.currentPlayer
+                    capturedByWhite = emptyList()
+                    capturedByBlack = emptyList()
+                    lastMove = null
+                },
+                onBack = {
+                    showGameEndDialog = false
+                    onBack()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChessTopBar(
+    currentPlayer: Color,
+    gameStatus: String,
+    onBack: () -> Unit,
+    onUndo: () -> Unit,
+    onReset: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF0A0A0A),
+        shadowElevation = 8.dp
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        "Назад",
+                        tint = NeonCyan
+                    )
+                }
+                
+                Text(
+                    "ШАХМАТЫ",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = NeonCyan,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Row {
+                    IconButton(onClick = onUndo) {
+                        Icon(
+                            Icons.Default.Undo,
+                            "Отменить ход",
+                            tint = NeonPink
+                        )
+                    }
+                    IconButton(onClick = onReset) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            "Новая игра",
+                            tint = NeonPurple
+                        )
+                    }
                 }
             }
+            
+            if (gameStatus.isNotEmpty()) {
+                Text(
+                    gameStatus,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    textAlign = TextAlign.Center,
+                    color = if (gameStatus == "ШАХ!") Color.Red else NeonCyan,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            }
         }
-        updateBoard()
     }
+}
+
+@Composable
+private fun ChessBoard(
+    pieces: Array<Array<Piece?>>,
+    selectedPosition: Position?,
+    legalMoves: List<Position>,
+    lastMove: Pair<Position, Position>?,
+    currentPlayer: Color,
+    onSquareClick: (Position) -> Unit
+) {
+    val boardSize = 380.dp
+    val squareSize = boardSize / 8
     
-    private fun highlightLegalMoves(from: Position) {
-        // TODO: Подсветка возможных ходов
-    }
-    
-    private fun updateBoard() {
-        for (row in 7 downTo 0) {
-            for (col in 0..7) {
-                val position = Position(col, row)
-                val button = squareButtons[position] ?: continue
-                val piece = chessGame.getPieceAt(position)
-                
-                // Очищаем текст на кнопке
-                button.clearChildren()
-                
-                if (piece != null) {
-                    val pieceChar = when(piece.type) {
-                        com.kakdela.p2p.model.PieceType.KING -> if (piece.color == ChessColor.WHITE) "♔" else "♚"
-                        com.kakdela.p2p.model.PieceType.QUEEN -> if (piece.color == ChessColor.WHITE) "♕" else "♛"
-                        com.kakdela.p2p.model.PieceType.ROOK -> if (piece.color == ChessColor.WHITE) "♖" else "♜"
-                        com.kakdela.p2p.model.PieceType.BISHOP -> if (piece.color == ChessColor.WHITE) "♗" else "♝"
-                        com.kakdela.p2p.model.PieceType.KNIGHT -> if (piece.color == ChessColor.WHITE) "♘" else "♞"
-                        com.kakdela.p2p.model.PieceType.PAWN -> if (piece.color == ChessColor.WHITE) "♙" else "♟"
+    Box(
+        modifier = Modifier
+            .size(boardSize)
+            .shadow(16.dp, RoundedCornerShape(8.dp))
+            .border(2.dp, NeonCyan.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(boardSize)) {
+            val squareSizePx = size.width / 8
+            
+            // Рисуем клетки
+            for (row in 0..7) {
+                for (col in 0..7) {
+                    val isLight = (row + col) % 2 == 0
+                    val color = if (isLight) {
+                        Color(0xFF2A2A4A)
+                    } else {
+                        Color(0xFF1A1A3A)
                     }
                     
-                    val label = Label(pieceChar, skin)
-                    label.setAlignment(Align.center)
-                    button.add(label).expand().fill()
-                }
-                
-                // Подсветка выбранной клетки
-                if (position == selectedSquare) {
-                    val highlightColor = Color(1f, 1f, 0f, 0.5f)
-                    val style = Button.ButtonStyle()
-                    style.up = createDrawable(highlightColor)
-                    button.style = style
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(col * squareSizePx, row * squareSizePx),
+                        size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                    )
+                    
+                    // Подсветка последнего хода
+                    if (lastMove != null) {
+                        if ((row == lastMove.first.row && col == lastMove.first.col) ||
+                            (row == lastMove.second.row && col == lastMove.second.col)) {
+                            drawRect(
+                                color = NeonCyan.copy(alpha = 0.3f),
+                                topLeft = Offset(col * squareSizePx, row * squareSizePx),
+                                size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                            )
+                        }
+                    }
+                    
+                    // Подсветка выбранной клетки
+                    if (selectedPosition?.row == row && selectedPosition?.col == col) {
+                        drawRect(
+                            color = NeonPurple.copy(alpha = 0.5f),
+                            topLeft = Offset(col * squareSizePx, row * squareSizePx),
+                            size = androidx.compose.ui.geometry.Size(squareSizePx, squareSizePx)
+                        )
+                    }
+                    
+                    // Подсветка возможных ходов
+                    val pos = Position(col, row)
+                    if (pos in legalMoves) {
+                        val piece = pieces[row][col]
+                        if (piece != null) {
+                            // Ход со взятием - кольцо
+                            drawCircle(
+                                color = NeonPink.copy(alpha = 0.7f),
+                                radius = squareSizePx * 0.45f,
+                                center = Offset(
+                                    col * squareSizePx + squareSizePx / 2,
+                                    row * squareSizePx + squareSizePx / 2
+                                ),
+                                style = Stroke(width = 3.dp.toPx())
+                            )
+                        } else {
+                            // Обычный ход - точка
+                            drawCircle(
+                                color = NeonCyan.copy(alpha = 0.5f),
+                                radius = squareSizePx * 0.15f,
+                                center = Offset(
+                                    col * squareSizePx + squareSizePx / 2,
+                                    row * squareSizePx + squareSizePx / 2
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
         
-        statusLabel?.setText(
-            if (chessGame.currentPlayer == ChessColor.WHITE) "Ход белых" 
-            else "Ход чёрных"
-        )
-    }
-    
-    private fun checkGameState() {
-        if (chessGame.isCheckmate()) {
-            val winner = if (chessGame.currentPlayer == ChessColor.WHITE) "Чёрные" else "Белые"
-            showDialog("Мат!", "$winner победили!")
-        } else if (chessGame.isStalemate()) {
-            showDialog("Пат!", "Ничья!")
-        } else if (chessGame.isCheck()) {
-            showDialog("Шах!", "Король под шахом!")
-        }
-    }
-    
-    private fun undoMove() {
-        if (chessGame.undoMove()) {
-            selectedSquare = null
-            updateBoard()
-        }
-    }
-    
-    private fun showDialog(title: String, message: String) {
-        val dialog = Dialog(title, skin)
-        dialog.text(message)
-        dialog.button("OK") {
-            if (chessGame.isGameOver()) {
-                game.returnToMenu()
+        // Фигуры
+        Box(
+            modifier = Modifier
+                .size(boardSize)
+                .clickable { }
+        ) {
+            for (row in 0..7) {
+                for (col in 0..7) {
+                    val piece = pieces[row][col]
+                    if (piece != null) {
+                        val isWhite = piece.color == Color.WHITE
+                        val pieceColor = if (isWhite) Color.White else Color(0xFF1A1A1A)
+                        val glowColor = if (isWhite) NeonCyan else NeonPink
+                        
+                        Text(
+                            text = piece.symbol,
+                            modifier = Modifier
+                                .offset(
+                                    x = (col * squareSize / 8),
+                                    y = (row * squareSize / 8)
+                                )
+                                .size(squareSize / 8)
+                                .clickable { onSquareClick(Position(col, row)) }
+                                .drawBehind {
+                                    // Свечение фигуры
+                                    drawCircle(
+                                        color = glowColor.copy(alpha = 0.3f),
+                                        radius = size.minDimension / 2 + 4.dp.toPx(),
+                                        center = center
+                                    )
+                                },
+                            color = pieceColor,
+                            fontSize = (squareSize / 8).value.sp * 0.6f,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
-        dialog.show(stage)
     }
-    
-    private fun createDrawable(color: Color): Drawable {
-        val pixmap = Pixmap(1, 1, Pixmap.Format.RGBA8888)
-        pixmap.setColor(color)
-        pixmap.fill()
-        val drawable = TextureRegionDrawable(TextureRegion(Texture(pixmap)))
-        pixmap.dispose()
-        return drawable
+}
+
+@Composable
+private fun CapturedPiecesBar(
+    pieces: List<Piece>,
+    alignment: Alignment.Horizontal
+) {
+    if (pieces.isNotEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = if (alignment == Alignment.Start) 
+                Arrangement.Start else Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "×${pieces.size}",
+                color = NeonCyan.copy(alpha = 0.7f),
+                fontSize = 14.sp,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            pieces.forEach { piece ->
+                Text(
+                    text = piece.symbol,
+                    color = if (piece.color == Color.WHITE) Color.White.copy(alpha = 0.6f) 
+                           else Color(0xFF666666),
+                    fontSize = 16.sp
+                )
+            }
+        }
     }
-    
-    private fun createSkin(): Skin {
-        // TODO: Создать полноценный скин
-        return Skin(Gdx.files.internal("skin/uiskin.json"))
+}
+
+@Composable
+private fun GameInfoBar(
+    moveCount: Int,
+    currentPlayer: Color
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF0A0A0A),
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "Ход: $moveCount",
+                    color = NeonCyan.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                Text(
+                    if (currentPlayer == Color.WHITE) "Ходят белые" else "Ходят чёрные",
+                    color = NeonPink,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+            
+            // Индикатор текущего игрока
+            Canvas(modifier = Modifier.size(20.dp)) {
+                drawCircle(
+                    color = if (currentPlayer == Color.WHITE) Color.White else Color(0xFF333333),
+                    radius = size.minDimension / 2
+                )
+                drawCircle(
+                    color = if (currentPlayer == Color.WHITE) NeonCyan else NeonPink,
+                    radius = size.minDimension / 2,
+                    style = Stroke(width = 2.dp.toPx())
+                )
+            }
+        }
     }
-    
-    override fun resize(width: Int, height: Int) {
-        viewport.update(width, height, true)
+}
+
+@Composable
+private fun GameEndDialog(
+    message: String,
+    onNewGame: () -> Unit,
+    onBack: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        containerColor = Color(0xFF1A1A2E),
+        title = {
+            Text(
+                "Игра окончена",
+                color = NeonCyan,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Text(
+                message,
+                color = NeonPink,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onNewGame,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonCyan,
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("НОВАЯ ИГРА")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onBack,
+                border = BorderStroke(1.dp, NeonPurple)
+            ) {
+                Text("ВЫЙТИ", color = NeonPurple)
+            }
+        }
+    )
+}
+
+// Расширения для ChessGame
+private fun ChessGame.getBoardState(): Array<Array<Piece?>> {
+    val state = Array(8) { Array<Piece?>(8) { null } }
+    for (row in 0..7) {
+        for (col in 0..7) {
+            state[row][col] = getPieceAt(Position(col, row))
+        }
     }
-    
-    override fun render(delta: Float) {
-        Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
-        
-        stage.act(delta)
-        stage.draw()
-    }
-    
-    override fun dispose() {
-        stage.dispose()
-    }
+    return state
+}
+
+val ChessGame.lastMove: Move?
+    get() = moveHistory.lastOrNull()
+
+val ChessGame.moveCount: Int
+    get() = moveHistory.size
+
+fun ChessGame.reset() {
+    // Пересоздаём игру
+    val newGame = ChessGame()
+    // Копируем состояние (костыль, но работает)
+    this.currentPlayer = newGame.currentPlayer
 }
